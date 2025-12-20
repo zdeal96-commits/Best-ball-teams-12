@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Best Ball Teams</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to bottom right, #2ecc71, #dff9fb);
+      min-height: 100vh;
+      color: #1a202c;
+    }
+    .card {
+      background: white;
+      border-radius: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .pair-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .pair-row:nth-child(odd) {
+      background-color: #f9f9f9;
+    }
+    .collapsible {
+      transition: max-height 0.4s ease, opacity 0.4s ease;
+      overflow: hidden;
+    }
+    .header-bar {
+      background: linear-gradient(to right, #1e8449, #27ae60);
+      color: white;
+      font-weight: bold;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.75rem;
+      border-bottom: 4px solid #145a32;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="module">
+    import { h, render } from "https://esm.sh/preact@10.22.1";
+    import { useState, useMemo } from "https://esm.sh/preact@10.22.1/hooks";
+    import htm from "https://esm.sh/htm@3.1.1";
+    const html = htm.bind(h);
+
+    const splitCSVLine = (line) => {
+      const out = []; let cur = "", inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+        else if (c === ',' && !inQ) { out.push(cur); cur = ""; }
+        else { cur += c; }
+      }
+      out.push(cur);
+      return out.map(s => (s || "").trim());
+    };
+    const parseCSVRows = (text) => text.split(/\r?\n/).map(splitCSVLine);
+    const toInt = (v) => /^\d+$/.test(v?.trim() ?? "") ? parseInt(v) : null;
+    const titleCase = (n) => n.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+    const buildHoleIndex = (row) => {
+      const idx = {}; row.forEach((c, i) => { for (let h = 1; h <= 18; h++) {
+        const s = c.toLowerCase().trim(); if (s === `hole ${h}` || s === `${h}` || s === `hole${h}`) idx[h] = i; } });
+      return Object.keys(idx).length ? idx : null;
+    };
+    const isPlayerRow = (r) => (r[1] || "").toLowerCase().includes("tee") && (r[0] || "").trim();
+    const parsePlayers = (txt) => {
+      const rows = parseCSVRows(txt); let holeIdx = null; const map = new Map();
+      for (const row of rows) {
+        if (row.some(c => /hole\s*1/i.test(c || ""))) { holeIdx = buildHoleIndex(row); continue; }
+        if (!holeIdx) continue;
+        if (!isPlayerRow(row)) continue;
+        const name = titleCase((row[0] || "").trim()); const strokes = [];
+        for (let h = 1; h <= 18; h++) { const val = toInt(row[holeIdx[h]]); if (val == null) { strokes.length = 0; break; } strokes.push(val); }
+        if (strokes.length === 18) map.set(name, strokes);
+      }
+      return [...map].map(([name, strokes]) => ({ name, strokes }));
+    };
+    const bestBall = (a, b) => a.reduce((t, _, i) => t + Math.min(a[i], b[i]), 0);
+    const buildTeams = (list) => {
+      const out = [];
+      for (let i = 0; i < list.length; i++) {
+        for (let j = i + 1; j < list.length; j++) {
+          const A = list[i], B = list[j];
+          out.push({ name: `${A.name} & ${B.name}`, total: bestBall(A.strokes, B.strokes), players: [A.name, B.name] });
+        }
+      }
+      return out.map(t => {
+        const parts = t.name.split(' & ');
+        parts.sort((a, b) => a.localeCompare(b));
+        const newName = `${parts[0]} & ${parts[1]}`;
+        return { ...t, name: newName };
+      }).sort((a, b) => a.name.localeCompare(b.name));
+    };
+
+    function App() {
+      const [players, setPlayers] = useState([]), [teams, setTeams] = useState([]), [msg, setMsg] = useState(""), [search, setSearch] = useState("");
+      const [openGroups, setOpenGroups] = useState({});
+      const toggleGroup = (key) => setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
+
+      const load = async f => {
+        const t = await f.text(); const p = parsePlayers(t); setPlayers(p); setTeams(buildTeams(p)); setMsg(`Loaded ${p.length} players.`);
+      };
+
+      const totals = useMemo(() => players.map(p => ({ name: p.name, total: p.strokes.reduce((a,b)=>a+b,0) })).sort((a,b)=>a.total-b.total), [players]);
+
+      const teamsByPlayer = useMemo(() => {
+        const map = {};
+        for (const t of teams) {
+          for (const player of t.players) {
+            (map[player] ??= []).push(t);
+          }
+        }
+        Object.keys(map).forEach(player => {
+          map[player] = map[player].map(team => {
+            const parts = team.name.split(' & ');
+            const sortedName = parts.includes(player)
+              ? `${player} & ${parts.find(p => p !== player)}`
+              : team.name;
+            return { ...team, name: sortedName };
+          });
+        });
+        return Object.entries(map).sort(([a],[b])=>a.localeCompare(b));
+      }, [teams]);
+
+      const filtered = useMemo(() => {
+        const q = search.toLowerCase();
+        if (!q) return teamsByPlayer;
+        return teamsByPlayer.filter(([name, list]) =>
+          name.toLowerCase().includes(q) || list.some(t => t.name.toLowerCase().includes(q)));
+      }, [teamsByPlayer, search]);
+
+      return html`
+        <div class="pb-10">
+          <div class="header-bar">🏌️‍♂️ Best Ball Teams</div>
+
+          <div class="max-w-xl mx-auto p-5">
+            <div class="card">
+              <h2 class="font-semibold text-lg mb-3 text-green-700">1) Upload CSV</h2>
+              <input type="file" accept=".csv,text/csv" class="block w-full text-sm text-gray-700"
+                onChange=${e => e.target.files?.[0] && load(e.target.files[0])} />
+              ${msg && html`<p class="text-green-700 text-sm mt-2">${msg}</p>`}
+            </div>
+
+            ${players.length > 0 && html`
+              <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                  <h2 class="font-semibold text-lg text-green-700">2) Player Sections</h2>
+                  <input type="text" placeholder="🔍 Search players or teams"
+                    value=${search} onInput=${e => setSearch(e.target.value)}
+                    class="ml-2 w-1/2 text-sm rounded-md px-2 py-1 border border-gray-300 focus:ring-2 focus:ring-green-400" />
+                </div>
+
+                ${filtered.map(([player, list]) => {
+                  const total = totals.find(p => p.name === player)?.total || '-';
+                  return html`
+                    <div class="mb-5">
+                      <button onClick=${() => toggleGroup(player)}
+                        class="w-full flex justify-between items-center text-left font-bold text-green-800 text-lg border-b pb-1 mb-2">
+                        <span>${player}</span>
+                        <span class="transform transition-transform ${openGroups[player] ? 'rotate-90' : 'rotate-0'}">▶</span>
+                      </button>
+                      <p class="text-green-600 font-semibold mb-2">Total: ${total}</p>
+
+                      <div class="collapsible ${openGroups[player] ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}">
+                        ${list.map(t => html`
+                          <div class="pair-row font-mono text-lg">
+                            <span>${t.name}</span>
+                            <span class="font-semibold text-gray-800">${t.total}</span>
+                          </div>
+                        `)}
+                      </div>
+                    </div>`;
+                })}
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    render(h(App, {}), document.getElementById("root"));
+  </script>
+</body>
+</html>
