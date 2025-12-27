@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Golf Tools</title>
   <style>
     :root{
-      --bg:#07110d;
+      --bg0:#07110d;
+      --bg1:#0b1f16;
       --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.08);
       --line:rgba(255,255,255,.12);
       --text:#eaf5ef;
       --muted:#b7d1c2;
       --accent:#22c55e;
       --accent2:#f59e0b;
-      --radius:16px;
+      --danger:#ef4444;
+      --radius:18px;
       --shadow:0 14px 45px rgba(0,0,0,.45);
     }
     *{box-sizing:border-box}
@@ -24,14 +27,15 @@
       background:
         radial-gradient(1100px 700px at 20% 0%, rgba(34,197,94,.18), transparent 55%),
         radial-gradient(900px 600px at 90% 10%, rgba(245,158,11,.14), transparent 55%),
-        linear-gradient(180deg,#06110c,#0b1f16 55%,#06110c);
+        linear-gradient(180deg,var(--bg0),var(--bg1) 55%,var(--bg0));
       padding:16px;
     }
+
     .wrap{max-width:1100px;margin:0 auto;display:grid;gap:12px}
     header{
       padding:14px 16px;
       border:1px solid var(--line);
-      background:var(--panel);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
       border-radius:var(--radius);
       box-shadow:var(--shadow);
       display:flex;
@@ -39,8 +43,21 @@
       justify-content:space-between;
       gap:12px;
     }
-    h1{margin:0;font-size:20px}
+    .brand{
+      display:flex; gap:12px; align-items:center;
+    }
+    .badge{
+      width:44px;height:44px;border-radius:14px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      display:grid;place-items:center;
+      color:#04110a;
+      font-weight:900;
+      box-shadow: 0 10px 25px rgba(0,0,0,.35);
+      flex:0 0 auto;
+    }
+    h1{margin:0;font-size:20px;letter-spacing:.2px}
     .sub{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.35}
+
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding:8px 12px; border-radius:999px;
@@ -55,50 +72,141 @@
       box-shadow: 0 0 0 4px rgba(34,197,94,.18);
     }
 
-    .grid{display:grid;grid-template-columns: 360px 1fr;gap:12px;min-height:75vh}
-    @media (max-width: 900px){ .grid{grid-template-columns:1fr} }
+    .grid{
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:12px;
+      min-height:72vh;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+      header{flex-direction:column;align-items:flex-start}
+      .pill{align-self:flex-start}
+    }
 
-    .menu{
+    .panel{
       border:1px solid var(--line);
       background:var(--panel);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
       padding:12px;
-      display:grid;
-      gap:10px;
-      align-content:start;
     }
-    .card{
+
+    .toolCard{
       border:1px solid var(--line);
       background:rgba(0,0,0,.18);
-      border-radius:14px;
+      border-radius:16px;
       padding:12px;
       cursor:pointer;
       transition: transform .08s ease, border-color .08s ease, background .08s ease;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
     }
-    .card:hover{ transform: translateY(-1px); border-color: rgba(34,197,94,.45); }
-    .card.active{ border-color: rgba(34,197,94,.75); background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(245,158,11,.06)); }
-    .title{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:900}
+    .toolCard:hover{ transform: translateY(-1px); border-color: rgba(34,197,94,.45); }
+    .toolCard.selected{
+      border-color: rgba(34,197,94,.80);
+      background: linear-gradient(135deg, rgba(34,197,94,.12), rgba(245,158,11,.06));
+    }
+
+    .radio{
+      width:18px;height:18px;border-radius:50%;
+      border:2px solid rgba(255,255,255,.28);
+      margin-top:2px;
+      position:relative;
+      flex:0 0 auto;
+    }
+    .toolCard.selected .radio{
+      border-color: rgba(34,197,94,.9);
+      box-shadow: 0 0 0 4px rgba(34,197,94,.14);
+    }
+    .toolCard.selected .radio::after{
+      content:"";
+      position:absolute; inset:3px;
+      background: var(--accent);
+      border-radius:50%;
+    }
+
+    .toolInfo{flex:1 1 auto; min-width:0}
+    .toolTop{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-weight:900;
+    }
     .filepill{
       font-size:11px;color:var(--muted);
       border:1px solid var(--line);
       padding:2px 8px;border-radius:999px;
       background:rgba(255,255,255,.05);
       white-space:nowrap;
+      flex:0 0 auto;
     }
     .desc{margin:6px 0 0;color:var(--muted);font-size:12.5px;line-height:1.35}
 
-    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+    .tag{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      color:var(--muted);
+    }
+    .tag.req{ border-color: rgba(245,158,11,.45); color: #f6d39a; }
+    .tag.fast{ border-color: rgba(34,197,94,.45); color: #bff0cf; }
+
+    .detailsTitle{
+      font-weight:900;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      margin:0 0 10px 0;
+    }
+    .detailsTitle small{
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .detailsBox{
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      border-radius:16px;
+      padding:12px;
+    }
+    .detailsBox p{margin:0;color:var(--muted);font-size:13px;line-height:1.4}
+    .steps{margin:10px 0 0 0; padding-left:18px; color:var(--muted); font-size:13px; line-height:1.45}
+    .steps li{margin:6px 0}
+
+    .btnRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:12px;
+    }
+    @media (max-width: 500px){
+      .btnRow{grid-template-columns:1fr}
+    }
     button{
       border:1px solid var(--line);
-      background:rgba(0,0,0,.20);
+      background:rgba(0,0,0,.22);
       color:var(--text);
-      padding:10px 12px;
-      border-radius:12px;
+      padding:11px 12px;
+      border-radius:14px;
       font-weight:900;
       cursor:pointer;
+      transition: transform .08s ease, border-color .08s ease, background .08s ease;
     }
-    button:hover{ border-color: rgba(245,158,11,.45); }
+    button:hover{ transform: translateY(-1px); border-color: rgba(245,158,11,.45); }
+    button.primary{
+      background: linear-gradient(135deg, rgba(34,197,94,.22), rgba(34,197,94,.10));
+      border-color: rgba(34,197,94,.55);
+    }
+    button.primary:hover{
+      border-color: rgba(34,197,94,.85);
+    }
+    button:disabled{
+      opacity:.55; cursor:not-allowed; transform:none;
+    }
 
     .frameWrap{
       border:1px solid var(--line);
@@ -107,119 +215,258 @@
       box-shadow:var(--shadow);
       overflow:hidden;
       min-height:70vh;
+      display:none; /* hidden until Launch */
     }
-    iframe{width:100%;height:100%;border:0;background:#fff}
-    .note{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.35}
+    .frameWrap.on{display:block;}
+    iframe{width:100%;height:70vh;border:0;background:#fff}
+
+    .hint{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .miniNote{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(245,158,11,.35);
+      background: rgba(245,158,11,.08);
+      color:#f6d39a;
+      font-size:12.5px;
+      line-height:1.35;
+    }
   </style>
 </head>
 
 <body>
   <div class="wrap">
     <header>
-      <div>
-        <h1>Golf Tools</h1>
-        <div class="sub">Pick a tool. It loads inside this page. Use “Full Screen” to open it by itself.</div>
+      <div class="brand">
+        <div class="badge">⛳</div>
+        <div>
+          <h1>Golf Tools</h1>
+          <div class="sub">Select a tool first, then hit <b>Launch</b>. “Full Screen” opens it by itself.</div>
+        </div>
       </div>
       <div class="pill"><span class="dot"></span><span><b>Local</b> (runs in your browser)</span></div>
     </header>
 
     <div class="grid">
-      <div class="menu" id="menu"></div>
-
-      <div>
-        <div class="frameWrap">
-          <iframe id="frame" title="Golf Tool"></iframe>
+      <!-- LEFT: Tool chooser -->
+      <div class="panel">
+        <div class="detailsTitle">
+          <span>Choose a tool</span>
+          <small id="selectedSmall">None selected</small>
         </div>
-        <div class="note">
-          Filenames are case-sensitive. If a tool shows blank, verify the filename matches exactly.
+
+        <div id="toolList" style="display:grid;gap:10px"></div>
+
+        <div class="hint">
+          If you share this link with the group, everyone can pick the game they want from the same page.
+        </div>
+      </div>
+
+      <!-- RIGHT: Details + Launch + Iframe -->
+      <div class="panel">
+        <div class="detailsTitle">
+          <span>Tool details</span>
+          <small id="fileSmall">—</small>
+        </div>
+
+        <div class="detailsBox" id="detailsBox">
+          <p>Select a tool on the left to see what it does and what you need.</p>
+        </div>
+
+        <div class="btnRow">
+          <button class="primary" id="btnLaunch" disabled>Launch</button>
+          <button id="btnFull" disabled>Full Screen</button>
+        </div>
+
+        <div class="miniNote" id="bestballNote" style="display:none">
+          Best Ball requires the <b>Squabbit export</b> of the event you played (the CSV with Hole 1–18).
+        </div>
+
+        <div class="frameWrap" id="frameWrap">
+          <iframe id="frame" title="Golf Tool"></iframe>
         </div>
       </div>
     </div>
   </div>
 
 <script>
-  // Filenames MUST match your repo exactly
+  // Filenames MUST match your repo exactly (case-sensitive)
   const TOOLS = [
     {
       id: "bestball",
       name: "Best Ball (All Teams)",
       file: "Best-ball-all-teams.html",
-      desc: "Team generator / best ball setup."
+      desc: "Team generator / best ball setup.",
+      tags: ["Best Ball", "Quick setup"],
+      requiresSquabbit: true,
+      steps: [
+        "Export the event from Squabbit (CSV with Hole 1–18).",
+        "Open the tool and upload the CSV (if prompted).",
+        "Build teams and use the output for scoring."
+      ]
     },
     {
       id: "wolf",
       name: "Wolf Game",
       file: "wolfgame.html",
-      desc: "Wolf + dots tracking."
+      desc: "Wolf + dots tracking.",
+      tags: ["Wolf", "Dots", "Fast"],
+      requiresSquabbit: false,
+      steps: [
+        "Enter the players.",
+        "Set the hole / wolf rotation.",
+        "Track winners and dots as you play."
+      ]
     },
     {
       id: "frontback9",
       name: "Front & Back 9 Teams",
       file: "front9-back9-teams.html",
-      desc: "Upload Squabbit CSV and build teams with front/back 9 best ball."
+      desc: "Upload Squabbit CSV and build teams with front/back 9 best ball.",
+      tags: ["Best Ball", "Front/Back 9"],
+      requiresSquabbit: true,
+      steps: [
+        "Export the event from Squabbit (CSV with Hole 1–18).",
+        "Upload the CSV in the tool to load player scores.",
+        "Create teams and view front/back winners."
+      ]
     }
   ];
 
-  const KEY = "golf-tools:last";
-  const menu = document.getElementById("menu");
+  const KEY_SELECTED = "golf-tools:selected";
+  const KEY_LAST_LAUNCHED = "golf-tools:lastLaunched";
+
+  const toolList = document.getElementById("toolList");
+  const selectedSmall = document.getElementById("selectedSmall");
+  const fileSmall = document.getElementById("fileSmall");
+  const detailsBox = document.getElementById("detailsBox");
+  const btnLaunch = document.getElementById("btnLaunch");
+  const btnFull = document.getElementById("btnFull");
+  const bestballNote = document.getElementById("bestballNote");
+  const frameWrap = document.getElementById("frameWrap");
   const frame = document.getElementById("frame");
 
-  function setActive(id, writeHash=true){
-    const tool = TOOLS.find(t => t.id === id) || TOOLS[0];
-    [...menu.querySelectorAll(".card")].forEach(c => c.classList.toggle("active", c.dataset.id === tool.id));
-    frame.src = tool.file;
-    localStorage.setItem(KEY, tool.id);
-    if(writeHash) location.hash = tool.id;
+  let selectedId = null;
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
   }
 
-  function buildMenu(){
-    menu.innerHTML = "";
+  function setSelected(id, save=true){
+    const tool = TOOLS.find(t => t.id === id);
+    if(!tool) return;
+
+    selectedId = tool.id;
+
+    // card UI
+    [...toolList.querySelectorAll(".toolCard")].forEach(c => {
+      c.classList.toggle("selected", c.dataset.id === tool.id);
+    });
+
+    selectedSmall.textContent = tool.name;
+    fileSmall.textContent = tool.file;
+
+    // details
+    const tagsHtml = tool.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+    const reqHtml = tool.requiresSquabbit ? `<span class="tag req">Requires Squabbit CSV</span>` : `<span class="tag fast">No CSV needed</span>`;
+
+    detailsBox.innerHTML = `
+      <p><b>${escapeHtml(tool.name)}</b> — ${escapeHtml(tool.desc)}</p>
+      <div class="tags" style="margin-top:10px">${tagsHtml}${reqHtml}</div>
+      <ol class="steps">
+        ${tool.steps.map(s => `<li>${escapeHtml(s)}</li>`).join("")}
+      </ol>
+    `;
+
+    bestballNote.style.display = tool.requiresSquabbit ? "block" : "none";
+
+    btnLaunch.disabled = false;
+    btnFull.disabled = false;
+
+    if(save) localStorage.setItem(KEY_SELECTED, tool.id);
+
+    // update hash for sharing (optional)
+    location.hash = tool.id;
+  }
+
+  function launchSelected(){
+    const tool = TOOLS.find(t => t.id === selectedId);
+    if(!tool) return;
+
+    frame.src = tool.file;
+    frameWrap.classList.add("on");
+    localStorage.setItem(KEY_LAST_LAUNCHED, tool.id);
+
+    // scroll into view on mobile after launching
+    setTimeout(() => {
+      frameWrap.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  }
+
+  function openFull(){
+    const tool = TOOLS.find(t => t.id === selectedId);
+    if(!tool) return;
+    window.open(tool.file, "_blank", "noopener");
+  }
+
+  function buildList(){
+    toolList.innerHTML = "";
     TOOLS.forEach(t => {
-      const c = document.createElement("div");
-      c.className = "card";
-      c.dataset.id = t.id;
-      c.innerHTML = `
-        <div class="title">
-          <span>${t.name}</span>
-          <span class="filepill">${t.file}</span>
-        </div>
-        <div class="desc">${t.desc}</div>
-        <div class="actions">
-          <button type="button" data-open="${t.id}">Open</button>
-          <button type="button" data-full="${t.id}">Full Screen</button>
+      const card = document.createElement("div");
+      card.className = "toolCard";
+      card.dataset.id = t.id;
+
+      const tags = [
+        ...t.tags,
+        ...(t.requiresSquabbit ? ["Requires Squabbit CSV"] : ["No CSV needed"])
+      ].slice(0, 3);
+
+      card.innerHTML = `
+        <div class="radio"></div>
+        <div class="toolInfo">
+          <div class="toolTop">
+            <span>${escapeHtml(t.name)}</span>
+            <span class="filepill">${escapeHtml(t.file)}</span>
+          </div>
+          <div class="desc">${escapeHtml(t.desc)}</div>
+          <div class="tags">
+            ${tags.map(x => `<span class="tag ${x.includes("Requires") ? "req" : ""}">${escapeHtml(x)}</span>`).join("")}
+          </div>
         </div>
       `;
 
-      c.addEventListener("click", (e) => {
-        const open = e.target.getAttribute("data-open");
-        const full = e.target.getAttribute("data-full");
-
-        if(open){ setActive(open); return; }
-        if(full){
-          const tool = TOOLS.find(x => x.id === full);
-          window.open(tool.file, "_blank", "noopener");
-          return;
-        }
-        setActive(t.id);
-      });
-
-      menu.appendChild(c);
+      card.addEventListener("click", () => setSelected(t.id));
+      toolList.appendChild(card);
     });
   }
 
-  buildMenu();
+  // Buttons
+  btnLaunch.addEventListener("click", launchSelected);
+  btnFull.addEventListener("click", openFull);
 
-  // Load order: URL hash > saved selection > first tool
+  // Init
+  buildList();
+
+  // Prefer hash > saved selection > last launched > first tool
   const fromHash = (location.hash || "").replace("#","").trim();
-  const fromSaved = localStorage.getItem(KEY);
+  const savedSel = localStorage.getItem(KEY_SELECTED);
+  const lastLaunch = localStorage.getItem(KEY_LAST_LAUNCHED);
 
-  if(fromHash && TOOLS.some(t => t.id === fromHash)) setActive(fromHash, false);
-  else if(fromSaved && TOOLS.some(t => t.id === fromSaved)) setActive(fromSaved, false);
-  else setActive(TOOLS[0].id, false);
+  if(fromHash && TOOLS.some(t => t.id === fromHash)) setSelected(fromHash, false);
+  else if(savedSel && TOOLS.some(t => t.id === savedSel)) setSelected(savedSel, false);
+  else if(lastLaunch && TOOLS.some(t => t.id === lastLaunch)) setSelected(lastLaunch, false);
+  else setSelected(TOOLS[0].id, false);
 
   window.addEventListener("hashchange", () => {
     const id = (location.hash || "").replace("#","").trim();
-    if(id && TOOLS.some(t => t.id === id)) setActive(id, false);
+    if(id && TOOLS.some(t => t.id === id)) setSelected(id, false);
   });
 </script>
 </body>
