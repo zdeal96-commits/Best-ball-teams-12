@@ -1,0 +1,648 @@
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wolf Dots</title>
+  <style>
+    :root{
+      --bg0:#07110d;
+      --bg1:#0b1f16;
+      --text:#eaf5ef;
+      --muted:#b7d1c2;
+      --line:rgba(255,255,255,.10);
+
+      --accent:#34d399;
+      --accent2:#22c55e;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --mid:#94a3b8;
+
+      --shadow: 0 14px 45px rgba(0,0,0,.45);
+      --radius: 16px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #06110c);
+      padding:16px 16px 28px;
+    }
+    .wrap{ max-width: 860px; margin: 0 auto; }
+
+    header{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+      margin: 6px 0 14px;
+    }
+    h1{ margin:0; font-size:22px; letter-spacing:.2px; }
+    .sub{ color:var(--muted); font-size:13px; line-height:1.3; margin-top:6px; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+      color: var(--text);
+      font-size:12px; white-space:nowrap;
+    }
+    .pill .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(52,211,153,.18);
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      margin: 12px 0;
+    }
+    .topline{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      margin: 0 0 6px; color: var(--muted); font-size: 12px;
+    }
+    label{ display:block; margin: 10px 0 6px; color: var(--muted); font-size: 12.5px; }
+    input, select{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(9, 24, 17, .55);
+      color: var(--text);
+      outline: none;
+      font-size: 16px;
+    }
+    select{
+      appearance:none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, rgba(234,245,239,.75) 50%),
+        linear-gradient(135deg, rgba(234,245,239,.75) 50%, transparent 50%);
+      background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 34px;
+    }
+
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .grid3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+    @media (max-width: 560px){
+      .grid2, .grid3{ grid-template-columns: 1fr; }
+      header{ flex-direction:column; align-items:flex-start; }
+    }
+
+    .btn{
+      width:100%;
+      border:0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor:pointer;
+      color: #0b1510;
+      transition: transform .05s ease, filter .15s ease;
+      user-select:none;
+    }
+    .btn:active{ transform: scale(.99); }
+
+    .btnPrimary{ background: linear-gradient(135deg, var(--accent2), var(--accent)); box-shadow: 0 12px 30px rgba(34,197,94,.25); }
+    .btnGhost{ background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--line); font-weight:700; }
+    .btnGood{ background: linear-gradient(135deg, #16a34a, var(--accent)); box-shadow: 0 12px 30px rgba(22,163,74,.22); }
+    .btnBad{ background: linear-gradient(135deg, #fb7185, #ef4444); box-shadow: 0 12px 30px rgba(239,68,68,.20); }
+    .btnMid{ background: linear-gradient(135deg, #94a3b8, #cbd5e1); color:#0b1510; }
+    .btnWarn{ background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 12px 30px rgba(245,158,11,.18); }
+
+    .summary{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-size: 13px;
+      line-height:1.35;
+      white-space: pre-wrap;
+    }
+    .mini{ font-size:12px; color: var(--muted); margin-top: 8px; }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      border-radius: 14px;
+      overflow:hidden;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.16);
+    }
+    th, td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      font-size: 14px;
+      vertical-align: top;
+    }
+    th{
+      text-align:left;
+      color: var(--muted);
+      font-weight:800;
+      background: rgba(255,255,255,.05);
+    }
+    tr:last-child td{ border-bottom:0; }
+    .goodTxt{ color: #5eead4; font-weight:900; }
+    .badTxt{ color: #fda4af; font-weight:900; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; }
+
+    .logBtn{
+      padding:8px 10px;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight:800;
+      cursor:pointer;
+    }
+    .logBtn:active{ transform: scale(.99); }
+
+    .tag{
+      display:inline-block;
+      padding: 2px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-size: 12px;
+      margin-left: 6px;
+      white-space:nowrap;
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Wolf Dots <span class="tag">$3 per dot</span></h1>
+      <div class="sub">No score entry — pick Wolf/partner (or solo) and tap the winner. Includes full hole log + edits.</div>
+    </div>
+    <div class="pill"><span class="dot"></span><span><b>Local save</b> (stays on your phone)</span></div>
+  </header>
+
+  <div class="card">
+    <div class="topline"><span>Setup</span><span class="tag">5 players</span></div>
+
+    <label>Players (comma separated)</label>
+    <input id="playersInput" value="Zack, Blair, Keith, Nick, Garrett" />
+
+    <div class="grid2">
+      <div>
+        <label>Holes</label>
+        <input id="holesInput" type="number" min="1" max="36" value="18" />
+      </div>
+      <div>
+        <label>Auto Wolf rotation</label>
+        <select id="autoWolf">
+          <option value="yes" selected>Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:10px;">
+      <button id="startBtn" class="btn btnPrimary">Start / Load</button>
+      <button id="resetBtn" class="btn btnGhost">Reset Round</button>
+    </div>
+
+    <div class="mini">Edit mistakes: tap the hole in the log, then tap the correct result — it overwrites that hole.</div>
+  </div>
+
+  <div class="card" id="playCard" style="display:none;">
+    <div class="topline"><span>Hole Entry</span><span class="tag">tap result</span></div>
+
+    <div class="grid3">
+      <div>
+        <label>Hole</label>
+        <select id="holeSelect"></select>
+      </div>
+      <div>
+        <label>Wolf</label>
+        <select id="wolfSelect"></select>
+      </div>
+      <div>
+        <label>Mode</label>
+        <select id="modeSelect">
+          <option value="partner" selected>Pick partner (2v3)</option>
+          <option value="solo">Go Wolf (1v4)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="partnerWrap">
+      <label>Partner</label>
+      <select id="partnerSelect"></select>
+    </div>
+
+    <label>Result</label>
+    <div id="resultButtons"></div>
+
+    <div class="grid2" style="margin-top:10px;">
+      <button id="undoBtn" class="btn btnGhost">Undo last save</button>
+      <button id="clearBtn" class="btn btnGhost">Clear this hole</button>
+    </div>
+
+    <div class="summary" id="holeSummary">No result saved yet for this hole.</div>
+    <div class="mini" id="hintLine"></div>
+  </div>
+
+  <div class="card" id="logCard" style="display:none;">
+    <div class="topline"><span>Hole Log</span><span class="tag">tap to edit</span></div>
+    <div id="holeLog"></div>
+  </div>
+
+  <div class="card" id="standingsCard" style="display:none;">
+    <div class="topline"><span>Standings</span><span class="tag">settlement below</span></div>
+    <div id="standings"></div>
+    <div class="mono mini" id="settlement" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const LS_KEY = "wolf_dots_v3_log_edit"; // kept same so you don't lose saved holes
+  const $ = (id) => document.getElementById(id);
+  const money = (dots) => dots * 3;
+
+  let undoState = null; // { holeIndex, prevEvent }
+
+  function parsePlayers(str){
+    return str.split(",").map(s => s.trim()).filter(Boolean);
+  }
+  function loadRound(){
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }
+  function saveRound(round){
+    localStorage.setItem(LS_KEY, JSON.stringify(round));
+  }
+  function newRound(players, holes, autoWolf){
+    return {
+      players,
+      holes,
+      autoWolf,
+      events: Array.from({length: holes}, () => null),
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  // ✅ UPDATED BALANCED DOTS:
+  // 2v3:
+  // - 2-man win: winners +3 each, losers -2 each
+  // - 3-man win: winners +2 each, losers -3 each
+  // Solo stays: +4 / -1 each
+  function computeDots(round, ev){
+    const dots = {};
+    round.players.forEach(p => dots[p] = 0);
+    if(!ev) return dots;
+
+    const wolf = ev.wolf;
+    const mode = ev.mode;
+    const partner = ev.partner || null;
+    const outcome = ev.outcome;
+
+    const others = round.players.filter(p => p !== wolf);
+
+    if(mode === "partner"){
+      const three = round.players.filter(p => p !== wolf && p !== partner);
+
+      if(outcome === "2wins"){
+        dots[wolf] += 3;
+        dots[partner] += 3;
+        three.forEach(p => dots[p] -= 2);
+      } else if(outcome === "3wins"){
+        three.forEach(p => dots[p] += 2);
+        dots[wolf] -= 3;
+        dots[partner] -= 3;
+      }
+      return dots;
+    }
+
+    if(outcome === "wolfwins"){
+      dots[wolf] += 4;
+      others.forEach(p => dots[p] -= 1);
+    } else if(outcome === "wolfloses"){
+      dots[wolf] -= 4;
+      others.forEach(p => dots[p] += 1);
+    }
+    return dots;
+  }
+
+  function recomputeTotals(round){
+    const totals = {};
+    round.players.forEach(p => totals[p] = 0);
+    round.events.forEach(ev => {
+      if(!ev) return;
+      const delta = computeDots(round, ev);
+      round.players.forEach(p => totals[p] += (delta[p] || 0));
+    });
+    return totals;
+  }
+
+  function eventTeamsText(round, ev){
+    if(!ev) return { matchup:"—", winner:"—" };
+
+    if(ev.mode === "partner"){
+      const three = round.players.filter(p => p !== ev.wolf && p !== ev.partner);
+      const matchup = `${ev.wolf} + ${ev.partner} vs ${three.join(", ")}`;
+      let winner = "Push";
+      if(ev.outcome === "2wins") winner = `${ev.wolf} + ${ev.partner}`;
+      if(ev.outcome === "3wins") winner = `${three.join(", ")}`;
+      return { matchup, winner };
+    } else {
+      const others = round.players.filter(p => p !== ev.wolf);
+      const matchup = `${ev.wolf} (solo) vs ${others.join(", ")}`;
+      let winner = "Push";
+      if(ev.outcome === "wolfwins") winner = `${ev.wolf} (solo)`;
+      if(ev.outcome === "wolfloses") winner = `${others.join(", ")}`;
+      return { matchup, winner };
+    }
+  }
+
+  function describeEvent(round, ev){
+    if(!ev) return "No result saved yet for this hole.";
+    const t = eventTeamsText(round, ev);
+    return `Matchup: ${t.matchup}\nWinner: ${t.winner}`;
+  }
+
+  function renderStandings(round){
+    const totals = recomputeTotals(round);
+    const rows = round.players.map(p => ({ name:p, dots: totals[p], dollars: money(totals[p]) }))
+      .sort((a,b)=> b.dots - a.dots);
+
+    let html = `<table>
+      <thead><tr><th>Player</th><th>Dots</th><th>$</th></tr></thead><tbody>`;
+    rows.forEach(r => {
+      const cls = r.dots >= 0 ? "goodTxt" : "badTxt";
+      const sDots = r.dots >= 0 ? "+" : "";
+      const sDol = r.dollars >= 0 ? "+" : "";
+      html += `<tr>
+        <td>${r.name}</td>
+        <td class="${cls}">${sDots}${r.dots}</td>
+        <td class="${cls}">${sDol}${r.dollars}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+    $("standings").innerHTML = html;
+
+    // settlement
+    const creditors = rows.filter(r => r.dollars > 0).map(r => ({...r, amt: r.dollars}));
+    const debtors = rows.filter(r => r.dollars < 0).map(r => ({...r, amt: -r.dollars}));
+
+    let i=0, j=0;
+    const lines = [];
+    while(i<debtors.length && j<creditors.length){
+      const pay = Math.min(debtors[i].amt, creditors[j].amt);
+      if(pay > 0){
+        lines.push(`${debtors[i].name} pays ${creditors[j].name}: $${pay}`);
+        debtors[i].amt -= pay;
+        creditors[j].amt -= pay;
+      }
+      if(debtors[i].amt === 0) i++;
+      if(creditors[j].amt === 0) j++;
+    }
+    $("settlement").textContent = "Settlement:\n" + (lines.length ? lines.join("\n") : "All square.");
+  }
+
+  function renderLog(round){
+    let html = `<table>
+      <thead><tr><th style="width:80px;">Hole</th><th>Teams</th><th style="width:120px;">Winner</th><th style="width:90px;"></th></tr></thead><tbody>`;
+
+    for(let i=0;i<round.holes;i++){
+      const ev = round.events[i];
+      const holeNum = i+1;
+      const t = eventTeamsText(round, ev);
+      const winnerTxt = ev ? t.winner : "—";
+      const teamsTxt = ev ? t.matchup : "No entry yet";
+      html += `<tr>
+        <td><b>${holeNum}</b></td>
+        <td>${teamsTxt}</td>
+        <td>${winnerTxt}</td>
+        <td><button class="logBtn" data-hole="${holeNum}">Edit</button></td>
+      </tr>`;
+    }
+    html += `</tbody></table>`;
+    $("holeLog").innerHTML = html;
+
+    [...$("holeLog").querySelectorAll("button[data-hole]")].forEach(btn => {
+      btn.onclick = () => {
+        $("holeSelect").value = btn.getAttribute("data-hole");
+        $("holeSelect").dispatchEvent(new Event("change"));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+    });
+  }
+
+  function render(round){
+    $("playCard").style.display = "block";
+    $("standingsCard").style.display = "block";
+    $("logCard").style.display = "block";
+
+    // holes
+    $("holeSelect").innerHTML = "";
+    for(let i=1;i<=round.holes;i++){
+      const opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = `Hole ${i}`;
+      $("holeSelect").appendChild(opt);
+    }
+
+    // wolf options
+    $("wolfSelect").innerHTML = "";
+    round.players.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p;
+      opt.textContent = p;
+      $("wolfSelect").appendChild(opt);
+    });
+
+    function autoSetWolf(){
+      if(round.autoWolf !== "yes") return;
+      const hole = Number($("holeSelect").value);
+      const idx = (hole - 1) % round.players.length;
+      $("wolfSelect").value = round.players[idx];
+    }
+
+    function rebuildPartner(){
+      const wolf = $("wolfSelect").value;
+      $("partnerSelect").innerHTML = "";
+      round.players.filter(p => p !== wolf).forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p;
+        opt.textContent = p;
+        $("partnerSelect").appendChild(opt);
+      });
+    }
+
+    function setPartnerVisibility(){
+      const mode = $("modeSelect").value;
+      $("partnerWrap").style.display = (mode === "partner") ? "block" : "none";
+    }
+
+    function buildResultButtons(){
+      const mode = $("modeSelect").value;
+
+      if(mode === "partner"){
+        $("resultButtons").innerHTML = `
+          <div class="grid3">
+            <button class="btn btnGood" id="btn2wins">2-man wins</button>
+            <button class="btn btnBad" id="btn3wins">3-man wins</button>
+            <button class="btn btnMid" id="btnpush">Push</button>
+          </div>
+        `;
+        $("btn2wins").onclick = () => saveOutcome("2wins");
+        $("btn3wins").onclick = () => saveOutcome("3wins");
+        $("btnpush").onclick = () => saveOutcome("push");
+
+        // ✅ UPDATED hint
+        $("hintLine").textContent =
+          "Balanced 2v3: 2-man win = winners +3 each, losers -2 each. 3-man win = winners +2 each, losers -3 each. Push = 0.";
+      } else {
+        $("resultButtons").innerHTML = `
+          <div class="grid3">
+            <button class="btn btnWarn" id="btnWolfWins">Wolf wins</button>
+            <button class="btn btnBad" id="btnWolfLoses">Wolf loses</button>
+            <button class="btn btnMid" id="btnpush">Push</button>
+          </div>
+        `;
+        $("btnWolfWins").onclick = () => saveOutcome("wolfwins");
+        $("btnWolfLoses").onclick = () => saveOutcome("wolfloses");
+        $("btnpush").onclick = () => saveOutcome("push");
+        $("hintLine").textContent = "Solo: win = Wolf +4, other four -1 each. Loss = Wolf -4, other four +1 each. Push = 0.";
+      }
+    }
+
+    function loadHole(){
+      autoSetWolf();
+      rebuildPartner();
+      setPartnerVisibility();
+      buildResultButtons();
+
+      const hole = Number($("holeSelect").value);
+      const ev = round.events[hole - 1];
+
+      if(ev){
+        $("wolfSelect").value = ev.wolf;
+        $("modeSelect").value = ev.mode;
+        rebuildPartner();
+        setPartnerVisibility();
+        if(ev.partner) $("partnerSelect").value = ev.partner;
+        buildResultButtons();
+      }
+
+      $("holeSummary").textContent = describeEvent(round, ev);
+      renderStandings(round);
+      renderLog(round);
+    }
+
+    function saveOutcome(outcome){
+      const hole = Number($("holeSelect").value);
+      const wolf = $("wolfSelect").value;
+      const mode = $("modeSelect").value;
+
+      let partner = null;
+      if(mode === "partner"){
+        partner = $("partnerSelect").value;
+        if(!partner || partner === wolf){
+          alert("Pick a valid partner.");
+          return;
+        }
+      }
+
+      // undo snapshot
+      undoState = { holeIndex: hole - 1, prevEvent: round.events[hole - 1] };
+
+      round.events[hole - 1] = { hole, wolf, mode, partner, outcome, savedAt: new Date().toISOString() };
+      saveRound(round);
+
+      $("holeSummary").textContent = describeEvent(round, round.events[hole - 1]);
+      renderStandings(round);
+      renderLog(round);
+
+      if(hole < round.holes){
+        $("holeSelect").value = String(hole + 1);
+        loadHole();
+      }
+    }
+
+    $("undoBtn").onclick = () => {
+      if(!undoState) return alert("Nothing to undo yet.");
+      round.events[undoState.holeIndex] = undoState.prevEvent;
+      undoState = null;
+      saveRound(round);
+      loadHole();
+    };
+
+    $("clearBtn").onclick = () => {
+      const hole = Number($("holeSelect").value);
+      undoState = { holeIndex: hole - 1, prevEvent: round.events[hole - 1] };
+      round.events[hole - 1] = null;
+      saveRound(round);
+      loadHole();
+    };
+
+    $("holeSelect").onchange = loadHole;
+    $("wolfSelect").onchange = () => { rebuildPartner(); };
+    $("modeSelect").onchange = () => { setPartnerVisibility(); buildResultButtons(); };
+
+    loadHole();
+  }
+
+  $("startBtn").onclick = () => {
+    const players = parsePlayers($("playersInput").value);
+    const holes = Number($("holesInput").value || 18);
+    const autoWolf = $("autoWolf").value;
+
+    if(players.length !== 5){
+      alert("This tracker is built for exactly 5 players.");
+      return;
+    }
+
+    const existing = loadRound();
+    let round = existing;
+
+    if(!round || round.players.join("|") !== players.join("|") || round.holes !== holes){
+      round = newRound(players, holes, autoWolf);
+      saveRound(round);
+    } else {
+      round.autoWolf = autoWolf;
+      saveRound(round);
+    }
+
+    render(round);
+  };
+
+  $("resetBtn").onclick = () => {
+    localStorage.removeItem(LS_KEY);
+    undoState = null;
+    $("playCard").style.display = "none";
+    $("standingsCard").style.display = "none";
+    $("logCard").style.display = "none";
+    alert("Round reset.");
+  };
+
+  // auto-load
+  const existing = loadRound();
+  if(existing){
+    $("playersInput").value = existing.players.join(", ");
+    $("holesInput").value = existing.holes;
+    $("autoWolf").value = existing.autoWolf || "yes";
+    render(existing);
+  }
+})();
+</script>
+</body>
+</html>
