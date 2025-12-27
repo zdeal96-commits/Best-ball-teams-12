@@ -32,7 +32,7 @@
         radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
         radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
         linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #06110c);
-      padding:16px 16px 28px;
+      padding: 18px 16px 34px;
     }
 
     .wrap{ max-width: 980px; margin: 0 auto; }
@@ -45,17 +45,23 @@
       margin: 6px 0 14px;
     }
 
-    h1{ margin:0; font-size:22px; letter-spacing:.2px; }
-    .sub{ color:var(--muted); font-size:13px; line-height:1.35; margin-top:6px; max-width: 640px; }
+    h1{ margin:0; font-size:24px; letter-spacing:.2px; }
+    .sub{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.45;
+      margin-top:8px;
+      max-width: 680px;
+    }
 
     .pill{
       display:inline-flex; align-items:center; gap:8px;
-      padding:8px 12px; border-radius:999px;
+      padding:9px 12px; border-radius:999px;
       background: rgba(255,255,255,.06);
       border: 1px solid var(--line);
       box-shadow: 0 10px 30px rgba(0,0,0,.18);
       color: var(--text);
-      font-size:12px; white-space:nowrap;
+      font-size:12.5px; white-space:nowrap;
       flex: 0 0 auto;
     }
     .pill .dot{
@@ -68,91 +74,138 @@
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      padding: 14px;
+      padding: 16px;
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      margin: 12px 0;
+      margin: 14px 0;
     }
 
-    .row{
+    .hubTop{
       display:flex;
-      gap:10px;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
-      flex-wrap: wrap;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom: 12px;
     }
 
-    .toolsHeader{
+    .sectionTitle{
+      margin: 0;
+      font-size: 13px;
+      letter-spacing: .22px;
+      color: var(--muted);
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .mini{
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height:1.45;
+      margin-top: 8px;
+    }
+
+    .searchRow{
       display:flex;
-      align-items:center;
-      justify-content:space-between;
       gap:10px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
+      align-items:stretch;
+      flex-wrap:wrap;
+      margin-top: 10px;
     }
 
     .search{
-      width: 340px;
-      max-width: 100%;
-      padding: 12px 12px;
+      flex: 1 1 320px;
+      min-width: 240px;
+      padding: 14px 14px;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,.14);
       background: rgba(9, 24, 17, .55);
       color: var(--text);
       outline: none;
-      font-size: 15px;
+      font-size: 16px;
     }
 
     .btn{
       border:0;
       border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 15px;
+      padding: 14px 16px;
+      font-size: 16px;
       font-weight: 950;
       cursor:pointer;
       color: #0b1510;
       user-select:none;
       transition: transform .05s ease, filter .15s ease;
+      white-space:nowrap;
     }
     .btn:active{ transform: scale(.99); }
     .btnPrimary{ background: linear-gradient(135deg, var(--accent2), var(--accent)); box-shadow: 0 12px 30px rgba(34,197,94,.25); }
     .btnGhost{ background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--line); }
     .btnDanger{ background: linear-gradient(135deg, #fb7185, #ef4444); color:#07110d; }
 
-    .sectionTitle{
-      margin: 2px 0 0;
-      font-size: 13px;
-      letter-spacing: .2px;
-      color: var(--muted);
-      font-weight: 950;
-      text-transform: uppercase;
-    }
+    /* Tool list */
+    .toolList{ display:flex; flex-direction:column; gap:14px; margin-top: 8px; }
 
     .toolCard{
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.12);
-      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.14);
+      padding: 16px;
+    }
+
+    .toolHeader{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
-      gap: 10px;
-      margin-top: 10px;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
     }
 
-    .toolLeft{ min-width: 0; flex: 1 1 auto; }
-    .toolName{ font-weight: 950; font-size: 16px; letter-spacing:.1px; }
-    .toolDesc{ color: var(--muted); font-size: 13px; margin-top: 3px; line-height:1.35; }
-    .badges{ display:flex; gap:8px; margin-top: 8px; flex-wrap:wrap; }
+    .toolName{
+      font-weight: 950;
+      font-size: 18px;
+      letter-spacing:.1px;
+      line-height: 1.2;
+      margin:0;
+    }
+
+    /* filename is its own line so it doesn't cram */
+    .filePill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      font-size: 12.5px;
+      white-space:nowrap;
+      margin-top: 8px;
+    }
+
+    .toolDesc{
+      color: var(--muted);
+      font-size: 14px;
+      line-height:1.5;
+      margin-top: 6px;
+    }
+
+    .badges{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      flex-wrap:wrap;
+    }
     .badge{
       display:inline-block;
-      padding: 3px 9px;
+      padding: 6px 10px;
       border-radius:999px;
       border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.05);
+      background: rgba(255,255,255,.06);
       color: var(--muted);
-      font-size: 12px;
+      font-size: 13px;
       white-space:nowrap;
     }
     .badgeWarn{
@@ -162,40 +215,32 @@
       font-weight: 950;
     }
 
-    .toolRight{
+    .toolActions{
       display:flex;
-      gap:8px;
-      flex: 0 0 auto;
-      flex-wrap: wrap;
-      align-items: stretch;
-      justify-content:flex-end;
+      gap:10px;
+      margin-top: 14px;
+      flex-wrap:wrap;
+    }
+    .toolActions .btn{
+      flex: 1 1 160px;
+      min-width: 150px;
     }
 
-    .filePill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding: 7px 10px;
-      border-radius: 999px;
+    .noteBox{
+      margin-top: 12px;
+      padding: 12px 12px;
+      border-radius: 14px;
       border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.05);
-      color: var(--muted);
-      font-size: 12px;
-      white-space:nowrap;
-      margin-left: 10px;
-    }
-
-    .mini{
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 8px;
-      line-height:1.35;
+      background: rgba(0,0,0,.14);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.45;
     }
 
     @media (max-width: 560px){
       header{ flex-direction:column; align-items:flex-start; }
-      .toolCard{ flex-direction:column; }
-      .toolRight{ justify-content:flex-start; }
+      .toolActions .btn{ flex: 1 1 100%; min-width: 100%; } /* stack buttons on iPhone */
+      .searchRow .btn{ width: 100%; } /* reset button full width */
     }
   </style>
 </head>
@@ -214,170 +259,71 @@
     </header>
 
     <div class="card">
-      <div class="toolsHeader">
+      <div class="hubTop">
         <div>
           <div class="sectionTitle">Hub</div>
-          <div class="mini">Tip: Search by tool name or player name (if it’s in the description).</div>
-        </div>
-
-        <div class="row" style="gap:10px;">
-          <input id="search" class="search" placeholder="Find a tool…" />
-          <button id="resetAll" class="btn btnDanger">Reset Everything</button>
+          <div class="mini">Search for a tool (ex: “wolf”, “bet sheet”, “front back”).</div>
         </div>
       </div>
 
-      <div id="sections"></div>
+      <div class="searchRow">
+        <input id="search" class="search" placeholder="Find a tool…" />
+        <button id="resetAll" class="btn btnDanger">Reset Everything</button>
+      </div>
     </div>
 
-    <div class="mini">
-      Reset Everything clears all local saved data (Wolf rounds, sheets, etc.) on this device only.
+    <div class="card">
+      <div class="toolHeader" style="margin-bottom:12px;">
+        <div>
+          <div class="sectionTitle">Betting Tools</div>
+          <div class="mini">All tools below support betting formats (teams, wolf, sheets). Big buttons and easy reading on mobile.</div>
+        </div>
+        <div class="mini" id="countLine"></div>
+      </div>
+
+      <div id="toolList" class="toolList"></div>
+
+      <div class="mini" style="margin-top:14px;">
+        Reset Everything clears all local saved data (Wolf rounds, sheets, etc.) on this device only.
+      </div>
     </div>
   </div>
 
 <script>
 (() => {
-  // Add new tools here (one object per tool).
-  // That’s it. No other HTML changes needed.
+  // Add new tools by adding one object here.
   const TOOLS = [
     {
-      section: "Teams",
-      name: "Best Ball (All Teams)",
-      file: "best-ball-all-teams.html",
-      desc: "Team generator / best ball setup.",
-      badges: ["Quick setup"]
-    },
-    {
-      section: "Games",
-      name: "Wolf Game",
-      file: "wolfgame.html",
-      desc: "Wolf + dots tracking. Supports 4 or 5 players. Local save.",
-      badges: ["Local save"]
-    },
-    {
-      section: "Teams",
-      name: "Front & Back 9 Teams",
-      file: "front9-back9-teams.html",
-      desc: "Upload Squabbit CSV and build teams with front/back 9 best ball. Includes side winners + PDF.",
-      badges: ["Squabbit export required"],
-      needsSquabbit: true
-    },
-    {
-      section: "Betting",
       name: "Best Ball Bet Sheet",
       file: "bestball-bet-sheet.html",
-      desc: "Import Squabbit round and build a bet sheet (2v1, 2v2, 3v2...). $/shot + max shots cap. Copy last row.",
-      badges: ["Squabbit export required", "Copy last row"],
+      desc: "Import Squabbit round and build a bet sheet (2v1, 2v2, 3v2...). Choose $/shot and max shots cap. Includes Copy Last Row and player search.",
+      badges: ["Squabbit export required", "Sheet mode", "Copy last row"],
       needsSquabbit: true
+    },
+    {
+      name: "Wolf Game (Dots)",
+      file: "wolfgame.html",
+      desc: "Wolf + dots tracking. Supports 4 or 5 players. Local save. Includes hole log + edits.",
+      badges: ["Local save", "$3 per dot"],
+      needsSquabbit: false
+    },
+    {
+      name: "Front & Back 9 Teams",
+      file: "front9-back9-teams.html",
+      desc: "Upload Squabbit CSV and build teams with front/back 9 best ball. Shows side winners and can export PDF.",
+      badges: ["Squabbit export required", "Front/Back winners", "PDF export"],
+      needsSquabbit: true
+    },
+    {
+      name: "Best Ball (All Teams)",
+      file: "best-ball-all-teams.html",
+      desc: "Quick team generator / best ball setup.",
+      badges: ["Quick setup"],
+      needsSquabbit: false
     }
   ];
 
   const $ = (id) => document.getElementById(id);
-  const sectionsEl = $("sections");
-
-  function groupBySection(list){
-    const map = new Map();
-    list.forEach(t => {
-      const sec = (t.section || "Tools").trim();
-      if(!map.has(sec)) map.set(sec, []);
-      map.get(sec).push(t);
-    });
-    return map;
-  }
-
-  function openTool(file){
-    // Always open as a full page (not iframe).
-    // Works if this hub is embedded too.
-    const url = "./" + file;
-    if (window.top && window.top !== window) window.top.location.href = url;
-    else window.location.href = url;
-  }
-
-  function render(){
-    const q = ($("search").value || "").trim().toLowerCase();
-
-    const filtered = TOOLS.filter(t => {
-      const hay = `${t.section||""} ${t.name||""} ${t.desc||""} ${t.file||""}`.toLowerCase();
-      return !q || hay.includes(q);
-    });
-
-    const grouped = groupBySection(filtered);
-
-    sectionsEl.innerHTML = "";
-
-    if(!filtered.length){
-      const empty = document.createElement("div");
-      empty.className = "mini";
-      empty.textContent = "No tools match that search.";
-      sectionsEl.appendChild(empty);
-      return;
-    }
-
-    [...grouped.keys()].sort((a,b)=>a.localeCompare(b)).forEach(sec => {
-      const secCard = document.createElement("div");
-      secCard.className = "card";
-      secCard.style.margin = "10px 0 0";
-
-      const top = document.createElement("div");
-      top.className = "row";
-      top.innerHTML = `
-        <div>
-          <div class="sectionTitle">${escapeHtml(sec)}</div>
-        </div>
-        <div class="mini">${grouped.get(sec).length} tool(s)</div>
-      `;
-      secCard.appendChild(top);
-
-      grouped.get(sec).forEach((t) => {
-        const tool = document.createElement("div");
-        tool.className = "toolCard";
-
-        const badges = (t.badges || []).map(b => {
-          const isWarn = (b || "").toLowerCase().includes("squabbit");
-          return `<span class="badge ${isWarn ? "badgeWarn" : ""}">${escapeHtml(b)}</span>`;
-        }).join("");
-
-        tool.innerHTML = `
-          <div class="toolLeft">
-            <div class="toolName">
-              ${escapeHtml(t.name)}
-              <span class="filePill">${escapeHtml(t.file)}</span>
-            </div>
-            <div class="toolDesc">${escapeHtml(t.desc || "")}</div>
-            <div class="badges">${badges}</div>
-            ${t.needsSquabbit ? `<div class="mini"><b>Note:</b> This tool needs the Squabbit export of the event round.</div>` : ``}
-          </div>
-
-          <div class="toolRight">
-            <button class="btn btnPrimary" type="button" data-open="${escapeHtml(t.file)}">Open</button>
-            <button class="btn btnGhost" type="button" data-copy="${escapeHtml(t.file)}">Copy Link</button>
-          </div>
-        `;
-
-        secCard.appendChild(tool);
-      });
-
-      sectionsEl.appendChild(secCard);
-    });
-
-    // Hook buttons
-    [...sectionsEl.querySelectorAll("button[data-open]")].forEach(btn => {
-      btn.onclick = () => openTool(btn.getAttribute("data-open"));
-    });
-
-    [...sectionsEl.querySelectorAll("button[data-copy]")].forEach(btn => {
-      btn.onclick = async () => {
-        const file = btn.getAttribute("data-copy");
-        const link = (location.origin ? location.origin : "") + location.pathname.replace(/index\.html$/,"") + file;
-        try{
-          await navigator.clipboard.writeText(link);
-          btn.textContent = "Copied";
-          setTimeout(()=> btn.textContent = "Copy Link", 900);
-        }catch(e){
-          alert("Copy blocked on this device. You can long-press the address bar and copy it.");
-        }
-      };
-    });
-  }
 
   function escapeHtml(s){
     return (s ?? "").toString()
@@ -385,6 +331,83 @@
       .replaceAll("<","&lt;")
       .replaceAll(">","&gt;")
       .replaceAll('"',"&quot;");
+  }
+
+  function openTool(file){
+    const url = "./" + file;
+    if (window.top && window.top !== window) window.top.location.href = url;
+    else window.location.href = url;
+  }
+
+  async function copyLink(file, btn){
+    // Use absolute link if possible; otherwise copy relative.
+    const base = location.origin ? location.origin : "";
+    const path = location.pathname.replace(/index\.html$/,"");
+    const link = base ? (base + path + file) : ("./" + file);
+
+    try{
+      await navigator.clipboard.writeText(link);
+      const old = btn.textContent;
+      btn.textContent = "Copied";
+      setTimeout(()=> btn.textContent = old, 900);
+    }catch(e){
+      alert("Copy blocked on this device. You can long-press the address bar and copy it.");
+    }
+  }
+
+  function render(){
+    const q = ($("search").value || "").trim().toLowerCase();
+    const list = TOOLS.filter(t => {
+      const hay = `${t.name} ${t.desc} ${t.file} ${(t.badges||[]).join(" ")}`.toLowerCase();
+      return !q || hay.includes(q);
+    });
+
+    $("countLine").textContent = `${list.length} tool(s)`;
+
+    const el = $("toolList");
+    el.innerHTML = "";
+
+    if(!list.length){
+      el.innerHTML = `<div class="mini">No tools match that search.</div>`;
+      return;
+    }
+
+    list.forEach(t => {
+      const badges = (t.badges || []).map(b => {
+        const isWarn = (b || "").toLowerCase().includes("squabbit");
+        return `<span class="badge ${isWarn ? "badgeWarn" : ""}">${escapeHtml(b)}</span>`;
+      }).join("");
+
+      const note = t.needsSquabbit
+        ? `<div class="noteBox"><b>Squabbit export required:</b> export the event/round from Squabbit and upload it inside this tool.</div>`
+        : "";
+
+      const card = document.createElement("div");
+      card.className = "toolCard";
+      card.innerHTML = `
+        <div>
+          <div class="toolName">${escapeHtml(t.name)}</div>
+          <div class="filePill">${escapeHtml(t.file)}</div>
+          <div class="toolDesc">${escapeHtml(t.desc || "")}</div>
+          <div class="badges">${badges}</div>
+          ${note}
+          <div class="toolActions">
+            <button class="btn btnPrimary" type="button" data-open="${escapeHtml(t.file)}">Open Tool</button>
+            <button class="btn btnGhost" type="button" data-copy="${escapeHtml(t.file)}">Copy Link</button>
+          </div>
+        </div>
+      `;
+
+      el.appendChild(card);
+    });
+
+    [...el.querySelectorAll("button[data-open]")].forEach(btn => {
+      btn.onclick = () => openTool(btn.getAttribute("data-open"));
+    });
+
+    [...el.querySelectorAll("button[data-copy]")].forEach(btn => {
+      btn.onclick = () => copyLink(btn.getAttribute("data-copy"), btn);
+    });
   }
 
   $("search").addEventListener("input", render);
