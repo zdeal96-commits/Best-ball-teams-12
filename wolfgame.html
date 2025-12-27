@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Wolf Dots</title>
   <style>
     :root{
@@ -31,9 +31,10 @@
         radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
         radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
         linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #06110c);
-      padding:16px 16px 28px;
+      padding: 0 16px 28px; /* top padding handled by hubbar */
     }
-    .wrap{ max-width: 860px; margin: 0 auto; }
+
+    .wrap{ max-width: 860px; margin: 0 auto; padding-top: 16px; }
 
     header{
       display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
@@ -180,10 +181,83 @@
       margin-left: 6px;
       white-space:nowrap;
     }
+
+    /* --- HUB BAR --- */
+    .hubbar{
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      padding: 10px 12px;
+      background: linear-gradient(180deg, rgba(5,17,11,.92), rgba(5,17,11,.70));
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .hubbarRow{
+      max-width: 980px;
+      margin: 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .hubbarTitle{
+      color: #eaf5ef;
+      font-weight: 950;
+      font-size: 14px;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .hubBtns{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .hubBtn{
+      border:0;
+      border-radius: 12px;
+      padding: 9px 10px;
+      font-size: 13px;
+      font-weight: 950;
+      cursor:pointer;
+      user-select:none;
+    }
+    .hubBtnGhost{
+      background: rgba(255,255,255,.08);
+      color:#eaf5ef;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .hubBtnDanger{
+      background: linear-gradient(135deg, #fb7185, #ef4444);
+      color:#08110c;
+    }
   </style>
 </head>
 
 <body>
+
+<!-- ✅ SET TOOL SETTINGS BEFORE HUB BAR SCRIPT -->
+<script>
+  window.TOOL_NAME = "Wolf Game";
+  window.TOOL_STORAGE_KEYS = ["wolf_dots_v4_4or5"];
+  window.HUB_INDEX = "index.html";
+</script>
+
+<!-- ✅ HUB BAR (Back / Reset) -->
+<div class="hubbar">
+  <div class="hubbarRow">
+    <div class="hubbarTitle" id="hubToolTitle">Golf Tool</div>
+    <div class="hubBtns">
+      <button class="hubBtn hubBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
+      <button class="hubBtn hubBtnGhost" type="button" id="hubResetThisBtn">Reset This Tool</button>
+      <button class="hubBtn hubBtnDanger" type="button" id="hubResetAllBtn">Reset Everything</button>
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
   <header>
     <div>
@@ -294,11 +368,11 @@
 
 <script>
 (() => {
-  const LS_KEY = "wolf_dots_v4_4or5"; // new key so 4/5 rules don't corrupt old saves
+  const LS_KEY = "wolf_dots_v4_4or5";
   const $ = (id) => document.getElementById(id);
   const money = (dots) => dots * 3;
 
-  let undoState = null; // { holeIndex, prevEvent }
+  let undoState = null;
 
   function parsePlayers(str){
     return str.split(",").map(s => s.trim()).filter(Boolean);
@@ -335,13 +409,6 @@
       "Solo (1v3): win Wolf +3, others −1 each. Loss Wolf −3, others +1 each.";
   }
 
-  // Dots logic (auto-adjusts for 4 or 5 players)
-  // Partner mode:
-  // - 5 players (2v3): 2-man win winners +3 each, losers -2 each; 3-man win winners +2 each, losers -3 each
-  // - 4 players (2v2): winners +2 each, losers -2 each
-  // Solo mode:
-  // - 5 players (1v4): Wolf +/-4, others ∓1 each
-  // - 4 players (1v3): Wolf +/-3, others ∓1 each
   function computeDots(round, ev){
     const dots = {};
     round.players.forEach(p => dots[p] = 0);
@@ -361,7 +428,6 @@
 
       if(outcome === "push") return dots;
 
-      // 5 players: 2v3 special balance
       if(oppCount === 3){
         if(outcome === "2wins"){
           dots[wolf] += 3;
@@ -375,7 +441,6 @@
         return dots;
       }
 
-      // 4 players: 2v2 symmetric
       if(oppCount === 2){
         if(outcome === "2wins"){
           dots[wolf] += 2;
@@ -392,7 +457,6 @@
       return dots;
     }
 
-    // solo
     if(outcome === "push") return dots;
 
     if(count === 5){
@@ -531,7 +595,6 @@
 
     setTagAndRulesText(round.players.length);
 
-    // holes
     $("holeSelect").innerHTML = "";
     for(let i=1;i<=round.holes;i++){
       const opt = document.createElement("option");
@@ -540,7 +603,6 @@
       $("holeSelect").appendChild(opt);
     }
 
-    // wolf options
     $("wolfSelect").innerHTML = "";
     round.players.forEach(p => {
       const opt = document.createElement("option");
@@ -695,7 +757,6 @@
     const pc = Number($("playerCountSelect").value);
     setTagAndRulesText(pc);
 
-    // Helpful defaults
     if(pc === 4){
       const current = parsePlayers($("playersInput").value);
       if(current.length !== 4){
@@ -721,7 +782,6 @@
       alert("Choose 4 or 5 players.");
       return;
     }
-
     if(players.length !== chosenCount){
       alert(`You selected ${chosenCount} players, but entered ${players.length}. Fix the player list or change the player count.`);
       return;
@@ -753,7 +813,6 @@
     alert("Round reset.");
   };
 
-  // auto-load
   const existing = loadRound();
   if(existing){
     $("playersInput").value = existing.players.join(", ");
@@ -767,78 +826,9 @@
   }
 })();
 </script>
-</body>
-<style>
-  .hubbar{
-    position: sticky;
-    top: 0;
-    z-index: 9999;
-    padding: 10px 12px;
-    background: linear-gradient(180deg, rgba(5,17,11,.92), rgba(5,17,11,.70));
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255,255,255,.10);
-  }
-  .hubbarRow{
-    max-width: 980px;
-    margin: 0 auto;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-  }
-  .hubbarTitle{
-    color: #eaf5ef;
-    font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial;
-    font-weight: 950;
-    font-size: 14px;
-    letter-spacing:.2px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .hubBtns{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    justify-content:flex-end;
-  }
-  .hubBtn{
-    border:0;
-    border-radius: 12px;
-    padding: 9px 10px;
-    font-size: 13px;
-    font-weight: 950;
-    cursor:pointer;
-    user-select:none;
-  }
-  .hubBtnGhost{
-    background: rgba(255,255,255,.08);
-    color:#eaf5ef;
-    border: 1px solid rgba(255,255,255,.10);
-  }
-  .hubBtnDanger{
-    background: linear-gradient(135deg, #fb7185, #ef4444);
-    color:#08110c;
-  }
-</style>
 
-<div class="hubbar">
-  <div class="hubbarRow">
-    <div class="hubbarTitle" id="hubToolTitle">Golf Tool</div>
-    <div class="hubBtns">
-      <button class="hubBtn hubBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
-      <button class="hubBtn hubBtnGhost" type="button" id="hubResetThisBtn">Reset This Tool</button>
-      <button class="hubBtn hubBtnDanger" type="button" id="hubResetAllBtn">Reset Everything</button>
-    </div>
-  </div>
-</div>
-
+<!-- ✅ HUB BAR SCRIPT (wired after DOM exists) -->
 <script>
-  // Set these per tool BEFORE this script runs:
-  // window.TOOL_NAME = "Wolf Game";
-  // window.TOOL_STORAGE_KEYS = ["wolf_dots_v4_4or5"];   // reset this tool
-  // window.HUB_INDEX = "index.html";                   // where back goes (optional)
   (function(){
     const TOOL_NAME = window.TOOL_NAME || document.title || "Golf Tool";
     const TOOL_KEYS = Array.isArray(window.TOOL_STORAGE_KEYS) ? window.TOOL_STORAGE_KEYS : [];
@@ -855,11 +845,7 @@
     backBtn.onclick = () => { window.location.href = HUB_INDEX; };
 
     resetThisBtn.onclick = () => {
-      if(!TOOL_KEYS.length){
-        alert("No reset keys set for this tool yet.");
-        return;
-      }
-      const ok = confirm(`Reset this tool?\n\nThis clears:\n- ${TOOL_KEYS.join("\n- ")}`);
+      const ok = confirm(`Reset this tool?\n\nThis clears local saved data for:\n- ${TOOL_KEYS.join("\n- ")}`);
       if(!ok) return;
       TOOL_KEYS.forEach(k => localStorage.removeItem(k));
       alert("Tool reset. Reloading…");
@@ -875,9 +861,6 @@
     };
   })();
 </script>
-<script>
-  window.TOOL_NAME = "Wolf Game";
-  window.TOOL_STORAGE_KEYS = ["wolf_dots_v4_4or5"];
-  window.HUB_INDEX = "index.html";
-</script>
+
+</body>
 </html>
