@@ -6,468 +6,159 @@
   <title>Golf Tools</title>
   <style>
     :root{
-      --bg0:#07110d;
-      --bg1:#0b1f16;
-      --panel:rgba(255,255,255,.06);
-      --panel2:rgba(255,255,255,.08);
-      --line:rgba(255,255,255,.12);
-      --text:#eaf5ef;
-      --muted:#b7d1c2;
-      --accent:#22c55e;
-      --accent2:#f59e0b;
-      --danger:#ef4444;
-      --radius:18px;
-      --shadow:0 14px 45px rgba(0,0,0,.45);
+      --bg0:#06110c; --bg1:#0b1f16;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.035);
+      --text:#eaf5ef; --muted:#b7d1c2;
+      --line: rgba(255,255,255,.10);
+      --accent:#34d399; --accent2:#22c55e;
+      --warn:#fbbf24; --bad:#fb7185;
+      --shadow: 0 14px 45px rgba(0,0,0,.45);
+      --radius: 16px;
     }
-    *{box-sizing:border-box}
+    *{ box-sizing:border-box; }
     body{
-      margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      color:var(--text);
+      margin:0; min-height:100vh; color:var(--text);
+      font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial;
       background:
-        radial-gradient(1100px 700px at 20% 0%, rgba(34,197,94,.18), transparent 55%),
-        radial-gradient(900px 600px at 90% 10%, rgba(245,158,11,.14), transparent 55%),
-        linear-gradient(180deg,var(--bg0),var(--bg1) 55%,var(--bg0));
-      padding:16px;
+        radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #05110b);
     }
+    .wrap{ max-width: 980px; margin:0 auto; padding: 14px 14px 28px; }
 
-    .wrap{max-width:1100px;margin:0 auto;display:grid;gap:12px}
-    header{
-      padding:14px 16px;
-      border:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-    }
-    .brand{
-      display:flex; gap:12px; align-items:center;
-    }
-    .badge{
-      width:44px;height:44px;border-radius:14px;
-      background:linear-gradient(135deg,var(--accent),var(--accent2));
-      display:grid;place-items:center;
-      color:#04110a;
-      font-weight:900;
-      box-shadow: 0 10px 25px rgba(0,0,0,.35);
-      flex:0 0 auto;
-    }
-    h1{margin:0;font-size:20px;letter-spacing:.2px}
-    .sub{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.35}
-
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 12px; border-radius:999px;
-      background: rgba(255,255,255,.06);
+    .top{
+      margin-top: 12px;
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
       border: 1px solid var(--line);
-      color: var(--text);
-      font-size:12px; white-space:nowrap;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
     }
-    .pill .dot{
-      width:10px;height:10px;border-radius:50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 4px rgba(34,197,94,.18);
-    }
+    h1{ margin:0; font-size:20px; letter-spacing:.2px; }
+    .sub{ margin:8px 0 0; color:var(--muted); font-size:13px; line-height:1.35; }
 
     .grid{
       display:grid;
-      grid-template-columns: 420px 1fr;
-      gap:12px;
-      min-height:72vh;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
     }
-    @media (max-width: 980px){
-      .grid{grid-template-columns:1fr}
-      header{flex-direction:column;align-items:flex-start}
-      .pill{align-self:flex-start}
-    }
+    @media (max-width: 920px){ .grid{ grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px){ .grid{ grid-template-columns: 1fr; } }
 
-    .panel{
-      border:1px solid var(--line);
-      background:var(--panel);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:12px;
-    }
-
-    .toolCard{
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.18);
-      border-radius:16px;
-      padding:12px;
-      cursor:pointer;
-      transition: transform .08s ease, border-color .08s ease, background .08s ease;
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-    }
-    .toolCard:hover{ transform: translateY(-1px); border-color: rgba(34,197,94,.45); }
-    .toolCard.selected{
-      border-color: rgba(34,197,94,.80);
-      background: linear-gradient(135deg, rgba(34,197,94,.12), rgba(245,158,11,.06));
-    }
-
-    .radio{
-      width:18px;height:18px;border-radius:50%;
-      border:2px solid rgba(255,255,255,.28);
-      margin-top:2px;
+    .card{
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
       position:relative;
-      flex:0 0 auto;
-    }
-    .toolCard.selected .radio{
-      border-color: rgba(34,197,94,.9);
-      box-shadow: 0 0 0 4px rgba(34,197,94,.14);
-    }
-    .toolCard.selected .radio::after{
-      content:"";
-      position:absolute; inset:3px;
-      background: var(--accent);
-      border-radius:50%;
-    }
-
-    .toolInfo{flex:1 1 auto; min-width:0}
-    .toolTop{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      font-weight:900;
-    }
-    .filepill{
-      font-size:11px;color:var(--muted);
-      border:1px solid var(--line);
-      padding:2px 8px;border-radius:999px;
-      background:rgba(255,255,255,.05);
-      white-space:nowrap;
-      flex:0 0 auto;
-    }
-    .desc{margin:6px 0 0;color:var(--muted);font-size:12.5px;line-height:1.35}
-
-    .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-    .tag{
-      font-size:11px;
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.05);
-      color:var(--muted);
-    }
-    .tag.req{ border-color: rgba(245,158,11,.45); color: #f6d39a; }
-    .tag.fast{ border-color: rgba(34,197,94,.45); color: #bff0cf; }
-
-    .detailsTitle{
-      font-weight:900;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      margin:0 0 10px 0;
-    }
-    .detailsTitle small{
-      color:var(--muted);
-      font-weight:700;
-    }
-
-    .detailsBox{
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.18);
-      border-radius:16px;
-      padding:12px;
-    }
-    .detailsBox p{margin:0;color:var(--muted);font-size:13px;line-height:1.4}
-    .steps{margin:10px 0 0 0; padding-left:18px; color:var(--muted); font-size:13px; line-height:1.45}
-    .steps li{margin:6px 0}
-
-    .btnRow{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-      margin-top:12px;
-    }
-    @media (max-width: 500px){
-      .btnRow{grid-template-columns:1fr}
-    }
-    button{
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.22);
-      color:var(--text);
-      padding:11px 12px;
-      border-radius:14px;
-      font-weight:900;
-      cursor:pointer;
-      transition: transform .08s ease, border-color .08s ease, background .08s ease;
-    }
-    button:hover{ transform: translateY(-1px); border-color: rgba(245,158,11,.45); }
-    button.primary{
-      background: linear-gradient(135deg, rgba(34,197,94,.22), rgba(34,197,94,.10));
-      border-color: rgba(34,197,94,.55);
-    }
-    button.primary:hover{
-      border-color: rgba(34,197,94,.85);
-    }
-    button:disabled{
-      opacity:.55; cursor:not-allowed; transform:none;
-    }
-
-    .frameWrap{
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.22);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
       overflow:hidden;
-      min-height:70vh;
-      display:none; /* hidden until Launch */
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
-    .frameWrap.on{display:block;}
-    iframe{width:100%;height:70vh;border:0;background:#fff}
+    .card::before{
+      content:"";
+      position:absolute; inset:-1px;
+      background: radial-gradient(600px 160px at 10% 0%, rgba(52,211,153,.22), transparent 55%);
+      pointer-events:none;
+      opacity:.9;
+    }
+    .card > *{ position:relative; }
 
-    .hint{
-      margin-top:10px;
-      color:var(--muted);
+    .row{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .name{ margin:0; font-size:16px; font-weight:950; }
+    .file{
+      display:inline-flex; align-items:center;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .desc{ margin:0; color:var(--muted); font-size:13px; line-height:1.35; }
+    .note{
+      margin:0;
+      color:#dbece3;
       font-size:12px;
       line-height:1.35;
+      border: 1px dashed rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      border-radius: 12px;
+      padding: 10px;
     }
-    .miniNote{
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(245,158,11,.35);
-      background: rgba(245,158,11,.08);
-      color:#f6d39a;
-      font-size:12.5px;
-      line-height:1.35;
+    .btn{
+      display:block;
+      width:100%;
+      text-align:center;
+      text-decoration:none;
+      border:0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 950;
+      cursor:pointer;
+      color:#08110c;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      box-shadow: 0 12px 30px rgba(34,197,94,.22);
+      user-select:none;
+    }
+    .btn:active{ transform: scale(.99); }
+    .mini{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      opacity:.95;
     }
   </style>
 </head>
-
 <body>
   <div class="wrap">
-    <header>
-      <div class="brand">
-        <div class="badge">⛳</div>
-        <div>
-          <h1>Golf Tools</h1>
-          <div class="sub">Select a tool first, then hit <b>Launch</b>. “Full Screen” opens it by itself.</div>
-        </div>
+    <div class="top">
+      <h1>Golf Tools</h1>
+      <p class="sub">
+        Pick a tool below. It opens as a new screen. Use <b>Back to Hub</b> inside the tool to return.
+        Everything saves locally on your device.
+      </p>
+      <div class="mini">
+        Tip: If a tool says it needs Squabbit, export the <b>event</b> from Squabbit first, then upload it inside the tool.
       </div>
-      <div class="pill"><span class="dot"></span><span><b>Local</b> (runs in your browser)</span></div>
-    </header>
+    </div>
 
     <div class="grid">
-      <!-- LEFT: Tool chooser -->
-      <div class="panel">
-        <div class="detailsTitle">
-          <span>Choose a tool</span>
-          <small id="selectedSmall">None selected</small>
+      <div class="card">
+        <div class="row">
+          <p class="name">Best Ball (All Teams)</p>
+          <span class="file">Best-ball-all-teams.html</span>
         </div>
-
-        <div id="toolList" style="display:grid;gap:10px"></div>
-
-        <div class="hint">
-          If you share this link with the group, everyone can pick the game they want from the same page.
-        </div>
+        <p class="desc">Team generator / best ball setup.</p>
+        <p class="note">If you are using the Squabbit version, you need the Squabbit export of the event you played.</p>
+        <a class="btn" href="Best-ball-all-teams.html">Open</a>
       </div>
 
-      <!-- RIGHT: Details + Launch + Iframe -->
-      <div class="panel">
-        <div class="detailsTitle">
-          <span>Tool details</span>
-          <small id="fileSmall">—</small>
+      <div class="card">
+        <div class="row">
+          <p class="name">Wolf Game</p>
+          <span class="file">wolfgame.html</span>
         </div>
+        <p class="desc">Wolf + dots tracking. Includes hole log + edits.</p>
+        <a class="btn" href="wolfgame.html">Open</a>
+      </div>
 
-        <div class="detailsBox" id="detailsBox">
-          <p>Select a tool on the left to see what it does and what you need.</p>
+      <div class="card">
+        <div class="row">
+          <p class="name">Front & Back 9 Teams</p>
+          <span class="file">front9-back9-teams.html</span>
         </div>
-
-        <div class="btnRow">
-          <button class="primary" id="btnLaunch" disabled>Launch</button>
-          <button id="btnFull" disabled>Full Screen</button>
-        </div>
-
-        <div class="miniNote" id="bestballNote" style="display:none">
-          Best Ball requires the <b>Squabbit export</b> of the event you played (the CSV with Hole 1–18).
-        </div>
-
-        <div class="frameWrap" id="frameWrap">
-          <iframe id="frame" title="Golf Tool"></iframe>
-        </div>
+        <p class="desc">Upload Squabbit CSV and build teams with front/back 9 best ball.</p>
+        <p class="note">You need the Squabbit export (CSV) from the event you played.</p>
+        <a class="btn" href="front9-back9-teams.html">Open</a>
       </div>
     </div>
   </div>
-
-<script>
-  // Filenames MUST match your repo exactly (case-sensitive)
-  const TOOLS = [
-    {
-      id: "bestball",
-      name: "Best Ball (All Teams)",
-      file: "Best-ball-all-teams.html",
-      desc: "Team generator / best ball setup.",
-      tags: ["Best Ball", "Quick setup"],
-      requiresSquabbit: true,
-      steps: [
-        "Export the event from Squabbit (CSV with Hole 1–18).",
-        "Open the tool and upload the CSV (if prompted).",
-        "Build teams and use the output for scoring."
-      ]
-    },
-    {
-      id: "wolf",
-      name: "Wolf Game",
-      file: "wolfgame.html",
-      desc: "Wolf + dots tracking.",
-      tags: ["Wolf", "Dots", "Fast"],
-      requiresSquabbit: false,
-      steps: [
-        "Enter the players.",
-        "Set the hole / wolf rotation.",
-        "Track winners and dots as you play."
-      ]
-    },
-    {
-      id: "frontback9",
-      name: "Front & Back 9 Teams",
-      file: "front9-back9-teams.html",
-      desc: "Upload Squabbit CSV and build teams with front/back 9 best ball.",
-      tags: ["Best Ball", "Front/Back 9"],
-      requiresSquabbit: true,
-      steps: [
-        "Export the event from Squabbit (CSV with Hole 1–18).",
-        "Upload the CSV in the tool to load player scores.",
-        "Create teams and view front/back winners."
-      ]
-    }
-  ];
-
-  const KEY_SELECTED = "golf-tools:selected";
-  const KEY_LAST_LAUNCHED = "golf-tools:lastLaunched";
-
-  const toolList = document.getElementById("toolList");
-  const selectedSmall = document.getElementById("selectedSmall");
-  const fileSmall = document.getElementById("fileSmall");
-  const detailsBox = document.getElementById("detailsBox");
-  const btnLaunch = document.getElementById("btnLaunch");
-  const btnFull = document.getElementById("btnFull");
-  const bestballNote = document.getElementById("bestballNote");
-  const frameWrap = document.getElementById("frameWrap");
-  const frame = document.getElementById("frame");
-
-  let selectedId = null;
-
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, (c) => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[c]));
-  }
-
-  function setSelected(id, save=true){
-    const tool = TOOLS.find(t => t.id === id);
-    if(!tool) return;
-
-    selectedId = tool.id;
-
-    // card UI
-    [...toolList.querySelectorAll(".toolCard")].forEach(c => {
-      c.classList.toggle("selected", c.dataset.id === tool.id);
-    });
-
-    selectedSmall.textContent = tool.name;
-    fileSmall.textContent = tool.file;
-
-    // details
-    const tagsHtml = tool.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
-    const reqHtml = tool.requiresSquabbit ? `<span class="tag req">Requires Squabbit CSV</span>` : `<span class="tag fast">No CSV needed</span>`;
-
-    detailsBox.innerHTML = `
-      <p><b>${escapeHtml(tool.name)}</b> — ${escapeHtml(tool.desc)}</p>
-      <div class="tags" style="margin-top:10px">${tagsHtml}${reqHtml}</div>
-      <ol class="steps">
-        ${tool.steps.map(s => `<li>${escapeHtml(s)}</li>`).join("")}
-      </ol>
-    `;
-
-    bestballNote.style.display = tool.requiresSquabbit ? "block" : "none";
-
-    btnLaunch.disabled = false;
-    btnFull.disabled = false;
-
-    if(save) localStorage.setItem(KEY_SELECTED, tool.id);
-
-    // update hash for sharing (optional)
-    location.hash = tool.id;
-  }
-
-  function launchSelected(){
-    const tool = TOOLS.find(t => t.id === selectedId);
-    if(!tool) return;
-
-    frame.src = tool.file;
-    frameWrap.classList.add("on");
-    localStorage.setItem(KEY_LAST_LAUNCHED, tool.id);
-
-    // scroll into view on mobile after launching
-    setTimeout(() => {
-      frameWrap.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
-  }
-
-  function openFull(){
-    const tool = TOOLS.find(t => t.id === selectedId);
-    if(!tool) return;
-    window.open(tool.file, "_blank", "noopener");
-  }
-
-  function buildList(){
-    toolList.innerHTML = "";
-    TOOLS.forEach(t => {
-      const card = document.createElement("div");
-      card.className = "toolCard";
-      card.dataset.id = t.id;
-
-      const tags = [
-        ...t.tags,
-        ...(t.requiresSquabbit ? ["Requires Squabbit CSV"] : ["No CSV needed"])
-      ].slice(0, 3);
-
-      card.innerHTML = `
-        <div class="radio"></div>
-        <div class="toolInfo">
-          <div class="toolTop">
-            <span>${escapeHtml(t.name)}</span>
-            <span class="filepill">${escapeHtml(t.file)}</span>
-          </div>
-          <div class="desc">${escapeHtml(t.desc)}</div>
-          <div class="tags">
-            ${tags.map(x => `<span class="tag ${x.includes("Requires") ? "req" : ""}">${escapeHtml(x)}</span>`).join("")}
-          </div>
-        </div>
-      `;
-
-      card.addEventListener("click", () => setSelected(t.id));
-      toolList.appendChild(card);
-    });
-  }
-
-  // Buttons
-  btnLaunch.addEventListener("click", launchSelected);
-  btnFull.addEventListener("click", openFull);
-
-  // Init
-  buildList();
-
-  // Prefer hash > saved selection > last launched > first tool
-  const fromHash = (location.hash || "").replace("#","").trim();
-  const savedSel = localStorage.getItem(KEY_SELECTED);
-  const lastLaunch = localStorage.getItem(KEY_LAST_LAUNCHED);
-
-  if(fromHash && TOOLS.some(t => t.id === fromHash)) setSelected(fromHash, false);
-  else if(savedSel && TOOLS.some(t => t.id === savedSel)) setSelected(savedSel, false);
-  else if(lastLaunch && TOOLS.some(t => t.id === lastLaunch)) setSelected(lastLaunch, false);
-  else setSelected(TOOLS[0].id, false);
-
-  window.addEventListener("hashchange", () => {
-    const id = (location.hash || "").replace("#","").trim();
-    if(id && TOOLS.some(t => t.id === id)) setSelected(id, false);
-  });
-</script>
 </body>
 </html>
