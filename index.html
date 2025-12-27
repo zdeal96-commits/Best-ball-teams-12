@@ -6,7 +6,7 @@
   <title>Golf Tools</title>
   <style>
     :root{
-      --bg:#08120e;
+      --bg:#07110d;
       --panel:rgba(255,255,255,.06);
       --line:rgba(255,255,255,.12);
       --text:#eaf5ef;
@@ -27,18 +27,35 @@
         linear-gradient(180deg,#06110c,#0b1f16 55%,#06110c);
       padding:16px;
     }
-    .wrap{max-width:1050px;margin:0 auto;display:grid;gap:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;gap:12px}
     header{
       padding:14px 16px;
       border:1px solid var(--line);
       background:var(--panel);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
     }
     h1{margin:0;font-size:20px}
-    p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.35}
+    .sub{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.35}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-size:12px; white-space:nowrap;
+    }
+    .pill .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(34,197,94,.18);
+    }
 
-    .grid{display:grid;grid-template-columns: 320px 1fr;gap:12px;min-height:75vh}
+    .grid{display:grid;grid-template-columns: 360px 1fr;gap:12px;min-height:75vh}
     @media (max-width: 900px){ .grid{grid-template-columns:1fr} }
 
     .menu{
@@ -57,12 +74,12 @@
       border-radius:14px;
       padding:12px;
       cursor:pointer;
-      transition: transform .08s ease, border-color .08s ease;
+      transition: transform .08s ease, border-color .08s ease, background .08s ease;
     }
     .card:hover{ transform: translateY(-1px); border-color: rgba(34,197,94,.45); }
     .card.active{ border-color: rgba(34,197,94,.75); background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(245,158,11,.06)); }
-    .title{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:800}
-    .pill{
+    .title{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:900}
+    .filepill{
       font-size:11px;color:var(--muted);
       border:1px solid var(--line);
       padding:2px 8px;border-radius:999px;
@@ -71,14 +88,14 @@
     }
     .desc{margin:6px 0 0;color:var(--muted);font-size:12.5px;line-height:1.35}
 
-    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
     button{
       border:1px solid var(--line);
       background:rgba(0,0,0,.20);
       color:var(--text);
       padding:10px 12px;
       border-radius:12px;
-      font-weight:800;
+      font-weight:900;
       cursor:pointer;
     }
     button:hover{ border-color: rgba(245,158,11,.45); }
@@ -92,14 +109,18 @@
       min-height:70vh;
     }
     iframe{width:100%;height:100%;border:0;background:#fff}
-    .note{color:var(--muted);font-size:12px;margin-top:8px}
+    .note{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.35}
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <header>
-      <h1>Golf Tools</h1>
-      <p>Pick a tool below. It loads inside this page. Use “Open Full Screen” if you want it by itself.</p>
+      <div>
+        <h1>Golf Tools</h1>
+        <div class="sub">Pick a tool. It loads inside this page. Use “Full Screen” to open it by itself.</div>
+      </div>
+      <div class="pill"><span class="dot"></span><span><b>Local</b> (runs in your browser)</span></div>
     </header>
 
     <div class="grid">
@@ -110,17 +131,33 @@
           <iframe id="frame" title="Golf Tool"></iframe>
         </div>
         <div class="note">
-          If a tool uses local storage, all tools share the same browser storage. If you notice overwrites, we’ll prefix the keys per tool.
+          Filenames are case-sensitive. If a tool shows blank, verify the filename matches exactly.
         </div>
       </div>
     </div>
   </div>
 
 <script>
-  // Update these filenames to match your repo after renaming
+  // Filenames MUST match your repo exactly
   const TOOLS = [
-    { id:"bestball", name:"Best Ball (All Teams)", file:"best-ball-all-teams.html", desc:"Team generator / best ball setup." },
-    { id:"wolf", name:"Wolf Game", file:"wolfgame.html", desc:"Wolf + dots tracking." },
+    {
+      id: "bestball",
+      name: "Best Ball (All Teams)",
+      file: "Best-ball-all-teams.html",
+      desc: "Team generator / best ball setup."
+    },
+    {
+      id: "wolf",
+      name: "Wolf Game",
+      file: "wolfgame.html",
+      desc: "Wolf + dots tracking."
+    },
+    {
+      id: "frontback9",
+      name: "Front & Back 9 Teams",
+      file: "front9-back9-teams.html",
+      desc: "Upload Squabbit CSV and build teams with front/back 9 best ball."
+    }
   ];
 
   const KEY = "golf-tools:last";
@@ -144,17 +181,19 @@
       c.innerHTML = `
         <div class="title">
           <span>${t.name}</span>
-          <span class="pill">${t.file}</span>
+          <span class="filepill">${t.file}</span>
         </div>
         <div class="desc">${t.desc}</div>
         <div class="actions">
           <button type="button" data-open="${t.id}">Open</button>
-          <button type="button" data-full="${t.id}">Open Full Screen</button>
+          <button type="button" data-full="${t.id}">Full Screen</button>
         </div>
       `;
+
       c.addEventListener("click", (e) => {
         const open = e.target.getAttribute("data-open");
         const full = e.target.getAttribute("data-full");
+
         if(open){ setActive(open); return; }
         if(full){
           const tool = TOOLS.find(x => x.id === full);
@@ -163,17 +202,19 @@
         }
         setActive(t.id);
       });
+
       menu.appendChild(c);
     });
   }
 
   buildMenu();
 
+  // Load order: URL hash > saved selection > first tool
   const fromHash = (location.hash || "").replace("#","").trim();
-  const fromStorage = localStorage.getItem(KEY);
+  const fromSaved = localStorage.getItem(KEY);
 
   if(fromHash && TOOLS.some(t => t.id === fromHash)) setActive(fromHash, false);
-  else if(fromStorage && TOOLS.some(t => t.id === fromStorage)) setActive(fromStorage, false);
+  else if(fromSaved && TOOLS.some(t => t.id === fromSaved)) setActive(fromSaved, false);
   else setActive(TOOLS[0].id, false);
 
   window.addEventListener("hashchange", () => {
