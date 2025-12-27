@@ -188,27 +188,43 @@
   <header>
     <div>
       <h1>Wolf Dots <span class="tag">$3 per dot</span></h1>
-      <div class="sub">No score entry — pick Wolf/partner (or solo) and tap the winner. Includes full hole log + edits.</div>
+      <div class="sub">No score entry — supports <b>4 or 5 players</b>. Pick Wolf/partner (or solo) and tap the winner. Includes full hole log + edits.</div>
     </div>
     <div class="pill"><span class="dot"></span><span><b>Local save</b> (stays on your phone)</span></div>
   </header>
 
   <div class="card">
-    <div class="topline"><span>Setup</span><span class="tag">5 players</span></div>
-
-    <label>Players (comma separated)</label>
-    <input id="playersInput" value="Zack, Blair, Keith, Nick, Garrett" />
+    <div class="topline"><span>Setup</span><span class="tag" id="playerCountTag">— players</span></div>
 
     <div class="grid2">
+      <div>
+        <label>Players in group</label>
+        <select id="playerCountSelect">
+          <option value="5" selected>5 players</option>
+          <option value="4">4 players</option>
+        </select>
+      </div>
       <div>
         <label>Holes</label>
         <input id="holesInput" type="number" min="1" max="36" value="18" />
       </div>
+    </div>
+
+    <label style="margin-top:10px;">Players (comma separated)</label>
+    <input id="playersInput" value="Zack, Blair, Keith, Nick, Garrett" />
+
+    <div class="grid2">
       <div>
         <label>Auto Wolf rotation</label>
         <select id="autoWolf">
           <option value="yes" selected>Yes</option>
           <option value="no">No</option>
+        </select>
+      </div>
+      <div>
+        <label>Dots rules</label>
+        <select id="rulesPreview" disabled>
+          <option>Auto-adjusts for 4 or 5</option>
         </select>
       </div>
     </div>
@@ -218,6 +234,11 @@
       <button id="resetBtn" class="btn btnGhost">Reset Round</button>
     </div>
 
+    <div class="mini" id="rulesLine">
+      5 players default.
+      2v3: 2-man win winners +3 each, losers −2 each. 3-man win winners +2 each, losers −3 each.
+      Solo: win Wolf +4, others −1 each. Loss Wolf −4, others +1 each.
+    </div>
     <div class="mini">Edit mistakes: tap the hole in the log, then tap the correct result — it overwrites that hole.</div>
   </div>
 
@@ -236,8 +257,8 @@
       <div>
         <label>Mode</label>
         <select id="modeSelect">
-          <option value="partner" selected>Pick partner (2v3)</option>
-          <option value="solo">Go Wolf (1v4)</option>
+          <option value="partner" selected>Pick partner</option>
+          <option value="solo">Go Wolf (solo)</option>
         </select>
       </div>
     </div>
@@ -273,7 +294,7 @@
 
 <script>
 (() => {
-  const LS_KEY = "wolf_dots_v3_log_edit"; // kept same so you don't lose saved holes
+  const LS_KEY = "wolf_dots_v4_4or5"; // new key so 4/5 rules don't corrupt old saves
   const $ = (id) => document.getElementById(id);
   const money = (dots) => dots * 3;
 
@@ -299,16 +320,34 @@
     };
   }
 
-  // ✅ UPDATED BALANCED DOTS:
-  // 2v3:
-  // - 2-man win: winners +3 each, losers -2 each
-  // - 3-man win: winners +2 each, losers -3 each
-  // Solo stays: +4 / -1 each
+  function setTagAndRulesText(playerCount){
+    $("playerCountTag").textContent = `${playerCount} players`;
+
+    if(playerCount === 5){
+      $("rulesLine").textContent =
+        "5 players. 2v3: 2-man win winners +3 each, losers −2 each. 3-man win winners +2 each, losers −3 each. " +
+        "Solo: win Wolf +4, others −1 each. Loss Wolf −4, others +1 each.";
+      return;
+    }
+
+    $("rulesLine").textContent =
+      "4 players. 2v2: winning team +2 each, losing team −2 each. " +
+      "Solo (1v3): win Wolf +3, others −1 each. Loss Wolf −3, others +1 each.";
+  }
+
+  // Dots logic (auto-adjusts for 4 or 5 players)
+  // Partner mode:
+  // - 5 players (2v3): 2-man win winners +3 each, losers -2 each; 3-man win winners +2 each, losers -3 each
+  // - 4 players (2v2): winners +2 each, losers -2 each
+  // Solo mode:
+  // - 5 players (1v4): Wolf +/-4, others ∓1 each
+  // - 4 players (1v3): Wolf +/-3, others ∓1 each
   function computeDots(round, ev){
     const dots = {};
     round.players.forEach(p => dots[p] = 0);
     if(!ev) return dots;
 
+    const count = round.players.length;
     const wolf = ev.wolf;
     const mode = ev.mode;
     const partner = ev.partner || null;
@@ -317,27 +356,67 @@
     const others = round.players.filter(p => p !== wolf);
 
     if(mode === "partner"){
-      const three = round.players.filter(p => p !== wolf && p !== partner);
+      const opp = round.players.filter(p => p !== wolf && p !== partner);
+      const oppCount = opp.length;
 
-      if(outcome === "2wins"){
-        dots[wolf] += 3;
-        dots[partner] += 3;
-        three.forEach(p => dots[p] -= 2);
-      } else if(outcome === "3wins"){
-        three.forEach(p => dots[p] += 2);
-        dots[wolf] -= 3;
-        dots[partner] -= 3;
+      if(outcome === "push") return dots;
+
+      // 5 players: 2v3 special balance
+      if(oppCount === 3){
+        if(outcome === "2wins"){
+          dots[wolf] += 3;
+          dots[partner] += 3;
+          opp.forEach(p => dots[p] -= 2);
+        } else if(outcome === "3wins"){
+          opp.forEach(p => dots[p] += 2);
+          dots[wolf] -= 3;
+          dots[partner] -= 3;
+        }
+        return dots;
+      }
+
+      // 4 players: 2v2 symmetric
+      if(oppCount === 2){
+        if(outcome === "2wins"){
+          dots[wolf] += 2;
+          dots[partner] += 2;
+          opp.forEach(p => dots[p] -= 2);
+        } else if(outcome === "3wins"){
+          opp.forEach(p => dots[p] += 2);
+          dots[wolf] -= 2;
+          dots[partner] -= 2;
+        }
+        return dots;
+      }
+
+      return dots;
+    }
+
+    // solo
+    if(outcome === "push") return dots;
+
+    if(count === 5){
+      if(outcome === "wolfwins"){
+        dots[wolf] += 4;
+        others.forEach(p => dots[p] -= 1);
+      } else if(outcome === "wolfloses"){
+        dots[wolf] -= 4;
+        others.forEach(p => dots[p] += 1);
       }
       return dots;
     }
 
-    if(outcome === "wolfwins"){
-      dots[wolf] += 4;
-      others.forEach(p => dots[p] -= 1);
-    } else if(outcome === "wolfloses"){
-      dots[wolf] -= 4;
-      others.forEach(p => dots[p] += 1);
+    if(count === 4){
+      if(outcome === "wolfwins"){
+        dots[wolf] += 3;
+        others.forEach(p => dots[p] -= 1);
+      } else if(outcome === "wolfloses"){
+        dots[wolf] -= 3;
+        others.forEach(p => dots[p] += 1);
+      }
+      return dots;
     }
+
     return dots;
   }
 
@@ -356,11 +435,11 @@
     if(!ev) return { matchup:"—", winner:"—" };
 
     if(ev.mode === "partner"){
-      const three = round.players.filter(p => p !== ev.wolf && p !== ev.partner);
-      const matchup = `${ev.wolf} + ${ev.partner} vs ${three.join(", ")}`;
+      const opp = round.players.filter(p => p !== ev.wolf && p !== ev.partner);
+      const matchup = `${ev.wolf} + ${ev.partner} vs ${opp.join(", ")}`;
       let winner = "Push";
       if(ev.outcome === "2wins") winner = `${ev.wolf} + ${ev.partner}`;
-      if(ev.outcome === "3wins") winner = `${three.join(", ")}`;
+      if(ev.outcome === "3wins") winner = `${opp.join(", ")}`;
       return { matchup, winner };
     } else {
       const others = round.players.filter(p => p !== ev.wolf);
@@ -398,7 +477,6 @@
     html += `</tbody></table>`;
     $("standings").innerHTML = html;
 
-    // settlement
     const creditors = rows.filter(r => r.dollars > 0).map(r => ({...r, amt: r.dollars}));
     const debtors = rows.filter(r => r.dollars < 0).map(r => ({...r, amt: -r.dollars}));
 
@@ -451,6 +529,8 @@
     $("standingsCard").style.display = "block";
     $("logCard").style.display = "block";
 
+    setTagAndRulesText(round.players.length);
+
     // holes
     $("holeSelect").innerHTML = "";
     for(let i=1;i<=round.holes;i++){
@@ -494,12 +574,14 @@
 
     function buildResultButtons(){
       const mode = $("modeSelect").value;
+      const count = round.players.length;
 
       if(mode === "partner"){
+        const otherLabel = (count === 5) ? "3-man wins" : "Other team wins";
         $("resultButtons").innerHTML = `
           <div class="grid3">
             <button class="btn btnGood" id="btn2wins">2-man wins</button>
-            <button class="btn btnBad" id="btn3wins">3-man wins</button>
+            <button class="btn btnBad" id="btn3wins">${otherLabel}</button>
             <button class="btn btnMid" id="btnpush">Push</button>
           </div>
         `;
@@ -507,9 +589,13 @@
         $("btn3wins").onclick = () => saveOutcome("3wins");
         $("btnpush").onclick = () => saveOutcome("push");
 
-        // ✅ UPDATED hint
-        $("hintLine").textContent =
-          "Balanced 2v3: 2-man win = winners +3 each, losers -2 each. 3-man win = winners +2 each, losers -3 each. Push = 0.";
+        if(count === 5){
+          $("hintLine").textContent =
+            "5 players (2v3): 2-man win winners +3 each, losers −2 each. 3-man win winners +2 each, losers −3 each. Push = 0.";
+        } else {
+          $("hintLine").textContent =
+            "4 players (2v2): winning team +2 each, losing team −2 each. Push = 0.";
+        }
       } else {
         $("resultButtons").innerHTML = `
           <div class="grid3">
@@ -521,7 +607,12 @@
         $("btnWolfWins").onclick = () => saveOutcome("wolfwins");
         $("btnWolfLoses").onclick = () => saveOutcome("wolfloses");
         $("btnpush").onclick = () => saveOutcome("push");
-        $("hintLine").textContent = "Solo: win = Wolf +4, other four -1 each. Loss = Wolf -4, other four +1 each. Push = 0.";
+
+        if(count === 5){
+          $("hintLine").textContent = "5 players (1v4): win = Wolf +4, others −1 each. Loss = Wolf −4, others +1 each. Push = 0.";
+        } else {
+          $("hintLine").textContent = "4 players (1v3): win = Wolf +3, others −1 each. Loss = Wolf −3, others +1 each. Push = 0.";
+        }
       }
     }
 
@@ -562,7 +653,6 @@
         }
       }
 
-      // undo snapshot
       undoState = { holeIndex: hole - 1, prevEvent: round.events[hole - 1] };
 
       round.events[hole - 1] = { hole, wolf, mode, partner, outcome, savedAt: new Date().toISOString() };
@@ -601,20 +691,49 @@
     loadHole();
   }
 
+  function syncDefaultsToPlayerCount(){
+    const pc = Number($("playerCountSelect").value);
+    setTagAndRulesText(pc);
+
+    // Helpful defaults
+    if(pc === 4){
+      const current = parsePlayers($("playersInput").value);
+      if(current.length !== 4){
+        $("playersInput").value = "Zack, Blair, Keith, Nick";
+      }
+    } else {
+      const current = parsePlayers($("playersInput").value);
+      if(current.length !== 5){
+        $("playersInput").value = "Zack, Blair, Keith, Nick, Garrett";
+      }
+    }
+  }
+
+  $("playerCountSelect").onchange = syncDefaultsToPlayerCount;
+
   $("startBtn").onclick = () => {
+    const chosenCount = Number($("playerCountSelect").value);
     const players = parsePlayers($("playersInput").value);
     const holes = Number($("holesInput").value || 18);
     const autoWolf = $("autoWolf").value;
 
-    if(players.length !== 5){
-      alert("This tracker is built for exactly 5 players.");
+    if(!(chosenCount === 4 || chosenCount === 5)){
+      alert("Choose 4 or 5 players.");
+      return;
+    }
+
+    if(players.length !== chosenCount){
+      alert(`You selected ${chosenCount} players, but entered ${players.length}. Fix the player list or change the player count.`);
       return;
     }
 
     const existing = loadRound();
     let round = existing;
 
-    if(!round || round.players.join("|") !== players.join("|") || round.holes !== holes){
+    const samePlayers = round && round.players.join("|") === players.join("|");
+    const sameHoles = round && round.holes === holes;
+
+    if(!round || !samePlayers || !sameHoles){
       round = newRound(players, holes, autoWolf);
       saveRound(round);
     } else {
@@ -640,7 +759,11 @@
     $("playersInput").value = existing.players.join(", ");
     $("holesInput").value = existing.holes;
     $("autoWolf").value = existing.autoWolf || "yes";
+    $("playerCountSelect").value = String(existing.players.length);
+    setTagAndRulesText(existing.players.length);
     render(existing);
+  } else {
+    syncDefaultsToPlayerCount();
   }
 })();
 </script>
