@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Front & Back 9 Best Ball – Custom Teams</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+      background: linear-gradient(to bottom right, #2ecc71, #dff9fb);
+      min-height: 100vh;
+      color: #1a202c;
+    }
+    .card {
+      background: white;
+      border-radius: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .header-bar {
+      background: linear-gradient(to right, #1e8449, #27ae60);
+      color: white;
+      font-weight: bold;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      border-bottom: 4px solid #145a32;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .btn {
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      background-color: #16a34a;
+      color: #ffffff;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .btn:hover:not(:disabled) {
+      background-color: #15803d;
+    }
+    .input {
+      border: 1px solid #cbd5f5;
+      border-radius: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+      width: 100%;
+    }
+    .label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #4b5563;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .pair-row {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0.4rem 0;
+      font-size: 0.9rem;
+    }
+    .pair-row:last-child {
+      border-bottom: none;
+    }
+    .suggest-box {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      margin-top: 0.15rem;
+      background: white;
+      border-radius: 0.5rem;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+      z-index: 20;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .suggest-item {
+      padding: 0.3rem 0.5rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .suggest-item:hover {
+      background-color: #f3f4f6;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="module">
+    import { h, render } from "https://esm.sh/preact@10.22.1";
+    import { useState, useMemo } from "https://esm.sh/preact@10.22.1/hooks";
+    import htm from "https://esm.sh/htm@3.1.1";
+    const html = htm.bind(h);
+
+    // ---------- CSV Helpers ----------
+    const splitCSVLine = (line) => {
+      const out = [];
+      let cur = "";
+      let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') {
+          if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if (c === ',' && !inQ) {
+          out.push(cur);
+          cur = "";
+        } else {
+          cur += c;
+        }
+      }
+      out.push(cur);
+      return out.map(s => (s || "").trim());
+    };
+
+    const parseCSVRows = (text) => text.split(/\r?\n/).map(splitCSVLine);
+
+    const toInt = (v) => {
+      const s = (v ?? "").toString().trim();
+      if (!/^\d+$/.test(s)) return null;
+      const n = parseInt(s, 10);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const titleCase = (n) =>
+      n.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+
+    const buildHoleIndex = (row) => {
+      const idx = {};
+      row.forEach((c, i) => {
+        const s = (c || "").toLowerCase().trim();
+        for (let h = 1; h <= 18; h++) {
+          if (s === `hole ${h}` || s === `${h}` || s === `hole${h}`) {
+            idx[h] = i;
+          }
+        }
+      });
+      return Object.keys(idx).length ? idx : null;
+    };
+
+    const isPlayerRow = (r) =>
+      (r[1] || "").toLowerCase().includes("tee") && (r[0] || "").trim();
+
+    // Parse players from Squabbit CSV → {name, strokes[18], front, back, total}
+    const parsePlayersFromCSV = (txt) => {
+      const rows = parseCSVRows(txt);
+      let holeIdx = null;
+      const playersMap = new Map();
+
+      for (const row of rows) {
+        // Detect header row with Hole 1, Hole 2, ...
+        if (row.some(c => /hole\s*1/i.test(c || ""))) {
+          holeIdx = buildHoleIndex(row);
+          continue;
+        }
+        if (!holeIdx) continue;
+
+        // Skip non-player rows
+        const lowerJoined = row.map(c => (c || "").toLowerCase()).join(" ");
+        if (
+          lowerJoined.includes("individual gross skins") ||
+          lowerJoined.includes("strokeplay") ||
+          lowerJoined.includes("best ball") ||
+          lowerJoined.includes("par") ||
+          lowerJoined.startsWith("s.i.")
+        ) {
+          continue;
+        }
+
+        if (!isPlayerRow(row)) continue;
+
+        const rawName = (row[0] || "").trim();
+        if (!rawName) continue;
+
+        const name = titleCase(rawName);
+        const strokes = [];
+
+        for (let h = 1; h <= 18; h++) {
+          const col = holeIdx[h];
+          const val = col != null ? toInt(row[col]) : null;
+          if (val == null) {
+            strokes.length = 0;
+            break;
+          }
+          strokes.push(val);
+        }
+
+        if (strokes.length === 18) {
+          const front = strokes.slice(0, 9).reduce((a, b) => a + b, 0);
+          const back  = strokes.slice(9, 18).reduce((a, b) => a + b, 0);
+          const total = front + back;
+          playersMap.set(name, { name, strokes, front, back, total });
+        }
+      }
+
+      return [...playersMap.values()];
+    };
+
+    // Compute hole-by-hole best ball front/back
+    const computeFrontBackBestBall = (p1, p2) => {
+      let front = 0;
+      let back = 0;
+      // Front 9 = indices 0..8
+      for (let i = 0; i < 9; i++) {
+        front += Math.min(p1.strokes[i], p2.strokes[i]);
+      }
+      // Back 9 = indices 9..17
+      for (let i = 9; i < 18; i++) {
+        back += Math.min(p1.strokes[i], p2.strokes[i]);
+      }
+      return { front, back };
+    };
+
+    // ---------- App ----------
+    function App() {
+      const [players, setPlayers] = useState([]); // {name, strokes[18], front, back, total}
+      const [msg, setMsg] = useState("");
+      const [loading, setLoading] = useState(false);
+
+      // manual teams
+      const [p1Name, setP1Name] = useState("");
+      const [p2Name, setP2Name] = useState("");
+      const [p1Suggestions, setP1Suggestions] = useState([]);
+      const [p2Suggestions, setP2Suggestions] = useState([]);
+      const [teams, setTeams] = useState([]); // {p1, p2, frontBB, backBB}
+
+      // side winners state
+      const [sideWinners, setSideWinners] = useState(null);
+
+      const handleUpload = async (file) => {
+        setLoading(true);
+        setMsg("");
+        setPlayers([]);
+        setTeams([]);
+        setSideWinners(null);
+        const text = await file.text();
+        const parsed = parsePlayersFromCSV(text);
+        if (!parsed.length) {
+          setMsg("Could not find player scores. Make sure the export includes the Hole 1–18 tables.");
+          setLoading(false);
+          return;
+        }
+        setPlayers(parsed);
+        setMsg(`Loaded ${parsed.length} players from CSV.`);
+        setLoading(false);
+      };
+
+      const playerTotals = useMemo(() => {
+        return [...players]
+          .map(p => ({ ...p }))
+          .sort((a, b) => a.total - b.total || a.name.localeCompare(b.name));
+      }, [players]);
+
+      const playerNames = useMemo(
+        () => players.map(p => p.name).sort((a, b) => a.localeCompare(b)),
+        [players]
+      );
+
+      // names already used in teams (either slot)
+      const usedNameSet = useMemo(() => {
+        const s = new Set();
+        for (const t of teams) {
+          s.add(t.p1);
+          s.add(t.p2);
+        }
+        return s;
+      }, [teams]);
+
+      const availableNames = useMemo(
+        () => playerNames.filter(n => !usedNameSet.has(n)),
+        [playerNames, usedNameSet]
+      );
+
+      // 🔍 Filter names, with optional "otherName" to exclude (so P2 can't show P1, etc.)
+      const filterNames = (value, otherName = "") => {
+        const v = value.trim().toLowerCase();
+        const other = otherName.trim().toLowerCase();
+        return availableNames
+          .filter(n => {
+            const ln = n.toLowerCase();
+            if (other && ln === other) return false;    // exclude the other selected player
+            if (!v) return true;
+            return ln.includes(v);
+          })
+          .slice(0, 10);
+      };
+
+      const findPlayer = (name) => {
+        const trimmed = name.trim().toLowerCase();
+        if (!trimmed) return null;
+        return players.find(p => p.name.toLowerCase() === trimmed) || null;
+      };
+
+      // UPDATED: prevent same player in both boxes (UI & logic)
+      const handleAddTeam = () => {
+        const p1 = findPlayer(p1Name);
+        const p2 = findPlayer(p2Name);
+
+        if (!p1 || !p2) {
+          alert("Please choose valid Player 1 and Player 2 names (from the list).");
+          return;
+        }
+
+        const n1 = p1.name.trim().toLowerCase();
+        const n2 = p2.name.trim().toLowerCase();
+
+        if (n1 === n2) {
+          alert("Player 1 and Player 2 must be two different players.");
+          return;
+        }
+
+        const { front, back } = computeFrontBackBestBall(p1, p2);
+
+        const team = {
+          p1: p1.name,
+          p2: p2.name,
+          frontBB: front,
+          backBB: back,
+        };
+
+        setTeams(prev => [...prev, team]);
+
+        // Clear inputs and suggestions after adding
+        setP1Name("");
+        setP2Name("");
+        setP1Suggestions([]);
+        setP2Suggestions([]);
+        setSideWinners(null); // reset winners if teams changed
+      };
+
+      const computeWinners = (teamsList) => {
+        if (!teamsList.length) return null;
+
+        let minFront = Infinity;
+        let minBack = Infinity;
+
+        teamsList.forEach(t => {
+          if (t.frontBB < minFront) minFront = t.frontBB;
+          if (t.backBB < minBack) minBack = t.backBB;
+        });
+
+        const frontWinners = teamsList.filter(t => t.frontBB === minFront);
+        const backWinners  = teamsList.filter(t => t.backBB === minBack);
+
+        const sweepTeams = frontWinners.filter(f =>
+          backWinners.some(
+            b => b.p1 === f.p1 && b.p2 === f.p2
+          )
+        );
+
+        return {
+          minFront,
+          minBack,
+          frontWinners,
+          backWinners,
+          sweepTeams,
+        };
+      };
+
+      const handleShowSideWinners = () => {
+        if (!teams.length) {
+          alert("Add at least one team first.");
+          return;
+        }
+        const result = computeWinners(teams);
+        setSideWinners(result);
+      };
+
+      // PDF Download with winners
+      const handleDownloadTeams = () => {
+        if (!teams.length) {
+          alert("No teams to download yet.");
+          return;
+        }
+
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+          alert("PDF library failed to load. Please refresh and try again.");
+          return;
+        }
+
+        const winners = computeWinners(teams);
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: "pt", format: "letter" });
+
+        // Colors similar to site
+        const greenDark = { r: 20, g: 90, b: 50 };   // #145a32-ish
+        const greenMid  = { r: 30, g: 132, b: 73 };  // #1e8449-ish;
+
+        let y = 50;
+        const leftMargin = 50;
+        const rightMargin = 550;
+
+        // Title
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.setTextColor(greenDark.r, greenDark.g, greenDark.b);
+        doc.text("Best Ball Teams – Front & Back 9", leftMargin, y);
+
+        y += 20;
+        doc.setDrawColor(greenDark.r, greenDark.g, greenDark.b);
+        doc.setLineWidth(1);
+        doc.line(leftMargin, y, rightMargin, y);
+
+        y += 25;
+
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+
+        // Teams list
+        teams.forEach((t) => {
+          // New page if we're near the bottom
+          if (y > 740) {
+            doc.addPage();
+            y = 50;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.setTextColor(greenDark.r, greenDark.g, greenDark.b);
+            doc.text("Best Ball Teams – Front & Back 9 (cont.)", leftMargin, y);
+            y += 20;
+            doc.setDrawColor(greenDark.r, greenDark.g, greenDark.b);
+            doc.setLineWidth(1);
+            doc.line(leftMargin, y, rightMargin, y);
+            y += 25;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+          }
+
+          // Team name in green
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(12);
+          doc.setTextColor(greenMid.r, greenMid.g, greenMid.b);
+          doc.text(`${t.p1} & ${t.p2}`, leftMargin, y);
+
+          // Front / Back lines
+          y += 16;
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(11);
+          doc.setTextColor(0, 0, 0);
+          doc.text(`Front Best Ball: ${t.frontBB}`, leftMargin + 20, y);
+
+          y += 14;
+          doc.text(`Back Best Ball: ${t.backBB}`, leftMargin + 20, y);
+
+          // Divider line between teams
+          y += 18;
+          doc.setDrawColor(225, 230, 235);
+          doc.setLineWidth(0.5);
+          doc.line(leftMargin, y, rightMargin, y);
+          y += 14;
+        });
+
+        // Winners section
+        if (winners) {
+          const { minFront, minBack, frontWinners, backWinners, sweepTeams } = winners;
+
+          // New page if needed
+          if (y > 700) {
+            doc.addPage();
+            y = 50;
+          }
+
+          y += 10;
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(14);
+          doc.setTextColor(greenDark.r, greenDark.g, greenDark.b);
+          doc.text("Side Winners", leftMargin, y);
+
+          y += 12;
+          doc.setDrawColor(greenDark.r, greenDark.g, greenDark.b);
+          doc.setLineWidth(0.8);
+          doc.line(leftMargin, y, rightMargin, y);
+          y += 18;
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(11);
+          doc.setTextColor(0, 0, 0);
+
+          // Front winners
+          doc.setFont("helvetica", "bold");
+          doc.text(`Front 9 Winner(s) – ${minFront}`, leftMargin, y);
+          y += 14;
+          doc.setFont("helvetica", "normal");
+          frontWinners.forEach(t => {
+            doc.text(`• ${t.p1} & ${t.p2}`, leftMargin + 18, y);
+            y += 14;
+          });
+
+          y += 8;
+
+          // Back winners
+          doc.setFont("helvetica", "bold");
+          doc.text(`Back 9 Winner(s) – ${minBack}`, leftMargin, y);
+          y += 14;
+          doc.setFont("helvetica", "normal");
+          backWinners.forEach(t => {
+            doc.text(`• ${t.p1} & ${t.p2}`, leftMargin + 18, y);
+            y += 14;
+          });
+
+          // Clean sweep
+          if (sweepTeams && sweepTeams.length > 0) {
+            y += 18;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(200, 80, 0); // orange-ish highlight
+            sweepTeams.forEach(t => {
+              doc.text(
+                `🔥 Clean Sweep: ${t.p1} & ${t.p2} won BOTH Front and Back 9!`,
+                leftMargin,
+                y
+              );
+              y += 16;
+            });
+          }
+        }
+
+        doc.save("bestball_teams.pdf");
+      };
+
+      return html`
+        <div class="pb-10">
+          <div class="header-bar">🏌️ Front & Back 9 Best Ball – Custom Teams</div>
+
+          <div class="max-w-xl mx-auto p-5 space-y-5">
+
+            <!-- Manual Best-Ball Teams (TOP) -->
+            <div class="card space-y-3">
+              <div class="flex items-center justify-between gap-2">
+                <h2 class="text-lg font-semibold text-green-700">
+                  1) Add Best-Ball Teams (Front & Back)
+                </h2>
+                <div class="flex gap-2">
+                  <button class="btn" onClick=${handleShowSideWinners} disabled=${teams.length === 0}>
+                    Find Side Winners
+                  </button>
+                  <button class="btn" onClick=${handleDownloadTeams} disabled=${teams.length === 0}>
+                    Download Teams (PDF)
+                  </button>
+                </div>
+              </div>
+
+              <p class="text-xs text-gray-600">
+                Upload a CSV below to load player scores. Then choose Player 1 and Player 2.
+                We’ll calculate the Front 9 and Back 9 best-ball totals hole by hole.
+                Once a name is used in any team, it is removed from the suggestions list.
+              </p>
+
+              <div class="space-y-2">
+                <div class="relative">
+                  <label class="label">Player 1</label>
+                  <input
+                    class="input"
+                    value=${p1Name}
+                    onInput=${e => {
+                      const v = e.target.value;
+                      setP1Name(v);
+                      setP1Suggestions(filterNames(v, p2Name));
+                    }}
+                    onFocus=${e => setP1Suggestions(filterNames(e.target.value, p2Name))}
+                    placeholder=${players.length === 0 ? "Upload CSV first…" : "Start typing a name…"}
+                    disabled=${players.length === 0 || availableNames.length === 0}
+                  />
+                  ${p1Suggestions.length > 0 && html`
+                    <div class="suggest-box">
+                      ${p1Suggestions.map(name => html`
+                        <div
+                          class="suggest-item"
+                          onClick=${() => {
+                            setP1Name(name);
+                            setP1Suggestions([]);
+                          }}
+                        >
+                          ${name}
+                        </div>
+                      `)}
+                    </div>
+                  `}
+                </div>
+
+                <div class="relative">
+                  <label class="label">Player 2</label>
+                  <input
+                    class="input"
+                    value=${p2Name}
+                    onInput=${e => {
+                      const v = e.target.value;
+                      setP2Name(v);
+                      setP2Suggestions(filterNames(v, p1Name));
+                    }}
+                    onFocus=${e => setP2Suggestions(filterNames(e.target.value, p1Name))}
+                    placeholder=${players.length === 0 ? "Upload CSV first…" : "Start typing a name…"}
+                    disabled=${players.length === 0 || availableNames.length === 0}
+                  />
+                  ${p2Suggestions.length > 0 && html`
+                    <div class="suggest-box">
+                      ${p2Suggestions.map(name => html`
+                        <div
+                          class="suggest-item"
+                          onClick=${() => {
+                            setP2Name(name);
+                            setP2Suggestions([]);
+                          }}
+                        >
+                          ${name}
+                        </div>
+                      `)}
+                    </div>
+                  `}
+                </div>
+              </div>
+
+              <button
+                class="btn mt-2"
+                onClick=${handleAddTeam}
+                disabled=${players.length === 0 || availableNames.length === 0}
+              >
+                Add Team
+              </button>
+
+              ${teams.length > 0 && html`
+                <div class="mt-4">
+                  <h3 class="text-sm font-semibold text-gray-700 mb-2">Teams</h3>
+                  <div class="space-y-2 text-sm">
+                    ${teams.map((t, i) => html`
+                      <div class="pair-row" key=${i}>
+                        <div class="font-semibold">${t.p1} & ${t.p2}</div>
+                        <div>Front Best Ball: ${t.frontBB}</div>
+                        <div>Back Best Ball: ${t.backBB}</div>
+                      </div>
+                    `)}
+                  </div>
+                </div>
+              `}
+
+              ${sideWinners && html`
+                <div class="mt-4 border-t border-gray-200 pt-3 text-sm">
+                  <h3 class="text-sm font-semibold text-green-700 mb-2">Side Winners</h3>
+
+                  <div class="mb-2">
+                    <div class="font-semibold">Front 9 – ${sideWinners.minFront}</div>
+                    ${sideWinners.frontWinners.map(t => html`
+                      <div>• ${t.p1} & ${t.p2}</div>
+                    `)}
+                  </div>
+
+                  <div class="mb-2">
+                    <div class="font-semibold">Back 9 – ${sideWinners.minBack}</div>
+                    ${sideWinners.backWinners.map(t => html`
+                      <div>• ${t.p1} & ${t.p2}</div>
+                    `)}
+                  </div>
+
+                  ${sideWinners.sweepTeams && sideWinners.sweepTeams.length > 0 && html`
+                    <div class="mt-1 text-orange-700 font-semibold">
+                      ${sideWinners.sweepTeams.map(t => html`
+                        <div>🔥 Clean Sweep: ${t.p1} & ${t.p2} won BOTH Front and Back!</div>
+                      `)}
+                    </div>
+                  `}
+                </div>
+              `}
+            </div>
+
+            <!-- Upload CSV -->
+            <div class="card space-y-3">
+              <h2 class="text-lg font-semibold text-green-700">2) Load Player Scores</h2>
+              <p class="text-xs text-gray-600">
+                Upload your Squabbit CSV (with Hole 1–18). We'll pull each player's Front 9, Back 9 and Total.
+              </p>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                class="block w-full text-sm text-gray-700"
+                onChange=${e => e.target.files?.[0] && handleUpload(e.target.files[0])}
+              />
+              ${loading && html`<p class="text-xs text-gray-600">Processing…</p>`}
+              ${msg && html`<p class="text-xs text-green-700">${msg}</p>`}
+            </div>
+
+            <!-- Player Totals -->
+            ${players.length > 0 && html`
+              <div class="card">
+                <h2 class="text-lg font-semibold text-green-700 mb-3">3) Player Totals</h2>
+                <div class="space-y-2 text-sm">
+                  ${playerTotals.map(p => html`
+                    <div>
+                      <div class="font-semibold">${p.name}</div>
+                      <div>F: ${p.front} | B: ${p.back} | Total: ${p.total}</div>
+                    </div>
+                  `)}
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    render(h(App, {}), document.getElementById("root"));
+  </script>
+</body>
+</html>
