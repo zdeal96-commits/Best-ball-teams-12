@@ -4,21 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Best Ball Bet Sheet</title>
+
   <style>
     :root{
       --bg0:#07110d;
       --bg1:#0b1f16;
-      --panel: rgba(255,255,255,.06);
-      --panel2: rgba(255,255,255,.04);
-      --line: rgba(255,255,255,.10);
       --text:#eaf5ef;
       --muted:#b7d1c2;
+      --line: rgba(255,255,255,.10);
 
       --accent:#34d399;
       --accent2:#22c55e;
       --warn:#fbbf24;
       --bad:#fb7185;
-      --mid:#94a3b8;
 
       --shadow: 0 14px 45px rgba(0,0,0,.45);
       --radius: 16px;
@@ -33,36 +31,31 @@
         radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.18), transparent 55%),
         radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.12), transparent 55%),
         linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #06110c);
-      padding: 14px 14px 92px; /* space for bottom bar */
+      padding: 14px 14px 92px; /* space for bottom sticky bar */
     }
-    .wrap{ max-width: 1100px; margin: 0 auto; }
+    .wrap{ max-width: 980px; margin: 0 auto; }
 
-    /* Top slim header */
-    .topbar{
+    .card{
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border: 1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 12px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .topRow{
       display:flex;
+      gap:10px;
+      flex-wrap:wrap;
       align-items:flex-start;
       justify-content:space-between;
-      gap:12px;
-      margin-bottom: 12px;
     }
-    .topbar h1{
-      margin:0;
-      font-size: 18px;
-      letter-spacing:.2px;
-      font-weight: 950;
-    }
-    .sub{
-      margin-top:6px;
-      color: var(--muted);
-      font-size: 12.5px;
-      line-height: 1.25;
-      max-width: 640px;
-    }
+    .title{ margin:0; font-size:18px; font-weight:950; letter-spacing:.2px; }
+    .sub{ margin-top:6px; color:var(--muted); font-size:12.5px; line-height:1.25; max-width: 720px; }
+
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding:8px 12px; border-radius:999px;
@@ -70,6 +63,7 @@
       border: 1px solid var(--line);
       color: var(--text);
       font-size:12px; white-space:nowrap;
+      height: fit-content;
     }
     .pill .dot{
       width:10px;height:10px;border-radius:50%;
@@ -77,29 +71,13 @@
       box-shadow: 0 0 0 4px rgba(52,211,153,.18);
     }
 
-    /* Controls row */
-    .controls{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      align-items:flex-end;
-      margin-bottom: 12px;
-    }
-    .ctl{
-      flex: 1 1 180px;
-      min-width: 170px;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 10px;
-    }
-    .ctl label{
+    label{
       display:block;
       color: var(--muted);
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing:.2px;
-      margin-bottom:6px;
+      margin: 0 0 6px;
     }
     input, select, textarea{
       width:100%;
@@ -108,223 +86,224 @@
       border: 1px solid rgba(255,255,255,.14);
       background: rgba(9, 24, 17, .55);
       color: var(--text);
-      outline:none;
-      font-size: 15px;
+      outline: none;
+      font-size: 16px;
     }
-    textarea{ min-height: 42px; resize: vertical; }
+    textarea{ min-height: 46px; resize: vertical; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media (min-width: 860px){
+      .grid2{ grid-template-columns: 1fr 1fr; }
+      .grid3{ grid-template-columns: 1fr 1fr 1fr; }
+    }
+
+    .btnRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
     .btn{
       border:0;
       border-radius: 12px;
       padding: 11px 12px;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 950;
       cursor:pointer;
       user-select:none;
+      transition: transform .05s ease, filter .15s ease;
     }
     .btn:active{ transform: scale(.99); }
-    .btnPrimary{ background: linear-gradient(135deg, var(--accent2), var(--accent)); color:#06110c; }
-    .btnGhost{ background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--line); }
-    .btnBad{ background: linear-gradient(135deg, #fb7185, #ef4444); color:#06110c; }
-    .btnMid{ background: linear-gradient(135deg, #94a3b8, #cbd5e1); color:#06110c; }
-
-    /* Sheet */
-    .sheetWrap{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    .btnPrimary{
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color:#08110c;
+      box-shadow: 0 12px 30px rgba(34,197,94,.22);
+    }
+    .btnGhost{
+      background: rgba(255,255,255,.08);
+      color: var(--text);
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
     }
-    .sheetHeader{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding: 10px 12px;
-      background: rgba(255,255,255,.05);
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      gap: 10px;
-      flex-wrap:wrap;
+    .btnDanger{
+      background: linear-gradient(135deg, #fb7185, #ef4444);
+      color:#08110c;
+      box-shadow: 0 12px 30px rgba(239,68,68,.18);
     }
-    .sheetHeader .left{
+
+    .hint{
       color: var(--muted);
       font-size: 12px;
-      font-weight: 800;
-      letter-spacing:.2px;
+      line-height: 1.25;
+      margin-top: 8px;
     }
-    .sheetHeader .right{
+
+    /* Row (sheet entry) */
+    .rowCard{
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(0,0,0,.14);
+      margin-top: 10px;
+    }
+    .rowHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .rowTitle{
+      font-weight: 950;
+      font-size: 14px;
+      letter-spacing:.2px;
+      color: var(--muted);
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 900;
+      white-space:nowrap;
+    }
+
+    .teams{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    @media (min-width: 860px){
+      .teams{ grid-template-columns: 1fr 1fr; gap: 12px; }
+    }
+    .sideLabel{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .sideTools{
       display:flex;
       gap:8px;
       flex-wrap:wrap;
       justify-content:flex-end;
     }
-
-    .tableScroll{ overflow:auto; -webkit-overflow-scrolling: touch; }
-    table{
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 980px; /* so it behaves like a sheet */
-      background: rgba(0,0,0,.12);
-    }
-    th, td{
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      padding: 10px 10px;
-      vertical-align: top;
-    }
-    th{
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: rgba(10,25,18,.96);
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-    tr:last-child td{ border-bottom:0; }
-
-    .colN{ width: 56px; text-align:center; color: var(--muted); font-weight: 950; }
-    .colTeam{ width: 330px; }
-    .colMid{ width: 140px; }
-    .colSmall{ width: 120px; }
-    .colActions{ width: 310px; }
-
-    .cellLabel{
-      display:block;
-      color: var(--muted);
-      font-size: 11.5px;
-      margin-bottom: 6px;
-      font-weight: 900;
-      letter-spacing:.2px;
-    }
-
-    .teamInput{
-      width:100%;
-      font-size: 15px;
-      padding: 12px 12px;
-      border-radius: 12px;
-    }
-
-    .rowBtns{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    .rowBtns .btn{ padding: 10px 10px; font-size: 13px; }
-
-    .resultPill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
+    .miniBtn{
+      border:1px solid var(--line);
       background: rgba(255,255,255,.06);
-      font-weight: 950;
-      font-size: 13px;
       color: var(--text);
-      white-space:nowrap;
-    }
-    .resultPill.good{ border-color: rgba(52,211,153,.35); }
-    .resultPill.bad{ border-color: rgba(251,113,133,.35); }
-    .resultPill.mid{ border-color: rgba(148,163,184,.30); }
-
-    /* Payouts section */
-    .payouts{
-      margin-top: 12px;
-      display:grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 12px;
-    }
-    @media (max-width: 860px){
-      .payouts{ grid-template-columns: 1fr; }
-      .topbar{ flex-direction:column; align-items:flex-start; }
-    }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 12px;
-    }
-    .cardTitle{
+      padding: 7px 9px;
+      border-radius: 12px;
       font-weight: 950;
-      letter-spacing:.2px;
-      margin:0 0 8px;
-      font-size: 14px;
-      color: var(--muted);
-      text-transform: uppercase;
-    }
-
-    .bigMoney{
-      font-size: 18px;
-      font-weight: 950;
-      letter-spacing:.2px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-      margin-bottom: 10px;
-      white-space: pre-wrap;
-      line-height: 1.25;
-    }
-    .bigMoney .pos{ color:#5eead4; }
-    .bigMoney .neg{ color:#fda4af; }
-
-    .settleList{
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 13px;
-      white-space: pre-wrap;
-      line-height: 1.35;
+      font-size: 12px;
+      cursor:pointer;
+      user-select:none;
     }
 
     /* Autocomplete */
     .acWrap{ position: relative; }
-    .acBox{
+    .suggest{
       position:absolute;
-      left:0; right:0; top: calc(100% + 6px);
+      left:0; right:0;
+      top: calc(100% + 6px);
       z-index: 50;
-      border-radius: 14px;
+      background: rgba(8, 20, 14, .98);
       border: 1px solid rgba(255,255,255,.12);
-      background: rgba(6,16,12,.98);
-      box-shadow: 0 18px 50px rgba(0,0,0,.55);
-      max-height: 220px;
-      overflow:auto;
-      display:none;
+      border-radius: 14px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.55);
+      overflow:hidden;
+      max-height: 210px;
+      overflow-y:auto;
     }
-    .acItem{
+    .suggestItem{
       padding: 10px 12px;
-      cursor:pointer;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      font-weight: 850;
       font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+      user-select:none;
     }
-    .acItem:last-child{ border-bottom:0; }
-    .acItem:hover{ background: rgba(255,255,255,.06); }
-    .acHint{
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 6px;
-      line-height: 1.25;
+    .suggestItem:last-child{ border-bottom: 0; }
+    .suggestItem:hover{ background: rgba(255,255,255,.06); }
+
+    /* Result */
+    .resultBox{
+      margin-top: 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      padding: 12px;
+    }
+    .resultTop{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .winner{
+      font-weight: 950;
+      font-size: 16px;
+      letter-spacing:.2px;
+    }
+    .winner.good{ color: #5eead4; }
+    .winner.bad{ color: #fda4af; }
+    .winner.push{ color: var(--warn); }
+
+    .bigMoney{
+      font-weight: 950;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+    .muted{ color: var(--muted); font-size: 12px; line-height:1.25; margin-top: 6px; }
+
+    .rowActions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      margin-top: 10px;
     }
 
-    /* Bottom sticky bar */
-    .bottombar{
+    /* Summary / settlement */
+    .summaryBox{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+      font-size: 13px;
+      line-height: 1.35;
+      color: #d6f2e6;
+    }
+
+    /* Bottom sticky hub bar */
+    .hubbar{
       position: fixed;
-      left: 0; right: 0; bottom: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       z-index: 9999;
-      padding: 10px 12px;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
       background: linear-gradient(180deg, rgba(5,17,11,.70), rgba(5,17,11,.92));
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border-top: 1px solid rgba(255,255,255,.10);
     }
-    .bottombarRow{
-      max-width: 1100px;
+    .hubbarRow{
+      max-width: 980px;
       margin: 0 auto;
       display:flex;
       align-items:center;
@@ -332,31 +311,37 @@
       gap:10px;
       flex-wrap:wrap;
     }
-    .btTitle{
+    .hubbarTitle{
+      color: #eaf5ef;
       font-weight: 950;
       font-size: 13px;
-      color: var(--text);
+      letter-spacing:.2px;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
-      max-width: 50vw;
+      max-width: 55vw;
     }
-    .btBtns{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-    .btBtn{
+    .hubBtns{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .hubBtn{
       border:0;
       border-radius: 12px;
-      padding: 10px 10px;
-      font-size: 13px;
+      padding: 9px 10px;
+      font-size: 12.5px;
       font-weight: 950;
       cursor:pointer;
       user-select:none;
     }
-    .btBtnGhost{
+    .hubBtnGhost{
       background: rgba(255,255,255,.08);
       color:#eaf5ef;
       border: 1px solid rgba(255,255,255,.10);
     }
-    .btBtnDanger{
+    .hubBtnDanger{
       background: linear-gradient(135deg, #fb7185, #ef4444);
       color:#08110c;
     }
@@ -364,144 +349,106 @@
 </head>
 
 <body>
-<div class="wrap">
+  <div class="wrap">
 
-  <div class="topbar">
-    <div>
-      <h1>Best Ball Bet Sheet</h1>
-      <div class="sub">
-        Sheet-style entry. Team A (left) vs Team B (right). Autocomplete names as you type.
-        Shortcut: type <b>""</b> (or <b>''</b>) to reuse the previous row’s Team A/Team B.
-      </div>
-    </div>
-    <div class="pill"><span class="dot"></span><span><b>Local save</b> (stays on your phone)</span></div>
-  </div>
-
-  <div class="controls">
-    <div class="ctl">
-      <label>$ per shot (global)</label>
-      <input id="dollarsPerShot" type="number" min="1" step="1" value="5" />
-    </div>
-    <div class="ctl">
-      <label>Max shots cap (global)</label>
-      <input id="maxShotsGlobal" type="number" min="1" step="1" value="5" />
-    </div>
-    <div class="ctl">
-      <label>Holes</label>
-      <input id="holes" type="number" min="1" max="36" value="18" />
-    </div>
-    <div class="ctl">
-      <label>Squabbit CSV (optional)</label>
-      <input id="csvFile" type="file" accept=".csv,text/csv" />
-    </div>
-    <div class="ctl" style="flex: 1 1 260px; min-width: 240px;">
-      <label>Quick find (filters rows by name)</label>
-      <input id="rowSearch" placeholder="Type a name… (Zack, Blair, etc)" />
-      <div class="acHint">Tip: also builds your autocomplete list once CSV is loaded.</div>
-    </div>
-  </div>
-
-  <div class="sheetWrap">
-    <div class="sheetHeader">
-      <div class="left" id="sheetMeta">0 row(s)</div>
-      <div class="right">
-        <button class="btn btnPrimary" id="addRowTop">Add Row</button>
-        <button class="btn btnGhost" id="copyLastRowTop">Copy Last Row</button>
-        <button class="btn btnBad" id="clearSheetTop">Clear Sheet</button>
-      </div>
-    </div>
-
-    <div class="tableScroll">
-      <table>
-        <thead>
-          <tr>
-            <th class="colN">#</th>
-            <th class="colTeam">Team A (left)</th>
-            <th class="colTeam">Team B (right)</th>
-            <th class="colMid">Winner</th>
-            <th class="colSmall">Shots</th>
-            <th class="colSmall">Payout</th>
-            <th class="colActions">Row actions</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="payouts">
     <div class="card">
-      <div class="cardTitle">Payout summary</div>
-      <div class="bigMoney" id="payoutSummary">Add rows to see payouts.</div>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn btnGhost" id="copyPayoutsBtn">Copy Payout Summary</button>
-        <button class="btn btnGhost" id="downloadCsvBtn">Download Sheet CSV</button>
+      <div class="topRow">
+        <div>
+          <h1 class="title">Best Ball Bet Sheet</h1>
+          <div class="sub">
+            Load a Squabbit CSV once. Then fill Team A vs Team B. Winner, shots (stroke difference),
+            and payouts are automatic. No side scrolling.
+          </div>
+        </div>
+        <div class="pill"><span class="dot"></span><span><b>Local save</b> (this device)</span></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="cardTitle">Settlement</div>
-      <div class="settleList" id="settlementBox">No settlement yet.</div>
-    </div>
-  </div>
-</div>
+      <div class="grid grid3">
+        <div>
+          <label>1) Load Squabbit CSV (required)</label>
+          <input id="csvInput" type="file" accept=".csv,text/csv" />
+          <div class="hint" id="csvStatus">No CSV loaded yet.</div>
+        </div>
 
-<!-- Bottom bar -->
-<div class="bottombar">
-  <div class="bottombarRow">
-    <div class="btTitle">Best Ball Bet Sheet</div>
-    <div class="btBtns">
-      <button class="btBtn btBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
-      <button class="btBtn btBtnGhost" type="button" id="resetThisBtn">Reset This Tool</button>
-      <button class="btBtn btBtnDanger" type="button" id="resetAllBtn">Reset Everything</button>
+        <div>
+          <label>$ per stroke (global)</label>
+          <input id="dollarsPerShot" type="number" min="0" step="1" value="5" />
+          <div class="hint">Example: $5 per stroke.</div>
+        </div>
+
+        <div>
+          <label>Max strokes (cap, global)</label>
+          <input id="maxShots" type="number" min="0" step="1" value="5" />
+          <div class="hint">Example: cap at 5 strokes.</div>
+        </div>
+      </div>
+
+      <div class="grid grid2" style="margin-top:10px;">
+        <div>
+          <label>Quick find (filters rows by name)</label>
+          <input id="filterInput" placeholder="Type a name... (Zack, Blair, etc)" />
+          <div class="hint">Tip: autocomplete list builds from the CSV player names.</div>
+        </div>
+        <div class="btnRow" style="justify-content:flex-end; align-items:end;">
+          <button class="btn btnPrimary" id="addRowBtn" type="button">Add Row</button>
+          <button class="btn btnGhost" id="clearSheetBtn" type="button">Clear Sheet</button>
+        </div>
+      </div>
+
+      <div class="hint" style="margin-top:10px;">
+        Entry tips:
+        <br>• Teams are comma-separated names (auto-complete helps).
+        <br>• Shortcut: type <b>""</b> in Team A or Team B to reuse the previous row on that side.
+        <br>• “Add Next (reuse Team A)” is for one team playing multiple matchups.
+      </div>
+    </div>
+
+    <div class="card" id="rowsWrap">
+      <div class="hint" id="rowsCount">No rows yet. Tap “Add Row”.</div>
+      <div id="rowsList"></div>
+
+      <div class="summaryBox" id="summaryBox" style="display:none;">
+        <div class="rowHeader" style="margin-bottom:6px;">
+          <div class="rowTitle">Payout Summary</div>
+          <span class="chip" id="summaryChip">—</span>
+        </div>
+
+        <div class="btnRow" style="margin-bottom:10px;">
+          <button class="btn btnGhost" id="copySummaryBtn" type="button">Copy Payout Summary</button>
+          <button class="btn btnGhost" id="downloadSheetBtn" type="button">Download Sheet CSV</button>
+        </div>
+
+        <div class="mono" id="summaryText"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom sticky bar -->
+  <div class="hubbar">
+    <div class="hubbarRow">
+      <div class="hubbarTitle" id="hubToolTitle">Best Ball Bet Sheet</div>
+      <div class="hubBtns">
+        <button class="hubBtn hubBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
+        <button class="hubBtn hubBtnGhost" type="button" id="hubResetThisBtn">Reset This Tool</button>
+        <button class="hubBtn hubBtnDanger" type="button" id="hubResetAllBtn">Reset Everything</button>
+      </div>
     </div>
   </div>
-</div>
 
 <script>
 (() => {
-  const LS_KEY = "bestball_bet_sheet_v2";
-  const HUB_INDEX = "index.html";
+  // --------- Settings ----------
+  window.TOOL_NAME = "Best Ball Bet Sheet";
+  window.TOOL_STORAGE_KEYS = ["bestball_bet_sheet_v2"];
+  window.HUB_INDEX = "index.html";
 
+  const LS_KEY = "bestball_bet_sheet_v2";
   const $ = (id) => document.getElementById(id);
 
-  const state = {
-    rows: [],
-    // autocomplete names list, built from CSV OR manual entry
-    names: [],
-    csvPlayers: null, // Map name -> {strokes[18], ...} if you want later
-  };
-
-  // ---------- local storage ----------
-  function load(){
-    const raw = localStorage.getItem(LS_KEY);
-    if(!raw) return;
-    try{
-      const parsed = JSON.parse(raw);
-      if(parsed && Array.isArray(parsed.rows)) state.rows = parsed.rows;
-      if(parsed && Array.isArray(parsed.names)) state.names = parsed.names;
-      if(parsed && parsed.meta){
-        $("dollarsPerShot").value = parsed.meta.dollarsPerShot ?? $("dollarsPerShot").value;
-        $("maxShotsGlobal").value = parsed.meta.maxShotsGlobal ?? $("maxShotsGlobal").value;
-        $("holes").value = parsed.meta.holes ?? $("holes").value;
-      }
-    }catch(e){}
-  }
-  function save(){
-    const meta = {
-      dollarsPerShot: num($("dollarsPerShot").value, 5),
-      maxShotsGlobal: num($("maxShotsGlobal").value, 5),
-      holes: num($("holes").value, 18),
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify({ rows: state.rows, names: state.names, meta }));
-  }
-
-  function num(v, fallback){
-    const n = Number(v);
-    return Number.isFinite(n) ? n : fallback;
-  }
-
-  // ---------- CSV parse (names list + optional scores for future use) ----------
+  // --------- CSV parsing helpers ----------
   const splitCSVLine = (line) => {
     const out = [];
     let cur = "";
@@ -514,11 +461,14 @@
       } else if (c === ',' && !inQ) {
         out.push(cur);
         cur = "";
-      } else cur += c;
+      } else {
+        cur += c;
+      }
     }
     out.push(cur);
     return out.map(s => (s || "").trim());
   };
+
   const parseCSVRows = (text) => text.split(/\r?\n/).map(splitCSVLine);
 
   const toInt = (v) => {
@@ -527,8 +477,6 @@
     const n = parseInt(s, 10);
     return Number.isFinite(n) ? n : null;
   };
-  const titleCase = (n) =>
-    n.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
 
   const buildHoleIndex = (row) => {
     const idx = {};
@@ -540,618 +488,750 @@
     });
     return Object.keys(idx).length ? idx : null;
   };
-  const isPlayerRow = (r) =>
-    (r[1] || "").toLowerCase().includes("tee") && (r[0] || "").trim();
 
-  function parsePlayersFromCSV(txt){
+  const normalizeName = (n) => (n || "").trim().replace(/\s+/g, " ");
+
+  // Parse players: requires a header row that has Hole 1..18 columns and player rows with 18 numeric hole values.
+  const parsePlayersFromSquabbitCSV = (txt) => {
     const rows = parseCSVRows(txt);
     let holeIdx = null;
-    const playersMap = new Map();
+    const map = new Map();
 
     for (const row of rows) {
-      if (row.some(c => /hole\s*1/i.test(c || ""))) {
+      const joined = row.map(c => (c || "").toLowerCase()).join(" ");
+      if (
+        joined.includes("individual gross skins") ||
+        joined.includes("strokeplay") ||
+        joined.includes("best ball") ||
+        joined.includes("par") ||
+        joined.startsWith("s.i.")
+      ) continue;
+
+      // detect header row
+      if (!holeIdx && row.some(c => /hole\s*1/i.test(c || ""))) {
         holeIdx = buildHoleIndex(row);
         continue;
       }
       if (!holeIdx) continue;
 
-      const lowerJoined = row.map(c => (c || "").toLowerCase()).join(" ");
-      if (
-        lowerJoined.includes("individual gross skins") ||
-        lowerJoined.includes("strokeplay") ||
-        lowerJoined.includes("best ball") ||
-        lowerJoined.includes("par") ||
-        lowerJoined.startsWith("s.i.")
-      ) continue;
+      const nameRaw = normalizeName(row[0]);
+      if (!nameRaw) continue;
 
-      if (!isPlayerRow(row)) continue;
-
-      const rawName = (row[0] || "").trim();
-      if (!rawName) continue;
-
-      const name = titleCase(rawName);
       const strokes = [];
       for (let h = 1; h <= 18; h++) {
         const col = holeIdx[h];
-        const val = col != null ? toInt(row[col]) : null;
+        const val = (col != null) ? toInt(row[col]) : null;
         if (val == null) { strokes.length = 0; break; }
         strokes.push(val);
       }
-      if (strokes.length === 18) playersMap.set(name, { name, strokes });
+      if (strokes.length !== 18) continue;
+
+      const name = nameRaw; // keep as-is (Squabbit export usually has correct casing)
+      map.set(name.toLowerCase(), { name, strokes });
     }
-    return [...playersMap.values()];
-  }
 
-  // ---------- row model ----------
-  function newRow(){
-    return {
-      a: "",      // Team A text
-      b: "",      // Team B text
-      winner: "", // "A" | "B" | "P"
-      shots: "",  // number string
-      notes: "",
-      createdAt: Date.now()
-    };
-  }
+    return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name));
+  };
 
-  function normalizeTeamText(raw, prev){
-    const t = (raw || "").trim();
-    if(t === '""' || t === "''") return prev || "";
-    return t;
-  }
-
-  function teamNamesFromText(text){
-    return (text || "")
-      .split(",")
-      .map(s => s.trim())
+  // --------- Best-ball scoring ----------
+  function bestBallScore(playersByLowerName, teamNames){
+    // score = sum of min strokes per hole among team members
+    const members = teamNames
+      .map(n => playersByLowerName.get(n.toLowerCase()))
       .filter(Boolean);
-  }
 
-  // ---------- autocomplete ----------
-  function addNameToAutocomplete(name){
-    const clean = titleCase(name.trim());
-    if(!clean) return;
-    const exists = state.names.some(n => n.toLowerCase() === clean.toLowerCase());
-    if(!exists){
-      state.names.push(clean);
-      state.names.sort((a,b)=> a.localeCompare(b));
+    if (!members.length) return null;
+
+    let total = 0;
+    for (let i = 0; i < 18; i++) {
+      let m = Infinity;
+      for (const p of members) m = Math.min(m, p.strokes[i]);
+      if (!Number.isFinite(m)) return null;
+      total += m;
     }
-  }
-
-  function buildAutocompleteBox(inputEl){
-    let box = inputEl.parentElement.querySelector(".acBox");
-    if(!box){
-      box = document.createElement("div");
-      box.className = "acBox";
-      inputEl.parentElement.appendChild(box);
-    }
-    return box;
-  }
-
-  function currentTokenInfo(value){
-    // token after last comma
-    const idx = value.lastIndexOf(",");
-    const token = idx === -1 ? value.trim() : value.slice(idx+1).trim();
-    return { idx, token };
-  }
-
-  function replaceTokenWith(value, replacement){
-    const { idx } = currentTokenInfo(value);
-    if(idx === -1) return replacement + ", ";
-    return value.slice(0, idx+1) + " " + replacement + ", ";
-  }
-
-  function showSuggestions(inputEl){
-    const box = buildAutocompleteBox(inputEl);
-    const { token } = currentTokenInfo(inputEl.value);
-    const q = token.toLowerCase();
-
-    const list = (state.names || [])
-      .filter(n => !q || n.toLowerCase().includes(q))
-      .slice(0, 10);
-
-    if(!list.length){
-      box.style.display = "none";
-      box.innerHTML = "";
-      return;
-    }
-
-    box.innerHTML = list.map(n => `<div class="acItem">${n}</div>`).join("");
-    box.style.display = "block";
-
-    [...box.querySelectorAll(".acItem")].forEach(item => {
-      item.onclick = () => {
-        inputEl.value = replaceTokenWith(inputEl.value, item.textContent);
-        inputEl.dispatchEvent(new Event("input"));
-        box.style.display = "none";
-      };
-    });
-  }
-
-  function hideSuggestions(inputEl){
-    const box = inputEl.parentElement.querySelector(".acBox");
-    if(box) box.style.display = "none";
-  }
-
-  // ---------- payouts ----------
-  function calcPayout(row, globals){
-    const dollarsPerShot = globals.dollarsPerShot;
-    const cap = globals.maxShotsGlobal;
-
-    const shots = Math.max(0, Math.min(cap, num(row.shots, 0)));
-    if(!shots) return 0;
-
-    // payout is per-player settlement in best-ball style:
-    // Team A loses -> each A player pays each B player? You previously did per-player settlement.
-    // We'll keep simple + consistent:
-    // Total pot = shots * dollarsPerShot * min(sizeA, sizeB)
-    // and settlement splits by min pairing count.
-    const a = teamNamesFromText(row.a);
-    const b = teamNamesFromText(row.b);
-    const pairs = Math.min(a.length, b.length);
-    const total = shots * dollarsPerShot * pairs;
     return total;
   }
 
-  function computeSettlement(rows, globals){
-    // Build balances per player using min pairs concept.
-    // If A wins: each B pays each A evenly by pairs.
-    // If B wins: each A pays each B evenly by pairs.
-    const bal = new Map(); // player -> $ balance (+ is owed, - owes)
-    const add = (p, amt) => bal.set(p, (bal.get(p)||0) + amt);
+  // --------- Sheet model ----------
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+  function saveState(st){
+    localStorage.setItem(LS_KEY, JSON.stringify(st));
+  }
 
-    rows.forEach(r => {
-      if(!r) return;
-      const winner = r.winner;
-      if(!(winner === "A" || winner === "B")) return;
+  function newState(){
+    return {
+      dollarsPerShot: 5,
+      maxShots: 5,
+      csvLoadedAt: null,
+      players: [],         // [{name, strokes[18]}]
+      rows: []             // [{a:"", b:""}]
+    };
+  }
 
-      const a = teamNamesFromText(r.a);
-      const b = teamNamesFromText(r.b);
-      const pairs = Math.min(a.length, b.length);
-      if(pairs <= 0) return;
+  // --------- Autocomplete ----------
+  function makeAutocomplete(inputEl, getNames, onPick){
+    let box = null;
 
-      const shots = Math.max(0, Math.min(globals.maxShotsGlobal, num(r.shots, 0)));
-      if(!shots) return;
+    function close(){
+      if (box) box.remove();
+      box = null;
+    }
 
-      const unit = shots * globals.dollarsPerShot; // per pair
-      // Pair up by index: A[i] vs B[i]
-      for(let i=0;i<pairs;i++){
-        const payer = (winner === "A") ? b[i] : a[i];
-        const payee = (winner === "A") ? a[i] : b[i];
-        add(payee, unit);
-        add(payer, -unit);
-      }
+    function open(list){
+      close();
+      if (!list.length) return;
+      box = document.createElement("div");
+      box.className = "suggest";
+      list.forEach(name => {
+        const it = document.createElement("div");
+        it.className = "suggestItem";
+        it.textContent = name;
+        it.onclick = () => { onPick(name); close(); };
+        box.appendChild(it);
+      });
+      inputEl.parentElement.appendChild(box);
+    }
+
+    function currentToken(str){
+      const s = str || "";
+      const parts = s.split(",");
+      return (parts[parts.length - 1] || "").trim();
+    }
+
+    inputEl.addEventListener("input", () => {
+      const token = currentToken(inputEl.value).toLowerCase();
+      const names = getNames();
+      const list = names
+        .filter(n => !token || n.toLowerCase().includes(token))
+        .slice(0, 10);
+      open(list);
     });
 
-    // Convert balances to payment instructions
-    const creditors = [...bal.entries()].filter(([_,v])=> v>0).map(([name,amt])=>({name,amt}));
-    const debtors = [...bal.entries()].filter(([_,v])=> v<0).map(([name,amt])=>({name,amt:-amt}));
+    inputEl.addEventListener("focus", () => {
+      const token = currentToken(inputEl.value).toLowerCase();
+      const names = getNames();
+      const list = names
+        .filter(n => !token || n.toLowerCase().includes(token))
+        .slice(0, 10);
+      open(list);
+    });
 
-    creditors.sort((a,b)=> b.amt - a.amt);
-    debtors.sort((a,b)=> b.amt - a.amt);
+    inputEl.addEventListener("blur", () => {
+      // let click register
+      setTimeout(close, 140);
+    });
+
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") close();
+    });
+  }
+
+  function appendNameWithComma(existing, picked){
+    const s = existing || "";
+    const parts = s.split(",");
+    parts[parts.length - 1] = " " + picked; // replace last token
+    const cleaned = parts.map(p => p.trim()).filter((p, i) => i === parts.length - 1 ? true : p.length);
+    let out = cleaned.join(", ");
+    out = out.replace(/\s+,/g, ",");
+    if (!out.endsWith(", ")) out += ", ";
+    return out.replace(/^, /, "");
+  }
+
+  function parseTeamInput(str){
+    const s = (str || "").trim();
+    if (!s) return [];
+    return s
+      .split(",")
+      .map(x => normalizeName(x))
+      .filter(Boolean);
+  }
+
+  function rowIncludesName(row, name){
+    const n = name.toLowerCase();
+    return row.a.toLowerCase().includes(n) || row.b.toLowerCase().includes(n);
+  }
+
+  // --------- Payout logic (per-losing-player rule) ----------
+  // If margin = 3 strokes and $/stroke = 5 => each loser owes 15.
+  // Total paid = losersCount * 15.
+  // Winners split total equally. (may be fractional; we keep cents)
+  function computePayout(margin, dollarsPerShot, maxShots, winnersCount, losersCount){
+    const shots = Math.min(margin, Math.max(0, maxShots));
+    const perLoser = shots * dollarsPerShot;
+    const total = perLoser * losersCount;
+    const perWinner = winnersCount > 0 ? (total / winnersCount) : 0;
+    return { shots, perLoser, total, perWinner };
+  }
+
+  function money(n){
+    return (Math.round((n + Number.EPSILON) * 100) / 100).toFixed(2);
+  }
+
+  // --------- Rendering ----------
+  let state = loadState() || newState();
+
+  function setCSVStatus(msg){
+    $("csvStatus").textContent = msg;
+  }
+
+  function getNameList(){
+    // from CSV players, plus any typed names
+    const set = new Set();
+    state.players.forEach(p => set.add(p.name));
+    state.rows.forEach(r => {
+      parseTeamInput(r.a).forEach(n => set.add(n));
+      parseTeamInput(r.b).forEach(n => set.add(n));
+    });
+    return [...set].sort((a,b)=>a.localeCompare(b));
+  }
+
+  function playersMap(){
+    const m = new Map();
+    state.players.forEach(p => m.set(p.name.toLowerCase(), p));
+    return m;
+  }
+
+  function computeRowResult(row, idx){
+    const pMap = playersMap();
+    const aRaw = (row.a || "").trim();
+    const bRaw = (row.b || "").trim();
+
+    // "" shortcut (reuse previous)
+    const prev = state.rows[idx - 1];
+    const aStr = (aRaw === '""' || aRaw === "“”" || aRaw === "''") && prev ? prev.a : aRaw;
+    const bStr = (bRaw === '""' || bRaw === "“”" || bRaw === "''") && prev ? prev.b : bRaw;
+
+    const aTeam = parseTeamInput(aStr);
+    const bTeam = parseTeamInput(bStr);
+
+    if (!state.players.length) {
+      return { status:"need_csv", aTeam, bTeam, aScore:null, bScore:null };
+    }
+
+    const aScore = aTeam.length ? bestBallScore(pMap, aTeam) : null;
+    const bScore = bTeam.length ? bestBallScore(pMap, bTeam) : null;
+
+    if (aScore == null || bScore == null) {
+      return { status:"need_names", aTeam, bTeam, aScore, bScore };
+    }
+
+    if (aScore === bScore) {
+      return {
+        status:"push",
+        aTeam, bTeam,
+        aScore, bScore,
+        winner:"Push",
+        margin:0,
+        payout: { shots:0, perLoser:0, total:0, perWinner:0 },
+        winners: [],
+        losers: []
+      };
+    }
+
+    const aWins = aScore < bScore;
+    const margin = Math.abs(aScore - bScore);
+
+    const winners = aWins ? aTeam : bTeam;
+    const losers = aWins ? bTeam : aTeam;
+
+    const payout = computePayout(
+      margin,
+      Number(state.dollarsPerShot || 0),
+      Number(state.maxShots || 0),
+      winners.length,
+      losers.length
+    );
+
+    return {
+      status:"ok",
+      aTeam, bTeam,
+      aScore, bScore,
+      winner: aWins ? "Team A" : "Team B",
+      winnerNames: winners,
+      loserNames: losers,
+      margin,
+      payout
+    };
+  }
+
+  function buildSettlement(){
+    // aggregate per player across all rows
+    // losers pay perLoser; winners receive perWinner
+    const credits = new Map(); // player -> +$
+    const debits = new Map();  // player -> -$
+
+    state.rows.forEach((row, idx) => {
+      const r = computeRowResult(row, idx);
+      if (r.status !== "ok") return;
+      if (r.payout.shots <= 0) return;
+
+      r.loserNames.forEach(n => {
+        debits.set(n, (debits.get(n) || 0) + r.payout.perLoser);
+      });
+      r.winnerNames.forEach(n => {
+        credits.set(n, (credits.get(n) || 0) + r.payout.perWinner);
+      });
+    });
+
+    // create settlement lines (simple greedy)
+    const debtors = [...debits.entries()].map(([name, amt]) => ({ name, amt })).filter(x => x.amt > 0);
+    const creditors = [...credits.entries()].map(([name, amt]) => ({ name, amt })).filter(x => x.amt > 0);
+
+    debtors.sort((a,b)=>b.amt - a.amt);
+    creditors.sort((a,b)=>b.amt - a.amt);
 
     let i=0, j=0;
-    const lines=[];
-    while(i<debtors.length && j<creditors.length){
+    const lines = [];
+    while (i < debtors.length && j < creditors.length) {
       const pay = Math.min(debtors[i].amt, creditors[j].amt);
-      if(pay > 0.0001){
-        lines.push(`${debtors[i].name} pays ${creditors[j].name}: $${pay.toFixed(2)}`);
+      if (pay > 0.00001) {
+        lines.push(`${debtors[i].name} pays ${creditors[j].name}: $${money(pay)}`);
         debtors[i].amt -= pay;
         creditors[j].amt -= pay;
       }
-      if(debtors[i].amt <= 0.0001) i++;
-      if(creditors[j].amt <= 0.0001) j++;
+      if (debtors[i].amt <= 0.00001) i++;
+      if (creditors[j].amt <= 0.00001) j++;
     }
 
-    return { balances: bal, lines };
+    return lines;
   }
 
-  // ---------- render ----------
-  function globals(){
-    return {
-      dollarsPerShot: num($("dollarsPerShot").value, 5),
-      maxShotsGlobal: num($("maxShotsGlobal").value, 5),
-      holes: num($("holes").value, 18),
-    };
-  }
+  function updateSummary(){
+    const validRows = state.rows
+      .map((r, i) => computeRowResult(r, i))
+      .filter(x => x.status === "ok");
 
-  function updateMeta(){
-    $("sheetMeta").textContent = `${state.rows.length} row(s) • $/shot ${globals().dollarsPerShot} • cap ${globals().maxShotsGlobal}`;
-  }
+    const rowsWithMoney = validRows.filter(r => r.payout.shots > 0);
 
-  function rowMatchesSearch(row, query){
-    if(!query) return true;
-    const q = query.toLowerCase();
-    return (row.a || "").toLowerCase().includes(q) ||
-           (row.b || "").toLowerCase().includes(q) ||
-           (row.notes || "").toLowerCase().includes(q);
-  }
-
-  function render(){
-    updateMeta();
-    const q = ($("rowSearch").value || "").trim();
-    const tb = $("tbody");
-    tb.innerHTML = "";
-
-    const prev = (idx, side) => {
-      for(let i=idx-1;i>=0;i--){
-        const t = (side==="a") ? state.rows[i].a : state.rows[i].b;
-        if((t||"").trim()) return t;
-      }
-      return "";
-    };
-
-    state.rows.forEach((r, idx) => {
-      if(!rowMatchesSearch(r, q)) return;
-
-      const tr = document.createElement("tr");
-
-      // # col
-      tr.innerHTML += `<td class="colN">${idx+1}</td>`;
-
-      // Team A
-      const tdA = document.createElement("td");
-      tdA.className = "colTeam";
-      tdA.innerHTML = `
-        <div class="acWrap">
-          <span class="cellLabel">Team A</span>
-          <input class="teamInput" data-idx="${idx}" data-side="a" placeholder="Zack, Keith" value="${escapeHtml(r.a)}" />
-        </div>
-        <div class="acHint">Shortcut: type "" to reuse previous Team A</div>
-      `;
-      tr.appendChild(tdA);
-
-      // Team B
-      const tdB = document.createElement("td");
-      tdB.className = "colTeam";
-      tdB.innerHTML = `
-        <div class="acWrap">
-          <span class="cellLabel">Team B</span>
-          <input class="teamInput" data-idx="${idx}" data-side="b" placeholder="Blair, Garrett" value="${escapeHtml(r.b)}" />
-        </div>
-        <div class="acHint">Shortcut: type "" to reuse previous Team B</div>
-      `;
-      tr.appendChild(tdB);
-
-      // Winner
-      const tdW = document.createElement("td");
-      tdW.className = "colMid";
-      tdW.innerHTML = `
-        <span class="cellLabel">Winner</span>
-        <select data-idx="${idx}" data-field="winner">
-          <option value="">—</option>
-          <option value="A" ${r.winner==="A"?"selected":""}>Team A</option>
-          <option value="B" ${r.winner==="B"?"selected":""}>Team B</option>
-          <option value="P" ${r.winner==="P"?"selected":""}>Push</option>
-        </select>
-      `;
-      tr.appendChild(tdW);
-
-      // Shots
-      const tdS = document.createElement("td");
-      tdS.className = "colSmall";
-      tdS.innerHTML = `
-        <span class="cellLabel">Shots</span>
-        <input type="number" min="0" step="1" data-idx="${idx}" data-field="shots" value="${escapeHtml(r.shots)}" placeholder="0" />
-        <div class="acHint">Max ${globals().maxShotsGlobal}</div>
-      `;
-      tr.appendChild(tdS);
-
-      // Payout
-      const tdP = document.createElement("td");
-      tdP.className = "colSmall";
-      const g = globals();
-      const aResolved = normalizeTeamText(r.a, prev(idx,"a"));
-      const bResolved = normalizeTeamText(r.b, prev(idx,"b"));
-      const tempRow = { ...r, a: aResolved, b: bResolved };
-      const payout = calcPayout(tempRow, g);
-
-      const pillClass = (r.winner==="A" ? "good" : (r.winner==="B" ? "bad" : "mid"));
-      const pillText = payout ? `$${payout}` : "—";
-
-      tdP.innerHTML = `
-        <span class="cellLabel">Payout</span>
-        <div class="resultPill ${pillClass}">${pillText}</div>
-      `;
-      tr.appendChild(tdP);
-
-      // Actions
-      const tdAct = document.createElement("td");
-      tdAct.className = "colActions";
-      tdAct.innerHTML = `
-        <span class="cellLabel">Actions</span>
-        <div class="rowBtns">
-          <button class="btn btnGhost" data-action="copyPrevA" data-idx="${idx}">Copy Prev A</button>
-          <button class="btn btnGhost" data-action="copyPrevB" data-idx="${idx}">Copy Prev B</button>
-          <button class="btn btnGhost" data-action="dup" data-idx="${idx}">Duplicate</button>
-          <button class="btn btnBad" data-action="del" data-idx="${idx}">Delete</button>
-          <button class="btn btnPrimary" data-action="addNext" data-idx="${idx}">Add Next Row</button>
-        </div>
-        <div class="acHint">Fast reuse: put "" in A or B to reuse that side from the previous row.</div>
-      `;
-      tr.appendChild(tdAct);
-
-      tb.appendChild(tr);
-    });
-
-    wireInputs();
-    renderPayouts();
-    save();
-  }
-
-  function renderPayouts(){
-    const g = globals();
-    // Resolve "" per row
-    const resolvedRows = [];
-    for(let i=0;i<state.rows.length;i++){
-      const prevA = i>0 ? resolvedRows[i-1].a : "";
-      const prevB = i>0 ? resolvedRows[i-1].b : "";
-      const r = state.rows[i];
-      resolvedRows.push({
-        ...r,
-        a: normalizeTeamText(r.a, prevA),
-        b: normalizeTeamText(r.b, prevB),
-      });
+    if (!state.rows.length) {
+      $("summaryBox").style.display = "none";
+      return;
     }
 
-    // Summary text (big + readable)
+    $("summaryBox").style.display = "block";
+    $("summaryChip").textContent =
+      `${rowsWithMoney.length}/${state.rows.length} row(s) have results`;
+
     const lines = [];
-    const used = resolvedRows.filter(r => (r.a||"").trim() || (r.b||"").trim() || r.winner || r.shots);
-    lines.push(`Holes: ${g.holes}`);
-    lines.push(`$/shot: ${g.dollarsPerShot} • Max shots: ${g.maxShotsGlobal}`);
-    lines.push(`Rows: ${state.rows.length} • Rows with data: ${used.length}`);
+    lines.push("Best Ball Bet Sheet Summary");
+    lines.push(`$/stroke: ${Number(state.dollarsPerShot || 0)} • cap: ${Number(state.maxShots || 0)}`);
+    lines.push(`Rows with payouts: ${rowsWithMoney.length}`);
     lines.push("");
 
-    resolvedRows.forEach((r, idx) => {
-      const a = (r.a||"").trim();
-      const b = (r.b||"").trim();
-      if(!a && !b) return;
-      const winnerTxt = r.winner==="A" ? "Team A wins" : (r.winner==="B" ? "Team B wins" : (r.winner==="P" ? "Push" : "—"));
-      const shots = Math.max(0, Math.min(g.maxShotsGlobal, num(r.shots, 0)));
-      const payout = calcPayout(r, g);
-      lines.push(`Row ${idx+1}: ${a}  vs  ${b}`);
-      lines.push(`  Result: ${winnerTxt} • Shots: ${shots || "—"} • Payout: ${payout ? "$"+payout : "—"}`);
-      lines.push("");
+    state.rows.forEach((row, idx) => {
+      const r = computeRowResult(row, idx);
+      const aStr = (row.a || "").trim();
+      const bStr = (row.b || "").trim();
+
+      const teamA = (aStr === '""' && idx>0) ? state.rows[idx-1].a : row.a;
+      const teamB = (bStr === '""' && idx>0) ? state.rows[idx-1].b : row.b;
+
+      if (r.status === "need_csv") {
+        lines.push(`Row ${idx+1}: ${teamA || "—"} vs ${teamB || "—"} | Need CSV`);
+        return;
+      }
+      if (r.status === "need_names") {
+        lines.push(`Row ${idx+1}: ${teamA || "—"} vs ${teamB || "—"} | Need names / match CSV`);
+        return;
+      }
+      if (r.status === "push") {
+        lines.push(`Row ${idx+1}: ${teamA} vs ${teamB} | Push (${r.aScore} - ${r.bScore})`);
+        return;
+      }
+      lines.push(
+        `Row ${idx+1}: ${teamA} (${r.aScore}) vs ${teamB} (${r.bScore}) | ` +
+        `${r.winner === "Team A" ? "Team A wins" : "Team B wins"} by ${r.margin} | ` +
+        `shots ${r.payout.shots} | each loser owes $${money(r.payout.perLoser)}`
+      );
     });
 
-    $("payoutSummary").textContent = lines.join("\n");
+    const settlement = buildSettlement();
+    lines.push("");
+    lines.push("Settlement:");
+    lines.push(settlement.length ? settlement.join("\n") : "All square.");
 
-    // Settlement
-    const set = computeSettlement(resolvedRows, g);
-    $("settlementBox").textContent = set.lines.length ? set.lines.join("\n") : "No settlement yet.";
+    $("summaryText").textContent = lines.join("\n");
   }
 
-  // ---------- wiring ----------
-  function wireInputs(){
-    // Team inputs with autocomplete
-    document.querySelectorAll('input.teamInput').forEach(inp => {
-      const idx = Number(inp.getAttribute("data-idx"));
-      const side = inp.getAttribute("data-side");
+  function renderRows(){
+    const filter = ($("filterInput").value || "").trim().toLowerCase();
 
-      // wrap input in acWrap already
-      inp.addEventListener("input", () => {
-        // collect names typed so far into autocomplete pool
-        const names = teamNamesFromText(inp.value);
-        names.forEach(addNameToAutocomplete);
+    const rowsList = $("rowsList");
+    rowsList.innerHTML = "";
 
-        state.rows[idx][side] = inp.value;
+    const visibleRows = state.rows
+      .map((row, idx) => ({ row, idx }))
+      .filter(x => !filter || rowIncludesName(x.row, filter));
 
-        // show suggestions for current token
-        showSuggestions(inp);
-        renderPayouts();
-        save();
+    $("rowsCount").textContent =
+      state.rows.length
+        ? `Showing ${visibleRows.length} row(s) • $/stroke ${Number(state.dollarsPerShot || 0)} • cap ${Number(state.maxShots || 0)}`
+        : "No rows yet. Tap “Add Row”.";
+
+    visibleRows.forEach(({ row, idx }) => {
+      const r = computeRowResult(row, idx);
+
+      const rc = document.createElement("div");
+      rc.className = "rowCard";
+
+      const header = document.createElement("div");
+      header.className = "rowHeader";
+      header.innerHTML = `
+        <div class="rowTitle">Row ${idx + 1}</div>
+        <span class="chip">${(r.status === "ok" || r.status === "push") ? "Auto" : "Pending"}</span>
+      `;
+      rc.appendChild(header);
+
+      // Teams UI
+      const teams = document.createElement("div");
+      teams.className = "teams";
+
+      // Left (Team A)
+      const left = document.createElement("div");
+      left.innerHTML = `
+        <div class="sideLabel">
+          <label style="margin:0;">Team A (left)</label>
+          <div class="sideTools">
+            <button class="miniBtn" type="button" data-act="usePrevA">Use prev A</button>
+          </div>
+        </div>
+        <div class="acWrap">
+          <textarea id="a_${idx}" placeholder="Zack, Keith  (comma separated)">${row.a || ""}</textarea>
+        </div>
+        <div class="hint">Pick names from the CSV. Autocomplete adds commas for you.</div>
+      `;
+      teams.appendChild(left);
+
+      // Right (Team B)
+      const right = document.createElement("div");
+      right.innerHTML = `
+        <div class="sideLabel">
+          <label style="margin:0;">Team B (right)</label>
+          <div class="sideTools">
+            <button class="miniBtn" type="button" data-act="usePrevB">Use prev B</button>
+          </div>
+        </div>
+        <div class="acWrap">
+          <textarea id="b_${idx}" placeholder="Brad, Dawson  (comma separated)">${row.b || ""}</textarea>
+        </div>
+        <div class="hint">Shortcut: type "" to reuse previous row on that side.</div>
+      `;
+      teams.appendChild(right);
+
+      rc.appendChild(teams);
+
+      // Result box
+      const res = document.createElement("div");
+      res.className = "resultBox";
+
+      if (r.status === "need_csv") {
+        res.innerHTML = `
+          <div class="resultTop">
+            <div class="winner push">Need Squabbit CSV</div>
+            <div class="bigMoney">—</div>
+          </div>
+          <div class="muted">Load the Squabbit export once at the top. Then results will populate automatically.</div>
+        `;
+      } else if (r.status === "need_names") {
+        res.innerHTML = `
+          <div class="resultTop">
+            <div class="winner push">Need names / match CSV</div>
+            <div class="bigMoney">—</div>
+          </div>
+          <div class="muted">Make sure names match the Squabbit export. Autocomplete helps.</div>
+        `;
+      } else if (r.status === "push") {
+        res.innerHTML = `
+          <div class="resultTop">
+            <div class="winner push">Push</div>
+            <div class="bigMoney">$0.00</div>
+          </div>
+          <div class="muted">
+            Team A: <b>${r.aScore}</b> • Team B: <b>${r.bScore}</b>
+          </div>
+        `;
+      } else {
+        const aWins = r.winner === "Team A";
+        const wCls = aWins ? "good" : "bad";
+        const winnerNames = aWins ? r.aTeam.join(", ") : r.bTeam.join(", ");
+        const loserNames = aWins ? r.bTeam.join(", ") : r.aTeam.join(", ");
+
+        res.innerHTML = `
+          <div class="resultTop">
+            <div class="winner ${wCls}">
+              ${aWins ? "Team A wins" : "Team B wins"} by ${r.margin}
+            </div>
+            <div class="bigMoney">
+              Each loser owes $${money(r.payout.perLoser)}
+            </div>
+          </div>
+          <div class="muted">
+            Team A score: <b>${r.aScore}</b> • Team B score: <b>${r.bScore}</b><br>
+            Shots used: <b>${r.payout.shots}</b> (cap ${Number(state.maxShots || 0)}) • Total paid: <b>$${money(r.payout.total)}</b><br>
+            Winners split: <b>$${money(r.payout.perWinner)}</b> each<br>
+            Winners: <b>${winnerNames}</b><br>
+            Losers: <b>${loserNames}</b>
+          </div>
+        `;
+      }
+
+      rc.appendChild(res);
+
+      // Row actions (Add-next + delete)
+      const actions = document.createElement("div");
+      actions.className = "rowActions";
+      actions.innerHTML = `
+        <button class="btn btnPrimary" type="button" data-act="addNextReuseA">Add Next (reuse Team A)</button>
+        <button class="btn btnGhost" type="button" data-act="duplicateRow">Duplicate Row</button>
+        <button class="btn btnDanger" type="button" data-act="deleteRow">Delete</button>
+      `;
+      rc.appendChild(actions);
+
+      rowsList.appendChild(rc);
+
+      // wire inputs + autocomplete
+      const aEl = $("a_" + idx);
+      const bEl = $("b_" + idx);
+
+      const getNames = () => getNameList();
+
+      makeAutocomplete(aEl, getNames, (picked) => {
+        aEl.value = appendNameWithComma(aEl.value, picked);
+        state.rows[idx].a = aEl.value;
+        saveState(state);
+        renderRows();
+        updateSummary();
       });
 
-      inp.addEventListener("focus", () => showSuggestions(inp));
+      makeAutocomplete(bEl, getNames, (picked) => {
+        bEl.value = appendNameWithComma(bEl.value, picked);
+        state.rows[idx].b = bEl.value;
+        saveState(state);
+        renderRows();
+        updateSummary();
+      });
 
-      inp.addEventListener("blur", () => {
-        // small delay to allow click
-        setTimeout(() => hideSuggestions(inp), 150);
+      aEl.addEventListener("input", () => {
+        state.rows[idx].a = aEl.value;
+        saveState(state);
+        // light refresh: only summary + row results
+        updateSummary();
+      });
+      bEl.addEventListener("input", () => {
+        state.rows[idx].b = bEl.value;
+        saveState(state);
+        updateSummary();
+      });
+
+      // wire buttons inside this row
+      rc.querySelectorAll("button[data-act]").forEach(btn => {
+        btn.onclick = () => {
+          const act = btn.getAttribute("data-act");
+          const prev = state.rows[idx - 1];
+
+          if (act === "usePrevA" && prev) {
+            state.rows[idx].a = prev.a;
+            saveState(state);
+            renderRows(); updateSummary();
+            return;
+          }
+          if (act === "usePrevB" && prev) {
+            state.rows[idx].b = prev.b;
+            saveState(state);
+            renderRows(); updateSummary();
+            return;
+          }
+          if (act === "duplicateRow") {
+            state.rows.splice(idx + 1, 0, { a: state.rows[idx].a, b: state.rows[idx].b });
+            saveState(state);
+            renderRows(); updateSummary();
+            return;
+          }
+          if (act === "deleteRow") {
+            state.rows.splice(idx, 1);
+            saveState(state);
+            renderRows(); updateSummary();
+            return;
+          }
+          if (act === "addNextReuseA") {
+            state.rows.splice(idx + 1, 0, { a: state.rows[idx].a, b: "" });
+            saveState(state);
+            renderRows(); updateSummary();
+            // scroll a bit so the new row is visible
+            setTimeout(() => {
+              window.scrollBy({ top: 260, behavior: "smooth" });
+            }, 60);
+            return;
+          }
+        };
       });
     });
 
-    // winner + shots
-    document.querySelectorAll('select[data-field="winner"]').forEach(sel => {
-      sel.onchange = () => {
-        const idx = Number(sel.getAttribute("data-idx"));
-        state.rows[idx].winner = sel.value;
-        render();
-      };
-    });
-    document.querySelectorAll('input[data-field="shots"]').forEach(inp => {
-      inp.oninput = () => {
-        const idx = Number(inp.getAttribute("data-idx"));
-        state.rows[idx].shots = inp.value;
-        renderPayouts();
-        save();
-      };
-    });
-
-    // row actions
-    document.querySelectorAll('button[data-action]').forEach(btn => {
-      btn.onclick = () => {
-        const idx = Number(btn.getAttribute("data-idx"));
-        const action = btn.getAttribute("data-action");
-
-        const prevA = findPrevTeam(idx, "a");
-        const prevB = findPrevTeam(idx, "b");
-
-        if(action === "copyPrevA"){
-          state.rows[idx].a = prevA || "";
-          render();
-          focusRow(idx, "a");
-        }
-        if(action === "copyPrevB"){
-          state.rows[idx].b = prevB || "";
-          render();
-          focusRow(idx, "b");
-        }
-        if(action === "dup"){
-          const copy = JSON.parse(JSON.stringify(state.rows[idx]));
-          copy.createdAt = Date.now();
-          state.rows.splice(idx+1, 0, copy);
-          render();
-          focusRow(idx+1, "a");
-        }
-        if(action === "del"){
-          state.rows.splice(idx, 1);
-          if(state.rows.length === 0) state.rows.push(newRow());
-          render();
-        }
-        if(action === "addNext"){
-          state.rows.splice(idx+1, 0, newRow());
-          render();
-          focusRow(idx+1, "a");
-        }
-      };
-    });
+    updateSummary();
   }
 
-  function findPrevTeam(idx, side){
-    for(let i=idx-1;i>=0;i--){
-      const v = (side==="a") ? state.rows[i].a : state.rows[i].b;
-      if((v||"").trim()) return v;
-    }
-    return "";
+  // --------- Controls ----------
+  function addRow(){
+    state.rows.push({ a:"", b:"" });
+    saveState(state);
+    renderRows();
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 60);
   }
 
-  function focusRow(idx, side){
-    // find the visible table input for this row
-    const selector = `input.teamInput[data-idx="${idx}"][data-side="${side}"]`;
-    const el = document.querySelector(selector);
-    if(el){
-      el.focus();
-      // put cursor at end
-      const v = el.value;
-      el.setSelectionRange(v.length, v.length);
-      el.scrollIntoView({ behavior:"smooth", block:"center" });
-    }
-  }
+  $("addRowBtn").onclick = addRow;
 
-  function escapeHtml(s){
-    return (s ?? "").toString()
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;");
-  }
-
-  // ---------- controls ----------
-  $("addRowTop").onclick = () => { state.rows.push(newRow()); render(); focusRow(state.rows.length-1, "a"); };
-  $("copyLastRowTop").onclick = () => {
-    if(!state.rows.length) state.rows.push(newRow());
-    const last = state.rows[state.rows.length-1];
-    const copy = JSON.parse(JSON.stringify(last));
-    copy.createdAt = Date.now();
-    state.rows.push(copy);
-    render();
-    focusRow(state.rows.length-1, "a");
-  };
-  $("clearSheetTop").onclick = () => {
-    if(!confirm("Clear the entire sheet?")) return;
-    state.rows = [newRow()];
-    render();
+  $("clearSheetBtn").onclick = () => {
+    const ok = confirm("Clear the sheet rows?\n\n(This does not delete the CSV.)");
+    if (!ok) return;
+    state.rows = [];
+    saveState(state);
+    renderRows();
   };
 
-  $("rowSearch").oninput = () => render();
+  $("filterInput").addEventListener("input", renderRows);
 
-  ["dollarsPerShot","maxShotsGlobal","holes"].forEach(id => {
-    $(id).oninput = () => { render(); };
+  $("dollarsPerShot").addEventListener("input", () => {
+    state.dollarsPerShot = Number($("dollarsPerShot").value || 0);
+    saveState(state);
+    renderRows();
   });
 
-  // Copy payouts
-  $("copyPayoutsBtn").onclick = async () => {
-    const text = $("payoutSummary").textContent + "\n\nSettlement:\n" + $("settlementBox").textContent;
+  $("maxShots").addEventListener("input", () => {
+    state.maxShots = Number($("maxShots").value || 0);
+    saveState(state);
+    renderRows();
+  });
+
+  $("csvInput").addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const txt = await file.text();
+    const players = parsePlayersFromSquabbitCSV(txt);
+
+    if (!players.length) {
+      setCSVStatus("Could not find player hole scores. Make sure this is the Squabbit export with Hole 1–18.");
+      return;
+    }
+
+    state.players = players;
+    state.csvLoadedAt = new Date().toISOString();
+    saveState(state);
+    setCSVStatus(`Loaded ${players.length} player(s) from Squabbit export.`);
+    renderRows();
+  });
+
+  // --------- Copy / Export ----------
+  $("copySummaryBtn").onclick = async () => {
     try{
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText($("summaryText").textContent || "");
       alert("Copied payout summary.");
-    }catch(e){
-      alert("Copy failed. Try selecting and copying manually.");
+    } catch {
+      alert("Copy failed. (iOS sometimes blocks clipboard.) You can manually select and copy.");
     }
   };
 
-  // Download sheet CSV
-  $("downloadCsvBtn").onclick = () => {
-    const g = globals();
-    // resolve "" per row
-    const resolved = [];
-    for(let i=0;i<state.rows.length;i++){
-      const prevA = i>0 ? resolved[i-1].a : "";
-      const prevB = i>0 ? resolved[i-1].b : "";
-      const r = state.rows[i];
-      resolved.push({ ...r, a: normalizeTeamText(r.a, prevA), b: normalizeTeamText(r.b, prevB) });
-    }
+  $("downloadSheetBtn").onclick = () => {
+    // CSV of rows + computed results
+    const lines = [];
+    lines.push(["Row","Team A","Team B","Team A Score","Team B Score","Winner","Margin","ShotsUsed","EachLoserOwes","EachWinnerGets","TotalPaid"].join(","));
 
-    const header = ["row","teamA","teamB","winner","shots","dollarsPerShot","maxShotsCap","holes"];
-    const lines = [header.join(",")];
+    state.rows.forEach((row, idx) => {
+      const r = computeRowResult(row, idx);
+      const safe = (s) => `"${String(s || "").replace(/"/g,'""')}"`;
 
-    resolved.forEach((r, i) => {
-      const row = [
-        i+1,
-        csvSafe(r.a),
-        csvSafe(r.b),
-        r.winner || "",
-        r.shots || "",
-        g.dollarsPerShot,
-        g.maxShotsGlobal,
-        g.holes
-      ];
-      lines.push(row.join(","));
+      if (r.status !== "ok" && r.status !== "push") {
+        lines.push([
+          idx+1, safe(row.a), safe(row.b),
+          "", "", r.status, "", "", "", "", ""
+        ].join(","));
+        return;
+      }
+
+      if (r.status === "push") {
+        lines.push([
+          idx+1, safe(row.a), safe(row.b),
+          r.aScore, r.bScore, "Push", 0, 0, 0, 0, 0
+        ].join(","));
+        return;
+      }
+
+      lines.push([
+        idx+1, safe(row.a), safe(row.b),
+        r.aScore, r.bScore,
+        r.winner,
+        r.margin,
+        r.payout.shots,
+        money(r.payout.perLoser),
+        money(r.payout.perWinner),
+        money(r.payout.total)
+      ].join(","));
     });
 
-    const blob = new Blob([lines.join("\n")], { type:"text/csv;charset=utf-8" });
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "bestball-bet-sheet.csv";
+    a.download = "bestball_bet_sheet.csv";
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
   };
 
-  function csvSafe(v){
-    const s = (v ?? "").toString();
-    if(s.includes(",") || s.includes('"') || s.includes("\n")){
-      return '"' + s.replaceAll('"','""') + '"';
+  // --------- Bottom bar wiring ----------
+  (function(){
+    const TOOL_NAME = window.TOOL_NAME || document.title || "Golf Tool";
+    const TOOL_KEYS = Array.isArray(window.TOOL_STORAGE_KEYS) ? window.TOOL_STORAGE_KEYS : [];
+    const HUB_INDEX = window.HUB_INDEX || "index.html";
+
+    $("hubToolTitle").textContent = TOOL_NAME;
+
+    $("hubBackBtn").onclick = () => { window.location.href = HUB_INDEX; };
+
+    $("hubResetThisBtn").onclick = () => {
+      if(!TOOL_KEYS.length){
+        alert("No reset keys set for this tool yet.");
+        return;
+      }
+      const ok = confirm(`Reset this tool?\n\nThis clears:\n- ${TOOL_KEYS.join("\n- ")}`);
+      if(!ok) return;
+      TOOL_KEYS.forEach(k => localStorage.removeItem(k));
+      alert("Tool reset. Reloading…");
+      window.location.reload();
+    };
+
+    $("hubResetAllBtn").onclick = () => {
+      const ok = confirm("Reset EVERYTHING for this site on this device?\n\nThis clears all local saved data.");
+      if(!ok) return;
+      localStorage.clear();
+      alert("Everything reset. Returning to hub…");
+      window.location.href = HUB_INDEX;
+    };
+  })();
+
+  // --------- Init ----------
+  function init(){
+    // hydrate UI
+    $("dollarsPerShot").value = state.dollarsPerShot ?? 5;
+    $("maxShots").value = state.maxShots ?? 5;
+
+    if (state.players?.length) {
+      setCSVStatus(`Loaded ${state.players.length} player(s) from Squabbit export.`);
+    } else {
+      setCSVStatus("No CSV loaded yet.");
     }
-    return s;
+
+    renderRows();
   }
 
-  // CSV import (optional) -> builds name list
-  $("csvFile").addEventListener("change", async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if(!file) return;
-    const text = await file.text();
-    const players = parsePlayersFromCSV(text);
-    players.forEach(p => addNameToAutocomplete(p.name));
-    save();
-    alert(`Loaded ${players.length} player name(s) from Squabbit CSV. Autocomplete updated.`);
-  });
-
-  // Bottom bar buttons
-  $("hubBackBtn").onclick = () => window.location.href = HUB_INDEX;
-
-  $("resetThisBtn").onclick = () => {
-    const ok = confirm("Reset this tool?\n\nThis clears your saved bet sheet on this device.");
-    if(!ok) return;
-    localStorage.removeItem(LS_KEY);
-    state.rows = [newRow()];
-    state.names = [];
-    render();
-  };
-
-  $("resetAllBtn").onclick = () => {
-    const ok = confirm("Reset EVERYTHING for this site on this device?\n\nThis clears all local saved data.");
-    if(!ok) return;
-    localStorage.clear();
-    window.location.href = HUB_INDEX;
-  };
-
-  // init
-  load();
-  if(!state.rows.length) state.rows = [newRow()];
-  render();
+  init();
 })();
 </script>
 </body>
