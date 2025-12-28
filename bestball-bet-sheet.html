@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Best Ball Bet Sheet</title>
-
   <style>
     :root{
       --bg0:#07110d;
@@ -32,71 +31,16 @@
         radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
         radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
         linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #06110c);
-      padding: 0 16px 30px;
+      padding:16px 16px calc(110px + env(safe-area-inset-bottom)) 16px; /* bottom bar space */
     }
-    .wrap{ max-width: 980px; margin: 0 auto; padding-top: 12px; }
-
-    /* ---------- Hub Bar (sticky) ---------- */
-    .hubbar{
-      position: sticky;
-      top: 0;
-      z-index: 9999;
-      padding: 10px 12px;
-      background: linear-gradient(180deg, rgba(5,17,11,.92), rgba(5,17,11,.70));
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255,255,255,.10);
-      margin: 0 -16px 10px;
-    }
-    .hubbarRow{
-      max-width: 980px;
-      margin: 0 auto;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding: 0 16px;
-    }
-    .hubbarTitle{
-      color: #eaf5ef;
-      font-weight: 950;
-      font-size: 14px;
-      letter-spacing:.2px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 40vw;
-    }
-    .hubBtns{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-    .hubBtn{
-      border:0;
-      border-radius: 12px;
-      padding: 9px 10px;
-      font-size: 13px;
-      font-weight: 950;
-      cursor:pointer;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .hubBtnGhost{
-      background: rgba(255,255,255,.08);
-      color:#eaf5ef;
-      border: 1px solid rgba(255,255,255,.10);
-    }
-    .hubBtnDanger{
-      background: linear-gradient(135deg, #fb7185, #ef4444);
-      color:#08110c;
-    }
+    .wrap{ max-width: 980px; margin: 0 auto; }
 
     header{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:14px;
-      margin: 10px 0 14px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+      margin: 6px 0 14px;
     }
     h1{ margin:0; font-size:22px; letter-spacing:.2px; }
-    .sub{ color:var(--muted); font-size:13px; line-height:1.35; margin-top:6px; max-width: 720px; }
+    .sub{ color:var(--muted); font-size:13px; line-height:1.35; margin-top:6px; }
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding:8px 12px; border-radius:999px;
@@ -105,7 +49,6 @@
       box-shadow: 0 10px 30px rgba(0,0,0,.18);
       color: var(--text);
       font-size:12px; white-space:nowrap;
-      flex: 0 0 auto;
     }
     .pill .dot{
       width:10px;height:10px;border-radius:50%;
@@ -123,15 +66,9 @@
       -webkit-backdrop-filter: blur(10px);
       margin: 12px 0;
     }
-
     .topline{
       display:flex; gap:10px; align-items:center; justify-content:space-between;
-      margin: 0 0 8px;
-      color: var(--muted);
-      font-size: 12px;
-      letter-spacing: .2px;
-      text-transform: uppercase;
-      font-weight: 900;
+      margin: 0 0 6px; color: var(--muted); font-size: 12px;
     }
 
     label{ display:block; margin: 10px 0 6px; color: var(--muted); font-size: 12.5px; }
@@ -145,14 +82,24 @@
       outline: none;
       font-size: 16px;
     }
-    textarea{ resize: vertical; min-height: 44px; }
+    textarea{ min-height: 48px; resize: vertical; }
+
+    select{
+      appearance:none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, rgba(234,245,239,.75) 50%),
+        linear-gradient(135deg, rgba(234,245,239,.75) 50%, transparent 50%);
+      background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 34px;
+    }
 
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .grid3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
-    @media (max-width: 560px){
+    @media (max-width: 640px){
       .grid2, .grid3{ grid-template-columns: 1fr; }
       header{ flex-direction:column; align-items:flex-start; }
-      .hubbarTitle{ max-width: 100%; }
     }
 
     .btn{
@@ -160,7 +107,7 @@
       border-radius: 14px;
       padding: 12px 14px;
       font-size: 16px;
-      font-weight: 950;
+      font-weight: 900;
       cursor:pointer;
       color: #0b1510;
       transition: transform .05s ease, filter .15s ease;
@@ -169,93 +116,16 @@
     }
     .btn:active{ transform: scale(.99); }
     .btnPrimary{ background: linear-gradient(135deg, var(--accent2), var(--accent)); box-shadow: 0 12px 30px rgba(34,197,94,.25); }
-    .btnGhost{ background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--line); }
-    .btnBad{ background: linear-gradient(135deg, #fb7185, #ef4444); box-shadow: 0 12px 30px rgba(239,68,68,.20); }
+    .btnGhost{ background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--line); font-weight:900; }
+    .btnWarn{ background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 12px 30px rgba(245,158,11,.18); color:#08110c; }
+    .btnBad{ background: linear-gradient(135deg, #fb7185, #ef4444); box-shadow: 0 12px 30px rgba(239,68,68,.20); color:#08110c; }
     .btnMid{ background: linear-gradient(135deg, #94a3b8, #cbd5e1); color:#0b1510; }
-    .btnWarn{ background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 12px 30px rgba(245,158,11,.18); }
 
-    .mini{ font-size:12px; color: var(--muted); margin-top: 8px; line-height: 1.35; }
+    .btnRow{ display:flex; gap:10px; flex-wrap:wrap; }
+    .btnRow .btn{ flex: 1 1 auto; }
 
-    /* ---------- Row cards ---------- */
-    .rowList{ display:flex; flex-direction:column; gap:12px; margin-top: 12px; }
-
-    .rowCard{
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.14);
-      padding: 14px;
-    }
-
-    .rowHead{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom: 10px;
-    }
-    .rowTitle{
-      font-weight: 950;
-      font-size: 16px;
-      letter-spacing: .2px;
-      margin:0;
-    }
-
-    .resultPill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 900;
-      white-space:nowrap;
-    }
-    .resGood{ background: rgba(52,211,153,.16); border-color: rgba(52,211,153,.35); }
-    .resBad{ background: rgba(251,113,133,.14); border-color: rgba(251,113,133,.35); }
-    .resWarn{ background: rgba(251,191,36,.15); border-color: rgba(251,191,36,.35); }
-    .resMid{ background: rgba(148,163,184,.14); border-color: rgba(148,163,184,.35); }
-
-    .rowActions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .rowActions .btn{ padding: 10px 12px; font-size: 14px; }
-
-    .rowMeta{
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.14);
-      font-size: 13px;
-      line-height: 1.35;
-      color: var(--text);
-    }
-    .warnTxt{ color: #fde68a; font-weight: 900; }
-    .badTxt{ color: #fda4af; font-weight: 900; }
-    .goodTxt{ color: #5eead4; font-weight: 900; }
-
-    .searchBar{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:stretch;
-      margin-top: 10px;
-    }
-    .searchBar input{ flex: 1 1 240px; }
-    .searchBar .btn{ flex: 0 0 auto; }
-
-    @media (max-width: 560px){
-      .rowActions{ width: 100%; justify-content:stretch; }
-      .rowActions .btn{ flex: 1 1 48%; min-width: 48%; }
-      .searchBar .btn{ width: 100%; }
-    }
+    .mini{ font-size:12px; color: var(--muted); margin-top: 8px; line-height:1.35; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; }
 
     .tag{
       display:inline-block;
@@ -267,168 +137,327 @@
       font-size: 12px;
       margin-left: 6px;
       white-space:nowrap;
+    }
+
+    /* --- SHEET LOOK --- */
+    .sheetHeader{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      margin-top: 10px;
+    }
+    .sheetHeader strong{ font-size:14px; }
+    .sheetCount{ color: var(--muted); font-size:12px; }
+
+    .rowList{ display:flex; flex-direction:column; gap:12px; margin-top: 12px; }
+
+    .rowCard{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.10);
+      padding: 12px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.22);
+    }
+
+    .rowTop{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom: 10px;
+    }
+    .rowTitle{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      font-weight: 950;
+    }
+    .pillSmall{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 6px 10px;
+      border-radius:999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-size: 12px;
       font-weight: 900;
-      text-transform: none;
-      letter-spacing: 0;
+      white-space:nowrap;
+    }
+    .pillGood{ border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.10); }
+    .pillBad{ border-color: rgba(251,113,133,.35); background: rgba(251,113,133,.10); }
+    .pillWarn{ border-color: rgba(251,191,36,.35); background: rgba(251,191,36,.10); }
+
+    .rowGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 110px 1fr;
+      gap:10px;
+      align-items:start;
+    }
+    @media (max-width: 760px){
+      .rowGrid{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .rowActions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      margin-top: 12px;
+    }
+    .rowActions .btn{ padding: 10px 12px; font-size: 14px; }
+
+    .resultBox{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      color: var(--text);
+      font-size: 13px;
+      line-height:1.35;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .resultBox .left{ flex: 1 1 auto; }
+    .resultBox .right{ text-align:right; min-width: 120px; font-weight: 950; }
+
+    .goodTxt{ color: #5eead4; font-weight:900; }
+    .badTxt{ color: #fda4af; font-weight:900; }
+    .warnTxt{ color: #fde68a; font-weight:900; }
+
+    /* --- BOTTOM HUB BAR --- */
+    .hubbar{
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9999;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) 12px;
+      background: linear-gradient(180deg, rgba(5,17,11,.50), rgba(5,17,11,.92));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+    .hubbarRow{
+      max-width: 980px;
+      margin: 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .hubbarTitle{
+      color: #eaf5ef;
+      font-weight: 950;
+      font-size: 13px;
+      letter-spacing:.2px;
+      max-width: 45%;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      opacity:.95;
+    }
+    .hubBtns{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .hubBtn{
+      border:0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 950;
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .hubBtnGhost{
+      background: rgba(255,255,255,.08);
+      color:#eaf5ef;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .hubBtnDanger{
+      background: linear-gradient(135deg, #fb7185, #ef4444);
+      color:#08110c;
+      border: 1px solid rgba(255,255,255,.06);
     }
   </style>
 </head>
 
 <body>
+<div class="wrap">
 
-  <!-- Sticky hub bar -->
-  <div class="hubbar">
-    <div class="hubbarRow">
-      <div class="hubbarTitle" id="hubToolTitle">Best Ball Bet Sheet</div>
-      <div class="hubBtns">
-        <button class="hubBtn hubBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
-        <button class="hubBtn hubBtnGhost" type="button" id="hubResetThisBtn">Reset This Tool</button>
-        <button class="hubBtn hubBtnDanger" type="button" id="hubResetAllBtn">Reset Everything</button>
+  <header>
+    <div>
+      <h1>Best Ball Bet Sheet <span class="tag">local save</span></h1>
+      <div class="sub">
+        Import Squabbit (optional), fill matchups like a sheet (2v1, 2v2, 3v2…). Each row can <b>Copy Prev</b>.
+        Set <b>$ per shot</b> and <b>max shots</b> to match your group.
       </div>
     </div>
-  </div>
+    <div class="pill"><span class="dot"></span><span><b>Local save</b> (stays on your phone)</span></div>
+  </header>
 
-  <div class="wrap">
-    <header>
+  <div class="card">
+    <div class="topline"><span>1) Round + Defaults</span><span class="tag">optional CSV</span></div>
+
+    <div class="grid2">
       <div>
-        <h1>Best Ball Bet Sheet <span class="tag" id="capTag">—</span></h1>
-        <div class="sub">
-          Import a Squabbit CSV, then enter teams as comma-separated names.
-          Each row auto-calculates best ball score, stroke difference (shots), and payout with a max shots cap.
-          Use <b>Copy Last Row</b> when one team plays multiple others.
-        </div>
+        <label>$ per shot</label>
+        <input id="dollarsPerShot" type="number" min="0" step="0.5" value="5" />
       </div>
-      <div class="pill"><span class="dot"></span><span><b>Local save</b> (stays on your phone)</span></div>
-    </header>
-
-    <!-- Setup -->
-    <div class="card">
-      <div class="topline"><span>Setup</span><span class="tag">bet rules</span></div>
-
-      <div class="grid3">
-        <div>
-          <label>$ per shot</label>
-          <input id="dollarsPerShot" type="number" min="1" step="1" value="5" />
-        </div>
-        <div>
-          <label>Default max shots (cap)</label>
-          <input id="defaultMaxShots" type="number" min="1" step="1" value="5" />
-        </div>
-        <div>
-          <label>Default cap ($)</label>
-          <input id="defaultCap" type="text" value="$25" disabled />
-        </div>
-      </div>
-
-      <div class="mini">
-        You can override max shots per row. Payout is: <b>min(stroke diff, max shots) × $/shot</b>.
+      <div>
+        <label>Default max shots</label>
+        <input id="defaultMaxShots" type="number" min="1" step="1" value="5" />
       </div>
     </div>
 
-    <!-- Squabbit CSV -->
-    <div class="card">
-      <div class="topline"><span>Squabbit CSV</span><span class="tag" id="csvStatus">not loaded</span></div>
+    <div class="grid2">
+      <div>
+        <label>Payout style</label>
+        <select id="payoutStyle">
+          <option value="per-player" selected>Each loser pays each winner (most common)</option>
+          <option value="team-split">Team pays team (split evenly)</option>
+        </select>
+        <div class="mini">
+          <b>Per-player</b>: payout is multiplied by winners × losers.<br/>
+          <b>Team-split</b>: single payout amount; split across winners/losers.
+        </div>
+      </div>
 
-      <label>Upload Squabbit export (Hole 1–18 table)</label>
-      <input id="csvFile" type="file" accept=".csv,text/csv" />
-
-      <div class="mini" id="csvMsg">
-        If CSV is not loaded, rows will show “Need CSV / names” and you can still build the sheet.
+      <div>
+        <label>Import Squabbit CSV (optional)</label>
+        <input id="csvFile" type="file" accept=".csv,text/csv" />
+        <div class="mini" id="csvStatus">No CSV loaded. You can still fill the sheet; results will show “Need CSV / names”.</div>
       </div>
     </div>
 
-    <!-- Sheet -->
-    <div class="card">
-      <div class="topline"><span>Sheet</span><span class="tag" id="rowCountTag">0 rows</span></div>
-
-      <div class="searchBar">
-        <input id="rowSearch" placeholder="Find a matchup or player name…" />
-        <button class="btn btnPrimary" id="addRowBtn" type="button">Add Row</button>
-        <button class="btn btnGhost" id="copyLastBtn" type="button">Copy Last Row</button>
-        <button class="btn btnBad" id="clearSheetBtn" type="button">Clear Sheet</button>
+    <div class="grid2">
+      <div>
+        <label>Find row / player</label>
+        <input id="filterText" placeholder="Type a name (Zack) or anything…" />
       </div>
-
-      <div class="mini">
-        Team inputs are comma-separated names. Examples:
-        <b>Zack, Nick vs Blair</b> or <b>Zack, Keith, Nick vs Blair, Garrett</b>.
-      </div>
-
-      <div class="rowList" id="rowList"></div>
-
-      <div class="card" style="margin-top:14px;">
-        <div class="topline"><span>Copy / Export</span><span class="tag">optional</span></div>
-        <button class="btn btnGhost" id="copySummaryBtn" type="button" style="width:100%; margin-bottom:10px;">Copy Payout Summary</button>
-        <button class="btn btnGhost" id="downloadCsvBtn" type="button" style="width:100%;">Download Sheet CSV</button>
-        <div class="mini">Exports include computed scores and payouts for each row.</div>
+      <div>
+        <label>Holes used</label>
+        <select id="holesMode">
+          <option value="18" selected>18 holes</option>
+          <option value="9f">Front 9 only</option>
+          <option value="9b">Back 9 only</option>
+        </select>
       </div>
     </div>
 
+    <div class="btnRow" style="margin-top:12px;">
+      <button id="addRowBtn" class="btn btnPrimary" type="button">Add Row</button>
+      <button id="copyLastRowBtn" class="btn btnGhost" type="button">Copy Last Row</button>
+      <button id="clearSheetBtn" class="btn btnBad" type="button">Clear Sheet</button>
+    </div>
+
+    <div class="mini">
+      Team inputs are comma-separated. Examples:<br/>
+      <span class="mono">Zack, Nick</span> vs <span class="mono">Blair</span> (2v1)<br/>
+      <span class="mono">Zack, Keith, Nick</span> vs <span class="mono">Blair, Garrett</span> (3v2)
+    </div>
   </div>
+
+  <div class="card">
+    <div class="sheetHeader">
+      <strong>2) Sheet</strong>
+      <div class="sheetCount" id="rowCount">Showing 0 row(s).</div>
+    </div>
+    <div class="rowList" id="rowList"></div>
+  </div>
+
+  <div class="card">
+    <div class="topline"><span>3) Copy / Export</span><span class="tag">optional</span></div>
+
+    <div class="btnRow">
+      <button id="copySummaryBtn" class="btn btnGhost" type="button">Copy Payout Summary</button>
+      <button id="downloadSheetBtn" class="btn btnGhost" type="button">Download Sheet CSV</button>
+    </div>
+
+    <div class="mini mono" id="summaryBox" style="margin-top:10px;">Summary will appear here…</div>
+  </div>
+
+</div>
+
+<!-- Bottom sticky bar -->
+<div class="hubbar">
+  <div class="hubbarRow">
+    <div class="hubbarTitle" id="hubToolTitle">Golf Tool</div>
+    <div class="hubBtns">
+      <button class="hubBtn hubBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
+      <button class="hubBtn hubBtnGhost" type="button" id="hubResetThisBtn">Reset This Tool</button>
+      <button class="hubBtn hubBtnDanger" type="button" id="hubResetAllBtn">Reset Everything</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (() => {
-  // ---------- Tool + hub config ----------
+  // -----------------------------
+  // Tool + local storage settings
+  // -----------------------------
   window.TOOL_NAME = "Best Ball Bet Sheet";
-  window.TOOL_STORAGE_KEYS = ["bb_betsheet_v1"];
+  window.TOOL_STORAGE_KEYS = ["bestball_bet_sheet_v1"];
   window.HUB_INDEX = "index.html";
 
-  const HUB_INDEX = window.HUB_INDEX || "index.html";
-  const TOOL_KEYS = Array.isArray(window.TOOL_STORAGE_KEYS) ? window.TOOL_STORAGE_KEYS : [];
-  const toolTitle = document.getElementById("hubToolTitle");
-  if(toolTitle) toolTitle.textContent = window.TOOL_NAME || document.title;
+  const LS_KEY = "bestball_bet_sheet_v1";
 
-  document.getElementById("hubBackBtn").onclick = () => { window.location.href = HUB_INDEX; };
-  document.getElementById("hubResetThisBtn").onclick = () => {
-    const ok = confirm("Reset this tool?\n\nThis clears the saved bet sheet on this device.");
-    if(!ok) return;
-    TOOL_KEYS.forEach(k => localStorage.removeItem(k));
-    alert("Tool reset. Reloading…");
-    window.location.reload();
-  };
-  document.getElementById("hubResetAllBtn").onclick = () => {
-    const ok = confirm("Reset EVERYTHING for this site on this device?\n\nThis clears all local saved data.");
-    if(!ok) return;
-    localStorage.clear();
-    alert("Everything reset. Returning to hub…");
-    window.location.href = HUB_INDEX;
-  };
-
-  // ---------- App storage ----------
-  const LS_KEY = "bb_betsheet_v1";
   const $ = (id) => document.getElementById(id);
+  const escapeHtml = (s) => (s ?? "").toString()
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 
+  // -----------------------------
+  // State
+  // -----------------------------
   const state = {
     dollarsPerShot: 5,
     defaultMaxShots: 5,
-    rows: [],
-    // CSV parsed players:
-    playersByName: new Map(), // nameLower -> {name, strokes[18], total}
-    csvLoaded: false
+    payoutStyle: "per-player",   // per-player | team-split
+    holesMode: "18",             // 18 | 9f | 9b
+    filterText: "",
+    rows: [],                    // {id, teamA, teamB, maxShots, note}
+    csvPlayers: [],              // {name, strokes[18], total, front, back}
+    csvMap: new Map(),           // lowerName -> player obj
+    csvLoadedAt: null
   };
 
-  const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
-
-  function save(){
-    const payload = {
-      dollarsPerShot: state.dollarsPerShot,
-      defaultMaxShots: state.defaultMaxShots,
-      rows: state.rows
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify(payload));
-  }
+  const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
   function load(){
     const raw = localStorage.getItem(LS_KEY);
     if(!raw) return;
     try{
-      const p = JSON.parse(raw);
-      if(Number.isFinite(+p.dollarsPerShot)) state.dollarsPerShot = +p.dollarsPerShot;
-      if(Number.isFinite(+p.defaultMaxShots)) state.defaultMaxShots = +p.defaultMaxShots;
-      if(Array.isArray(p.rows)) state.rows = p.rows;
-    }catch(e){}
+      const obj = JSON.parse(raw);
+      Object.assign(state, obj);
+    } catch {}
+    rebuildCsvMap();
   }
 
-  // ---------- CSV parsing (Squabbit) ----------
+  function save(){
+    const out = {
+      dollarsPerShot: state.dollarsPerShot,
+      defaultMaxShots: state.defaultMaxShots,
+      payoutStyle: state.payoutStyle,
+      holesMode: state.holesMode,
+      filterText: state.filterText,
+      rows: state.rows,
+      csvPlayers: state.csvPlayers,
+      csvLoadedAt: state.csvLoadedAt
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(out));
+  }
+
+  function rebuildCsvMap(){
+    state.csvMap = new Map();
+    (state.csvPlayers || []).forEach(p => state.csvMap.set(p.name.toLowerCase(), p));
+  }
+
+  // -----------------------------
+  // Squabbit CSV parsing (Hole 1–18)
+  // -----------------------------
   const splitCSVLine = (line) => {
     const out = [];
     let cur = "";
@@ -448,7 +477,8 @@
     out.push(cur);
     return out.map(s => (s || "").trim());
   };
-  const parseCSVRows = (text) => text.split(/\r?\n/).map(splitCSVLine);
+
+  const parseCSVRows = (text) => text.split(/\r?\n/).filter(Boolean).map(splitCSVLine);
 
   const toInt = (v) => {
     const s = (v ?? "").toString().trim();
@@ -458,7 +488,7 @@
   };
 
   const titleCase = (n) =>
-    n.split(/\s+/).map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : "").join(" ").trim();
+    n.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
 
   const buildHoleIndex = (row) => {
     const idx = {};
@@ -471,20 +501,19 @@
     return Object.keys(idx).length ? idx : null;
   };
 
-  const isPlayerRow = (r) =>
-    (r[1] || "").toLowerCase().includes("tee") && (r[0] || "").trim();
+  const isPlayerRow = (r) => (r[0] || "").trim() && (r[1] || "").toLowerCase().includes("tee");
 
   function parsePlayersFromSquabbitCSV(txt){
     const rows = parseCSVRows(txt);
     let holeIdx = null;
-    const map = new Map();
+    const playersMap = new Map();
 
-    for(const row of rows){
+    for (const row of rows) {
       if (row.some(c => /hole\s*1/i.test(c || ""))) {
         holeIdx = buildHoleIndex(row);
         continue;
       }
-      if(!holeIdx) continue;
+      if (!holeIdx) continue;
 
       const lowerJoined = row.map(c => (c || "").toLowerCase()).join(" ");
       if (
@@ -495,519 +524,581 @@
         lowerJoined.startsWith("s.i.")
       ) continue;
 
-      if(!isPlayerRow(row)) continue;
+      if (!isPlayerRow(row)) continue;
 
       const rawName = (row[0] || "").trim();
-      if(!rawName) continue;
+      if (!rawName) continue;
 
       const name = titleCase(rawName);
       const strokes = [];
-      for(let h=1; h<=18; h++){
+
+      for (let h = 1; h <= 18; h++) {
         const col = holeIdx[h];
         const val = col != null ? toInt(row[col]) : null;
-        if(val == null){ strokes.length = 0; break; }
+        if (val == null) { strokes.length = 0; break; }
         strokes.push(val);
       }
-      if(strokes.length === 18){
-        const total = strokes.reduce((a,b)=>a+b,0);
-        map.set(name.toLowerCase(), { name, strokes, total });
+
+      if (strokes.length === 18) {
+        const front = strokes.slice(0, 9).reduce((a, b) => a + b, 0);
+        const back  = strokes.slice(9, 18).reduce((a, b) => a + b, 0);
+        const total = front + back;
+        playersMap.set(name, { name, strokes, front, back, total });
       }
     }
-    return map;
+
+    return [...playersMap.values()];
   }
 
-  // ---------- Best ball calc ----------
-  function parseTeamInput(str){
+  // -----------------------------
+  // Sheet / math
+  // -----------------------------
+  function parseTeamNames(str){
     return (str || "")
       .split(",")
-      .map(s => titleCase(s.trim()))
+      .map(s => s.trim())
       .filter(Boolean);
   }
 
-  function bestBallTotalForTeam(teamNames){
-    // returns {total, missing[]}
-    if(!state.csvLoaded) return { total: null, missing: teamNames };
+  function holesRange(){
+    if(state.holesMode === "9f") return { start: 0, end: 8 };
+    if(state.holesMode === "9b") return { start: 9, end: 17 };
+    return { start: 0, end: 17 };
+  }
+
+  function bestBallTotal(teamNames){
+    if(!state.csvPlayers || state.csvPlayers.length === 0) return { ok:false, reason:"Need CSV", total:null };
 
     const players = [];
-    const missing = [];
     for(const n of teamNames){
-      const p = state.playersByName.get(n.toLowerCase());
-      if(p) players.push(p);
-      else missing.push(n);
+      const p = state.csvMap.get(n.toLowerCase());
+      if(!p) return { ok:false, reason:`Missing: ${n}`, total:null };
+      players.push(p);
     }
-    if(missing.length) return { total: null, missing };
+    if(players.length === 0) return { ok:false, reason:"No names", total:null };
 
-    let total = 0;
-    for(let i=0;i<18;i++){
+    const { start, end } = holesRange();
+    let sum = 0;
+    for(let i = start; i <= end; i++){
       let best = Infinity;
       for(const p of players){
         best = Math.min(best, p.strokes[i]);
       }
-      total += best;
+      if(!Number.isFinite(best)) return { ok:false, reason:"Bad strokes", total:null };
+      sum += best;
     }
-    return { total, missing: [] };
+    return { ok:true, reason:"", total:sum };
   }
 
-  function computeRow(row){
-    const dollars = Number(state.dollarsPerShot) || 0;
-    const defaultMax = Number(state.defaultMaxShots) || 1;
-    const maxShots = Math.max(1, Number(row.maxShots || defaultMax) || defaultMax);
+  function computeRowResult(row){
+    const aNames = parseTeamNames(row.teamA);
+    const bNames = parseTeamNames(row.teamB);
 
-    const teamA = parseTeamInput(row.teamA);
-    const teamB = parseTeamInput(row.teamB);
-
-    const a = bestBallTotalForTeam(teamA);
-    const b = bestBallTotalForTeam(teamB);
-
-    // If CSV not loaded or names missing
-    if(!state.csvLoaded){
-      return {
-        status: "need_csv",
-        maxShots,
-        dollars,
-        teamA, teamB
-      };
-    }
-    if(a.total == null || b.total == null){
-      return {
-        status: "missing_names",
-        maxShots,
-        dollars,
-        teamA, teamB,
-        missing: [...new Set([...(a.missing||[]), ...(b.missing||[])])]
-      };
+    if(aNames.length === 0 || bNames.length === 0){
+      return { status:"need", pill:"Need teams", pillClass:"pillWarn", text:"Enter Team A and Team B.", payout:0 };
     }
 
-    const diff = Math.abs(a.total - b.total);
-    const shots = Math.min(diff, maxShots);
-    const payout = shots * dollars;
+    const a = go(aNames);
+    const b = go(bNames);
 
+    function go(names){
+      const r = bestBallTotal(names);
+      return { names, ...r };
+    }
+
+    if(!a.ok || !b.ok){
+      const why = !a.ok ? a.reason : b.reason;
+      const need = (!state.csvPlayers || state.csvPlayers.length === 0) ? "Load Squabbit CSV to calculate." : `CSV missing player: ${why}`;
+      return { status:"need", pill:"Need CSV / names", pillClass:"pillWarn", text:need, payout:0 };
+    }
+
+    const diff = b.total - a.total; // positive means A wins (lower)
     if(diff === 0){
-      return {
-        status: "push",
-        maxShots, dollars,
-        teamA, teamB,
-        aTotal: a.total, bTotal: b.total,
-        diff, shots, payout,
-        text: "Push"
-      };
+      return { status:"push", pill:"Push", pillClass:"pillWarn", text:`A ${a.total} vs B ${b.total}.`, payout:0, shots:0 };
     }
 
-    const aWins = a.total < b.total;
-    const winner = aWins ? "A" : "B";
-    const loser = aWins ? "B" : "A";
+    const shotsRaw = Math.abs(diff);
+    const maxShots = Number(row.maxShots || state.defaultMaxShots || 0);
+    const shots = Math.min(shotsRaw, maxShots > 0 ? maxShots : shotsRaw);
+
+    const perShot = Number(state.dollarsPerShot || 0);
+    const basePayout = shots * perShot;
+
+    const aCount = a.names.length;
+    const bCount = b.names.length;
+
+    const aWins = diff > 0;
+    const winnerNames = aWins ? a.names : b.names;
+    const loserNames  = aWins ? b.names : a.names;
+
+    // payout math depends on style
+    // per-player: each loser pays each winner basePayout => total transfer basePayout * winners * losers
+    // team-split: single basePayout => split evenly among winners/losers for per-person settlement
+    const totalTransfer = (state.payoutStyle === "per-player")
+      ? basePayout * (winnerNames.length * loserNames.length)
+      : basePayout;
+
+    const pill = aWins ? "Team A wins" : "Team B wins";
+    const pillClass = aWins ? "pillGood" : "pillBad";
+
+    const aLabel = `A (${a.names.join(", ")})`;
+    const bLabel = `B (${b.names.join(", ")})`;
+
+    const text =
+      `${aLabel}: ${a.total}  •  ${bLabel}: ${b.total}\n` +
+      `Shots: ${shotsRaw} (capped to ${shots})  •  $/shot: ${perShot}\n` +
+      `Base payout: $${basePayout}\n` +
+      (state.payoutStyle === "per-player"
+        ? `Per-player style: $${basePayout} per opponent pair → Total transfer: $${totalTransfer}`
+        : `Team-split style: Total transfer: $${totalTransfer}`);
 
     return {
-      status: "ok",
-      maxShots, dollars,
-      teamA, teamB,
-      aTotal: a.total, bTotal: b.total,
-      diff, shots, payout,
-      winner, loser
+      status:"win",
+      pill,
+      pillClass,
+      text,
+      aTotal:a.total,
+      bTotal:b.total,
+      shotsRaw,
+      shots,
+      basePayout,
+      totalTransfer,
+      winnerNames,
+      loserNames
     };
   }
 
-  function money(n){
-    const v = Number(n) || 0;
-    return "$" + v.toFixed(0);
-  }
+  function buildPayoutSummary(){
+    // Build net per player, based on payout style:
+    // per-player:
+    //   each loser pays each winner basePayout. So each winner receives basePayout * #losers
+    //   each loser pays basePayout * #winners
+    // team-split:
+    //   totalTransfer split evenly among winners; and evenly among losers (each loser pays equal share)
+    const net = new Map(); // name -> dollars
+    const lines = [];
+    let totalRows = 0;
 
-  function teamLabel(names){
-    return names.length ? names.join(", ") : "—";
-  }
-
-  // ---------- UI render ----------
-  function syncSetupUI(){
-    $("dollarsPerShot").value = state.dollarsPerShot;
-    $("defaultMaxShots").value = state.defaultMaxShots;
-
-    const cap = (Number(state.dollarsPerShot)||0) * (Number(state.defaultMaxShots)||0);
-    $("defaultCap").value = money(cap);
-    $("capTag").textContent = `Default cap ${money(cap)}`;
-
-    $("rowCountTag").textContent = `${state.rows.length} rows`;
-  }
-
-  function setCsvStatus(loaded, msg){
-    state.csvLoaded = !!loaded;
-    $("csvStatus").textContent = loaded ? "loaded" : "not loaded";
-    $("csvStatus").style.opacity = "1";
-    $("csvMsg").textContent = msg || (loaded
-      ? "CSV loaded. Results will compute automatically when names match."
-      : "If CSV is not loaded, rows will show “Need CSV / names” and you can still build the sheet.");
-  }
-
-  function renderRows(){
-    const q = ($("rowSearch").value || "").toLowerCase().trim();
-    const list = $("rowList");
-    list.innerHTML = "";
-
-    const filtered = state.rows.filter((r) => {
-      if(!q) return true;
-      const hay = `${r.teamA||""} ${r.teamB||""} ${r.maxShots||""}`.toLowerCase();
-      return hay.includes(q);
-    });
-
-    $("rowCountTag").textContent = `${filtered.length} row(s)`;
-
-    if(!filtered.length){
-      list.innerHTML = `<div class="mini">No rows match that search.</div>`;
-      return;
+    function addNet(name, amt){
+      net.set(name, (net.get(name) || 0) + amt);
     }
 
-    filtered.forEach((row, idx) => {
-      const c = computeRow(row);
+    for(const row of state.rows){
+      const r = computeRowResult(row);
+      if(r.status !== "win") continue;
+      totalRows++;
 
-      let pillClass = "resMid";
-      let pillText = "Need CSV / names";
-      let metaHtml = "";
+      const perShot = Number(state.dollarsPerShot || 0);
+      const base = r.basePayout;
 
-      if(c.status === "need_csv"){
-        pillClass = "resWarn";
-        pillText = "Need Squabbit CSV";
-        metaHtml = `<div class="rowMeta"><span class="warnTxt">Upload CSV</span> to auto-calc scores and payouts.</div>`;
-      } else if(c.status === "missing_names"){
-        pillClass = "resWarn";
-        pillText = "Name not found";
-        metaHtml = `<div class="rowMeta"><span class="badTxt">Missing:</span> ${c.missing.join(", ")}</div>`;
-      } else if(c.status === "push"){
-        pillClass = "resMid";
-        pillText = "Push (0)";
-        metaHtml = `
-          <div class="rowMeta">
-            <b>Score</b> A ${c.aTotal} • B ${c.bTotal}<br/>
-            <b>Shots</b> 0 (cap ${c.maxShots}) • <b>Payout</b> ${money(0)}
-          </div>`;
-      } else if(c.status === "ok"){
-        const cap = c.maxShots * c.dollars;
-        const isCapped = c.diff > c.maxShots;
+      if(state.payoutStyle === "per-player"){
+        const winners = r.winnerNames;
+        const losers = r.loserNames;
 
-        pillClass = "resGood";
-        pillText =
-          `${c.winner} wins by ${c.shots}${isCapped ? " (capped)" : ""} • ${money(c.payout)}`;
+        // Each loser pays each winner base
+        for(const w of winners){
+          addNet(w, base * losers.length);
+        }
+        for(const l of losers){
+          addNet(l, -base * winners.length);
+        }
 
-        const winnerTeam = (c.winner === "A") ? teamLabel(c.teamA) : teamLabel(c.teamB);
-        const loserTeam  = (c.loser === "A") ? teamLabel(c.teamA) : teamLabel(c.teamB);
+        lines.push(
+          `Row: ${escapeOneLine(row.teamA)} vs ${escapeOneLine(row.teamB)} | ` +
+          `${r.pill} | shots ${r.shots} | $${base} per pair | total $${r.totalTransfer}`
+        );
+      } else {
+        const winners = r.winnerNames;
+        const losers = r.loserNames;
+        const total = r.totalTransfer;
 
-        metaHtml = `
-          <div class="rowMeta">
-            <b>Score</b> A ${c.aTotal} • B ${c.bTotal}<br/>
-            <b>Diff</b> ${c.diff} • <b>Shots</b> ${c.shots} (cap ${c.maxShots}) • <b>Payout</b> ${money(c.payout)} (cap ${money(cap)})<br/>
-            <span class="goodTxt">${loserTeam}</span> pays <span class="goodTxt">${winnerTeam}</span> <b>${money(c.payout)}</b>
-          </div>`;
+        const winShare = total / winners.length;
+        const loseShare = total / losers.length;
+
+        winners.forEach(w => addNet(w, winShare));
+        losers.forEach(l => addNet(l, -loseShare));
+
+        lines.push(
+          `Row: ${escapeOneLine(row.teamA)} vs ${escapeOneLine(row.teamB)} | ` +
+          `${r.pill} | shots ${r.shots} | total $${total} (split)`
+        );
       }
+    }
 
+    // settlement lines (who pays who) greedy match
+    const creditors = [];
+    const debtors = [];
+    for(const [name, amt] of net.entries()){
+      const rounded = Math.round(amt * 100) / 100;
+      if(rounded > 0) creditors.push({ name, amt: rounded });
+      else if(rounded < 0) debtors.push({ name, amt: -rounded });
+    }
+    creditors.sort((a,b)=> b.amt - a.amt);
+    debtors.sort((a,b)=> b.amt - a.amt);
+
+    let i=0, j=0;
+    const settle = [];
+    while(i < debtors.length && j < creditors.length){
+      const pay = Math.min(debtors[i].amt, creditors[j].amt);
+      if(pay > 0.009){
+        settle.push(`${debtors[i].name} pays ${creditors[j].name}: $${pay.toFixed(2)}`);
+        debtors[i].amt -= pay;
+        creditors[j].amt -= pay;
+      }
+      if(debtors[i].amt <= 0.009) i++;
+      if(creditors[j].amt <= 0.009) j++;
+    }
+
+    let header =
+      `Best Ball Bet Sheet Summary\n` +
+      `Holes: ${state.holesMode === "18" ? "18" : (state.holesMode === "9f" ? "Front 9" : "Back 9")}\n` +
+      `$/shot: ${Number(state.dollarsPerShot || 0)} | Default max: ${Number(state.defaultMaxShots || 0)}\n` +
+      `Style: ${state.payoutStyle}\n` +
+      `Rows with results: ${totalRows}\n`;
+
+    const detail = lines.length ? ("\nRows:\n" + lines.join("\n")) : "\nRows:\n(no calculated rows yet)";
+    const settleText = settle.length ? ("\n\nSettlement:\n" + settle.join("\n")) : "\n\nSettlement:\nAll square.";
+
+    return header + detail + settleText;
+
+    function escapeOneLine(s){
+      return (s || "").toString().replaceAll("\n"," ").trim();
+    }
+  }
+
+  // -----------------------------
+  // Rendering
+  // -----------------------------
+  function applyInputsToState(){
+    state.dollarsPerShot = Number($("dollarsPerShot").value || 0);
+    state.defaultMaxShots = Number($("defaultMaxShots").value || 0);
+    state.payoutStyle = $("payoutStyle").value;
+    state.holesMode = $("holesMode").value;
+    state.filterText = $("filterText").value || "";
+    save();
+  }
+
+  function filteredRows(){
+    const q = (state.filterText || "").trim().toLowerCase();
+    if(!q) return state.rows;
+    return state.rows.filter(r => {
+      const hay = `${r.teamA||""} ${r.teamB||""} ${r.note||""}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  function render(){
+    // sync UI inputs
+    $("dollarsPerShot").value = String(state.dollarsPerShot ?? 5);
+    $("defaultMaxShots").value = String(state.defaultMaxShots ?? 5);
+    $("payoutStyle").value = state.payoutStyle || "per-player";
+    $("holesMode").value = state.holesMode || "18";
+    $("filterText").value = state.filterText || "";
+
+    // csv status
+    if(state.csvPlayers && state.csvPlayers.length){
+      const when = state.csvLoadedAt ? ` • Loaded: ${new Date(state.csvLoadedAt).toLocaleString()}` : "";
+      $("csvStatus").textContent = `CSV loaded: ${state.csvPlayers.length} players${when}.`;
+    } else {
+      $("csvStatus").textContent = "No CSV loaded. You can still fill the sheet; results will show “Need CSV / names”.";
+    }
+
+    const list = $("rowList");
+    const rows = filteredRows();
+    $("rowCount").textContent = `Showing ${rows.length} row(s).`;
+
+    list.innerHTML = "";
+
+    rows.forEach((row, idx) => {
       const card = document.createElement("div");
       card.className = "rowCard";
-      card.innerHTML = `
-        <div class="rowHead">
-          <div>
-            <p class="rowTitle">Match ${idx + 1}</p>
-            <span class="resultPill ${pillClass}">${pillText}</span>
-          </div>
 
-          <div class="rowActions">
-            <button class="btn btnGhost" type="button" data-dup="${row.id}">Duplicate</button>
-            <button class="btn btnBad" type="button" data-del="${row.id}">Delete</button>
+      const r = computeRowResult(row);
+      const pillText = r.pill || "—";
+      const pillClass = r.pillClass || "pillWarn";
+
+      let right = "";
+      if(r.status === "win"){
+        right = `$${(r.totalTransfer || 0).toFixed(2)}`;
+      } else if(r.status === "push"){
+        right = "$0.00";
+      } else {
+        right = "—";
+      }
+
+      card.innerHTML = `
+        <div class="rowTop">
+          <div class="rowTitle">
+            Match ${idx + 1}
+            <span class="pillSmall ${pillClass}">${escapeHtml(pillText)}</span>
           </div>
+          <div class="pillSmall">${escapeHtml(state.holesMode === "18" ? "18" : (state.holesMode === "9f" ? "Front 9" : "Back 9"))}</div>
         </div>
 
-        <div class="grid2">
+        <div class="rowGrid">
           <div>
             <label>Team A</label>
-            <textarea data-a="${row.id}" placeholder="Zack, Nick">${escapeHtml(row.teamA || "")}</textarea>
+            <textarea data-a="${escapeHtml(row.id)}" placeholder="Zack, Nick">${escapeHtml(row.teamA || "")}</textarea>
           </div>
+
           <div>
             <label>Team B</label>
-            <textarea data-b="${row.id}" placeholder="Blair, Garrett">${escapeHtml(row.teamB || "")}</textarea>
+            <textarea data-b="${escapeHtml(row.id)}" placeholder="Blair, Garrett">${escapeHtml(row.teamB || "")}</textarea>
+          </div>
+
+          <div>
+            <label>Max</label>
+            <input data-m="${escapeHtml(row.id)}" type="number" min="1" step="1" placeholder="${escapeHtml(state.defaultMaxShots)}" value="${escapeHtml(row.maxShots || "")}" />
+          </div>
+
+          <div>
+            <label>Notes</label>
+            <input data-n="${escapeHtml(row.id)}" type="text" placeholder="Optional…" value="${escapeHtml(row.note || "")}" />
           </div>
         </div>
 
-        <div class="grid2" style="margin-top:10px;">
-          <div>
-            <label>Max shots (override)</label>
-            <input data-m="${row.id}" type="number" min="1" step="1" placeholder="${state.defaultMaxShots}" value="${escapeHtml(row.maxShots || "")}" />
-          </div>
-          <div>
-            <label>Notes (optional)</label>
-            <input data-n="${row.id}" type="text" placeholder="Front 9 only, press, etc." value="${escapeHtml(row.note || "")}" />
-          </div>
+        <div class="resultBox">
+          <div class="left">${escapeHtml(r.text || "—").replaceAll("\n","<br/>")}</div>
+          <div class="right">${escapeHtml(right)}</div>
         </div>
 
-        ${metaHtml}
+        <div class="rowActions">
+          <button class="btn btnGhost" type="button" data-copyprev="${escapeHtml(row.id)}">Copy Prev</button>
+          <button class="btn btnGhost" type="button" data-dup="${escapeHtml(row.id)}">Duplicate</button>
+          <button class="btn btnBad" type="button" data-del="${escapeHtml(row.id)}">Delete</button>
+        </div>
       `;
 
       list.appendChild(card);
     });
 
-    // bind handlers
+    // bind inputs
+    [...list.querySelectorAll("textarea[data-a], textarea[data-b], input[data-m], input[data-n]")].forEach(el => {
+      el.oninput = () => {
+        const id = el.getAttribute("data-a") || el.getAttribute("data-b") || el.getAttribute("data-m") || el.getAttribute("data-n");
+        const row = state.rows.find(x => x.id === id);
+        if(!row) return;
+
+        if(el.hasAttribute("data-a")) row.teamA = el.value;
+        if(el.hasAttribute("data-b")) row.teamB = el.value;
+        if(el.hasAttribute("data-m")) row.maxShots = el.value;
+        if(el.hasAttribute("data-n")) row.note = el.value;
+
+        save();
+        // re-render lightly (simple + reliable)
+        renderSummaryOnly();
+        render(); // keep it straightforward and consistent
+      };
+    });
+
+    // Copy Prev
+    [...list.querySelectorAll("button[data-copyprev]")].forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-copyprev");
+        const index = state.rows.findIndex(x => x.id === id);
+        if(index <= 0){
+          alert("No previous row to copy.");
+          return;
+        }
+        const prev = state.rows[index - 1];
+        const cur = state.rows[index];
+        cur.teamA = prev.teamA;
+        cur.teamB = prev.teamB;
+        cur.maxShots = prev.maxShots;
+        save();
+        render();
+      };
+    });
+
+    // Duplicate
     [...list.querySelectorAll("button[data-dup]")].forEach(btn => {
       btn.onclick = () => {
         const id = btn.getAttribute("data-dup");
-        const r = state.rows.find(x => x.id === id);
-        if(!r) return;
-        const copy = { ...r, id: uid() };
-        state.rows.push(copy);
+        const index = state.rows.findIndex(x => x.id === id);
+        if(index < 0) return;
+        const src = state.rows[index];
+        const copy = { ...src, id: uid() };
+        state.rows.splice(index + 1, 0, copy);
         save();
-        renderRows();
+        render();
       };
     });
 
+    // Delete
     [...list.querySelectorAll("button[data-del]")].forEach(btn => {
       btn.onclick = () => {
         const id = btn.getAttribute("data-del");
-        const ok = confirm("Delete this row?");
-        if(!ok) return;
-        state.rows = state.rows.filter(x => x.id !== id);
+        const index = state.rows.findIndex(x => x.id === id);
+        if(index < 0) return;
+        state.rows.splice(index, 1);
         save();
-        renderRows();
-        syncSetupUI();
+        render();
       };
     });
 
-    // inputs
-    const wire = (selector, field) => {
-      [...list.querySelectorAll(selector)].forEach(el => {
-        el.oninput = () => {
-          const id = el.getAttribute(selector.match(/\[data-(.)=/)[1] ? "" : "");
-        };
-      });
-    };
-
-    // Team A
-    [...list.querySelectorAll("textarea[data-a]")].forEach(el => {
-      el.oninput = () => {
-        const id = el.getAttribute("data-a");
-        const r = state.rows.find(x => x.id === id);
-        if(!r) return;
-        r.teamA = el.value;
-        save();
-        renderRows();
-      };
-    });
-    // Team B
-    [...list.querySelectorAll("textarea[data-b]")].forEach(el => {
-      el.oninput = () => {
-        const id = el.getAttribute("data-b");
-        const r = state.rows.find(x => x.id === id);
-        if(!r) return;
-        r.teamB = el.value;
-        save();
-        renderRows();
-      };
-    });
-    // Max shots override
-    [...list.querySelectorAll("input[data-m]")].forEach(el => {
-      el.oninput = () => {
-        const id = el.getAttribute("data-m");
-        const r = state.rows.find(x => x.id === id);
-        if(!r) return;
-        const v = el.value.trim();
-        r.maxShots = v ? Number(v) : "";
-        save();
-        renderRows();
-      };
-    });
-    // Notes
-    [...list.querySelectorAll("input[data-n]")].forEach(el => {
-      el.oninput = () => {
-        const id = el.getAttribute("data-n");
-        const r = state.rows.find(x => x.id === id);
-        if(!r) return;
-        r.note = el.value;
-        save();
-      };
-    });
+    renderSummaryOnly();
   }
 
-  function escapeHtml(s){
-    return (s ?? "").toString()
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;");
+  function renderSummaryOnly(){
+    const summary = buildPayoutSummary();
+    $("summaryBox").textContent = summary;
   }
 
-  // ---------- Actions ----------
-  function addRow(fromRow){
-    const r = fromRow ? { ...fromRow } : { teamA:"", teamB:"", maxShots:"", note:"" };
-    r.id = uid();
-    state.rows.push(r);
-    save();
-    renderRows();
-    syncSetupUI();
-  }
-
-  function copyLastRow(){
+  // -----------------------------
+  // Actions
+  // -----------------------------
+  function addRow(copyLast=false){
     const last = state.rows[state.rows.length - 1];
-    if(!last){
-      addRow();
-      return;
-    }
-    addRow(last);
+    const row = {
+      id: uid(),
+      teamA: copyLast && last ? last.teamA : "",
+      teamB: copyLast && last ? last.teamB : "",
+      maxShots: copyLast && last ? last.maxShots : String(state.defaultMaxShots || 5),
+      note: ""
+    };
+    state.rows.push(row);
+    save();
+    render();
+    // scroll to bottom so it feels like adding to a sheet
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
   }
 
   function clearSheet(){
-    const ok = confirm("Clear the whole sheet (all rows)?");
+    const ok = confirm("Clear the sheet rows?\n\nThis does not delete your loaded CSV.");
     if(!ok) return;
     state.rows = [];
     save();
-    renderRows();
-    syncSetupUI();
+    render();
   }
 
-  // Copy payout summary
-  async function copySummary(){
-    const dollars = Number(state.dollarsPerShot) || 0;
-    const defMax = Number(state.defaultMaxShots) || 1;
-    const cap = dollars * defMax;
-
-    const lines = [];
-    lines.push(`Best Ball Bet Sheet`);
-    lines.push(`$ per shot: ${dollars} | Default max shots: ${defMax} | Default cap: $${cap}`);
-    lines.push("");
-
-    state.rows.forEach((row, i) => {
-      const c = computeRow(row);
-      const maxShots = Math.max(1, Number(row.maxShots || defMax) || defMax);
-
-      const A = teamLabel(parseTeamInput(row.teamA));
-      const B = teamLabel(parseTeamInput(row.teamB));
-
-      if(c.status === "need_csv"){
-        lines.push(`Row ${i+1}: ${A} vs ${B} -> NEED CSV`);
-        return;
-      }
-      if(c.status === "missing_names"){
-        lines.push(`Row ${i+1}: ${A} vs ${B} -> MISSING: ${c.missing.join(", ")}`);
-        return;
-      }
-      if(c.status === "push"){
-        lines.push(`Row ${i+1}: ${A} vs ${B} -> Push`);
-        return;
-      }
-
-      const winnerTeam = (c.winner === "A") ? A : B;
-      const loserTeam  = (c.loser === "A") ? A : B;
-      const isCapped = c.diff > maxShots;
-      lines.push(
-        `Row ${i+1}: ${A} vs ${B} -> ${loserTeam} pays ${winnerTeam} $${c.payout} (${c.shots} shots${isCapped ? ", capped" : ""})`
-      );
-    });
-
-    const text = lines.join("\n");
-
+  async function copyToClipboard(text){
     try{
       await navigator.clipboard.writeText(text);
-      alert("Payout summary copied.");
-    }catch(e){
-      prompt("Copy this:", text);
+      alert("Copied.");
+    } catch {
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      alert("Copied.");
     }
   }
 
-  // Download sheet CSV
-  function downloadSheetCSV(){
-    const dollars = Number(state.dollarsPerShot) || 0;
-    const defMax = Number(state.defaultMaxShots) || 1;
-
-    const rows = [];
-    rows.push([
-      "Row","TeamA","TeamB","MaxShots","ScoreA","ScoreB","Diff","Shots","Payout","Note","Status"
-    ].join(","));
-
-    state.rows.forEach((row, i) => {
-      const c = computeRow(row);
-      const maxShots = Math.max(1, Number(row.maxShots || defMax) || defMax);
-
-      const teamA = (row.teamA || "").replaceAll('"','""');
-      const teamB = (row.teamB || "").replaceAll('"','""');
-      const note  = (row.note || "").replaceAll('"','""');
-
-      const scoreA = (c.aTotal ?? "");
-      const scoreB = (c.bTotal ?? "");
-      const diff   = (c.diff ?? "");
-      const shots  = (c.shots ?? "");
-      const payout = (c.payout ?? "");
-      const status = c.status;
-
-      rows.push([
-        i+1,
-        `"${teamA}"`,
-        `"${teamB}"`,
-        maxShots,
-        scoreA,
-        scoreB,
-        diff,
-        shots,
-        payout,
-        `"${note}"`,
-        status
-      ].join(","));
-    });
-
-    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
+  function downloadText(filename, content){
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "bestball-bet-sheet.csv";
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
+    setTimeout(()=> URL.revokeObjectURL(url), 1000);
   }
 
-  // ---------- Wire up ----------
-  $("dollarsPerShot").oninput = () => {
-    state.dollarsPerShot = Math.max(1, Number($("dollarsPerShot").value || 1));
-    save();
-    syncSetupUI();
-    renderRows();
-  };
+  function downloadSheetCSV(){
+    // export rows as a simple CSV
+    const header = ["Row","Team A","Team B","Max Shots","Notes"].join(",");
+    const lines = state.rows.map((r, i) => {
+      return [
+        i+1,
+        csvCell(r.teamA),
+        csvCell(r.teamB),
+        csvCell(r.maxShots),
+        csvCell(r.note)
+      ].join(",");
+    });
+    downloadText("bestball_bet_sheet.csv", [header, ...lines].join("\n"));
 
-  $("defaultMaxShots").oninput = () => {
-    state.defaultMaxShots = Math.max(1, Number($("defaultMaxShots").value || 1));
-    save();
-    syncSetupUI();
-    renderRows();
-  };
+    function csvCell(v){
+      const s = (v ?? "").toString();
+      if(s.includes('"') || s.includes(",") || s.includes("\n")){
+        return `"${s.replaceAll('"','""')}"`;
+      }
+      return s;
+    }
+  }
 
-  $("addRowBtn").onclick = () => addRow();
-  $("copyLastBtn").onclick = () => copyLastRow();
-  $("clearSheetBtn").onclick = () => clearSheet();
-  $("rowSearch").oninput = () => renderRows();
-
-  $("copySummaryBtn").onclick = () => copySummary();
-  $("downloadCsvBtn").onclick = () => downloadSheetCSV();
-
-  $("csvFile").onchange = async (e) => {
+  // -----------------------------
+  // CSV upload binding
+  // -----------------------------
+  $("csvFile").addEventListener("change", async (e) => {
     const f = e.target.files && e.target.files[0];
     if(!f) return;
-    const txt = await f.text();
-    const map = parsePlayersFromSquabbitCSV(txt);
-    state.playersByName = map;
-    const count = map.size;
-
-    if(count){
-      setCsvStatus(true, `CSV loaded. Found ${count} players. Make sure your row names match the Squabbit names.`);
-    } else {
-      setCsvStatus(false, "Could not find player scores. Make sure the export includes Hole 1–18 columns.");
+    const text = await f.text();
+    const players = parsePlayersFromSquabbitCSV(text);
+    if(!players.length){
+      alert("Could not find player scores. Make sure the Squabbit export includes Hole 1–18 columns.");
+      return;
     }
-    renderRows();
-  };
+    state.csvPlayers = players;
+    state.csvLoadedAt = new Date().toISOString();
+    rebuildCsvMap();
+    save();
+    render();
+  });
 
-  // ---------- Init ----------
+  // -----------------------------
+  // Inputs
+  // -----------------------------
+  ["dollarsPerShot","defaultMaxShots","payoutStyle","holesMode","filterText"].forEach(id => {
+    $(id).addEventListener("input", () => { applyInputsToState(); render(); });
+    $(id).addEventListener("change", () => { applyInputsToState(); render(); });
+  });
+
+  $("addRowBtn").onclick = () => addRow(false);
+  $("copyLastRowBtn").onclick = () => addRow(true);
+  $("clearSheetBtn").onclick = clearSheet;
+
+  $("copySummaryBtn").onclick = () => copyToClipboard(buildPayoutSummary());
+  $("downloadSheetBtn").onclick = downloadSheetCSV;
+
+  // -----------------------------
+  // Bottom hub bar behavior
+  // -----------------------------
+  (function(){
+    const TOOL_NAME = window.TOOL_NAME || document.title || "Golf Tool";
+    const TOOL_KEYS = Array.isArray(window.TOOL_STORAGE_KEYS) ? window.TOOL_STORAGE_KEYS : [];
+    const HUB_INDEX = window.HUB_INDEX || "index.html";
+
+    $("hubToolTitle").textContent = TOOL_NAME;
+
+    $("hubBackBtn").onclick = () => { window.location.href = HUB_INDEX; };
+
+    $("hubResetThisBtn").onclick = () => {
+      if(!TOOL_KEYS.length){
+        alert("No reset keys set for this tool yet.");
+        return;
+      }
+      const ok = confirm(`Reset this tool?\n\nThis clears:\n- ${TOOL_KEYS.join("\n- ")}`);
+      if(!ok) return;
+      TOOL_KEYS.forEach(k => localStorage.removeItem(k));
+      alert("Tool reset. Reloading…");
+      window.location.reload();
+    };
+
+    $("hubResetAllBtn").onclick = () => {
+      const ok = confirm("Reset EVERYTHING for this site on this device?\n\nThis clears all local saved data.");
+      if(!ok) return;
+      localStorage.clear();
+      alert("Everything reset. Returning to hub…");
+      window.location.href = HUB_INDEX;
+    };
+  })();
+
+  // -----------------------------
+  // Initialize
+  // -----------------------------
   load();
-  syncSetupUI();
-
-  if(!state.rows.length){
-    // start with 2 rows so it feels like a sheet
-    addRow();
-    addRow();
-  } else {
-    renderRows();
+  if(!state.rows || !state.rows.length){
+    // start with one empty row so it feels like a sheet
+    state.rows = [{ id: uid(), teamA:"", teamB:"", maxShots: String(state.defaultMaxShots || 5), note:"" }];
+    save();
   }
-
-  setCsvStatus(false);
+  render();
 })();
 </script>
 </body>
