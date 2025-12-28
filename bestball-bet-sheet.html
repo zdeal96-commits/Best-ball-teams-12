@@ -8,9 +8,11 @@
     :root{
       --bg0:#07110d;
       --bg1:#0b1f16;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.04);
+      --line: rgba(255,255,255,.10);
       --text:#eaf5ef;
       --muted:#b7d1c2;
-      --line:rgba(255,255,255,.10);
 
       --accent:#34d399;
       --accent2:#22c55e;
@@ -20,9 +22,6 @@
 
       --shadow: 0 14px 45px rgba(0,0,0,.45);
       --radius: 16px;
-
-      --panel: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
-      --panel2: rgba(0,0,0,.16);
     }
     *{ box-sizing:border-box; }
     body{
@@ -31,25 +30,44 @@
       color:var(--text);
       font-family:-apple-system, system-ui, Segoe UI, Roboto, Arial;
       background:
-        radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
-        radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
+        radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.18), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.12), transparent 55%),
         linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #06110c);
-      padding:16px 16px calc(110px + env(safe-area-inset-bottom)) 16px;
+      padding: 14px 14px 92px; /* space for bottom bar */
     }
-    .wrap{ max-width: 1020px; margin: 0 auto; }
+    .wrap{ max-width: 1100px; margin: 0 auto; }
 
-    header{
-      display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
-      margin:6px 0 14px;
+    /* Top slim header */
+    .topbar{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 12px;
     }
-    h1{ margin:0; font-size:22px; letter-spacing:.2px; }
-    .sub{ color:var(--muted); font-size:13px; line-height:1.35; margin-top:6px; }
+    .topbar h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.2px;
+      font-weight: 950;
+    }
+    .sub{
+      margin-top:6px;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.25;
+      max-width: 640px;
+    }
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding:8px 12px; border-radius:999px;
       background: rgba(255,255,255,.06);
       border: 1px solid var(--line);
-      box-shadow: 0 10px 30px rgba(0,0,0,.18);
       color: var(--text);
       font-size:12px; white-space:nowrap;
     }
@@ -59,285 +77,288 @@
       box-shadow: 0 0 0 4px rgba(52,211,153,.18);
     }
 
-    .card{
+    /* Controls row */
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:flex-end;
+      margin-bottom: 12px;
+    }
+    .ctl{
+      flex: 1 1 180px;
+      min-width: 170px;
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 14px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      margin: 12px 0;
+      border-radius: 14px;
+      padding: 10px;
     }
-    .topline{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      margin:0 0 8px;
-      color:var(--muted);
-      font-size:12px;
-    }
-    .tag{
-      display:inline-block;
-      padding: 2px 8px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.05);
+    .ctl label{
+      display:block;
       color: var(--muted);
       font-size: 12px;
-      white-space:nowrap;
+      font-weight: 800;
+      letter-spacing:.2px;
+      margin-bottom:6px;
     }
-
-    label{ display:block; margin:10px 0 6px; color:var(--muted); font-size:12.5px; }
     input, select, textarea{
       width:100%;
-      padding:12px 12px;
-      border-radius: 14px;
+      padding: 11px 12px;
+      border-radius: 12px;
       border: 1px solid rgba(255,255,255,.14);
       background: rgba(9, 24, 17, .55);
       color: var(--text);
-      outline: none;
-      font-size: 16px;
+      outline:none;
+      font-size: 15px;
     }
-    textarea{ min-height: 54px; resize: vertical; }
-
-    select{
-      appearance:none;
-      background-image:
-        linear-gradient(45deg, transparent 50%, rgba(234,245,239,.75) 50%),
-        linear-gradient(135deg, rgba(234,245,239,.75) 50%, transparent 50%);
-      background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
-      background-size: 6px 6px, 6px 6px;
-      background-repeat: no-repeat;
-      padding-right: 34px;
-    }
-
-    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    .grid3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
-    @media (max-width: 720px){
-      .grid2, .grid3{ grid-template-columns: 1fr; }
-      header{ flex-direction:column; align-items:flex-start; }
-    }
-
+    textarea{ min-height: 42px; resize: vertical; }
     .btn{
       border:0;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 16px;
-      font-weight: 900;
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 14px;
+      font-weight: 950;
       cursor:pointer;
-      color: #0b1510;
-      transition: transform .05s ease, filter .15s ease;
       user-select:none;
-      white-space:nowrap;
     }
     .btn:active{ transform: scale(.99); }
-    .btnPrimary{ background: linear-gradient(135deg, var(--accent2), var(--accent)); box-shadow: 0 12px 30px rgba(34,197,94,.25); }
+    .btnPrimary{ background: linear-gradient(135deg, var(--accent2), var(--accent)); color:#06110c; }
     .btnGhost{ background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--line); }
-    .btnBad{ background: linear-gradient(135deg, #fb7185, #ef4444); box-shadow: 0 12px 30px rgba(239,68,68,.20); color:#08110c; }
+    .btnBad{ background: linear-gradient(135deg, #fb7185, #ef4444); color:#06110c; }
+    .btnMid{ background: linear-gradient(135deg, #94a3b8, #cbd5e1); color:#06110c; }
 
-    .btnRow{ display:flex; gap:10px; flex-wrap:wrap; }
-    .btnRow .btn{ flex: 1 1 auto; }
-
-    .mini{ font-size:12px; color:var(--muted); margin-top: 8px; line-height:1.35; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; }
-
-    /* ---------- SHEET ROW ---------- */
-    .sheetHeader{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding: 10px 12px;
-      border-radius: 14px;
+    /* Sheet */
+    .sheetWrap{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border: 1px solid var(--line);
-      background: var(--panel2);
-      margin-top: 6px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
     }
-    .sheetHeader strong{ font-size:14px; }
-    .sheetCount{ color: var(--muted); font-size:12px; }
-
-    .rowList{ display:flex; flex-direction:column; gap:14px; margin-top: 12px; }
-
-    .rowCard{
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.12);
-      padding: 12px;
-      box-shadow: 0 10px 28px rgba(0,0,0,.22);
-      position: relative;
+    .sheetHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.05);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      gap: 10px;
+      flex-wrap:wrap;
     }
-
-    .rowTop{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      margin-bottom: 10px;
-    }
-    .rowTitle{
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-      font-weight: 950;
+    .sheetHeader .left{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
       letter-spacing:.2px;
     }
-    .badge{
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 6px 10px;
-      border-radius:999px;
+    .sheetHeader .right{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .tableScroll{ overflow:auto; -webkit-overflow-scrolling: touch; }
+    table{
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px; /* so it behaves like a sheet */
+      background: rgba(0,0,0,.12);
+    }
+    th, td{
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: 10px 10px;
+      vertical-align: top;
+    }
+    th{
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(10,25,18,.96);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    tr:last-child td{ border-bottom:0; }
+
+    .colN{ width: 56px; text-align:center; color: var(--muted); font-weight: 950; }
+    .colTeam{ width: 330px; }
+    .colMid{ width: 140px; }
+    .colSmall{ width: 120px; }
+    .colActions{ width: 310px; }
+
+    .cellLabel{
+      display:block;
+      color: var(--muted);
+      font-size: 11.5px;
+      margin-bottom: 6px;
+      font-weight: 900;
+      letter-spacing:.2px;
+    }
+
+    .teamInput{
+      width:100%;
+      font-size: 15px;
+      padding: 12px 12px;
+      border-radius: 12px;
+    }
+
+    .rowBtns{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .rowBtns .btn{ padding: 10px 10px; font-size: 13px; }
+
+    .resultPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
       border: 1px solid var(--line);
       background: rgba(255,255,255,.06);
-      font-size:12px;
-      font-weight:900;
+      font-weight: 950;
+      font-size: 13px;
+      color: var(--text);
       white-space:nowrap;
     }
-    .badgeGood{ border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.10); }
-    .badgeBad{ border-color: rgba(251,113,133,.35); background: rgba(251,113,133,.10); }
-    .badgeWarn{ border-color: rgba(251,191,36,.35); background: rgba(251,191,36,.10); }
+    .resultPill.good{ border-color: rgba(52,211,153,.35); }
+    .resultPill.bad{ border-color: rgba(251,113,133,.35); }
+    .resultPill.mid{ border-color: rgba(148,163,184,.30); }
 
-    /* Opposite sides layout */
-    .matchGrid{
-      display:grid;
-      grid-template-columns: 1fr 70px 1fr;
-      gap: 10px;
-      align-items: start;
-    }
-    @media (max-width: 820px){
-      .matchGrid{ grid-template-columns: 1fr; }
-      .vsCol{ display:none; }
-    }
-    .vsCol{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border-radius: 16px;
-      border: 1px dashed rgba(255,255,255,.14);
-      background: rgba(255,255,255,.03);
-      height: 100%;
-      min-height: 130px;
-      color: var(--muted);
-      font-weight: 950;
-      letter-spacing: .3px;
-    }
-    .sideTitle{
-      display:flex; align-items:center; justify-content:space-between;
-      margin-bottom: 8px;
-    }
-    .sideTitle strong{ font-size: 13px; color: var(--text); }
-    .sideHint{ font-size:12px; color: var(--muted); }
-
-    .smallGrid{
-      display:grid;
-      grid-template-columns: 140px 1fr;
-      gap:10px;
-      margin-top: 10px;
-      align-items: end;
-    }
-    @media (max-width: 720px){
-      .smallGrid{ grid-template-columns: 1fr; }
-    }
-
-    .resultBox{
+    /* Payouts section */
+    .payouts{
       margin-top: 12px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 12px;
+    }
+    @media (max-width: 860px){
+      .payouts{ grid-template-columns: 1fr; }
+      .topbar{ flex-direction:column; align-items:flex-start; }
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+    .cardTitle{
+      font-weight: 950;
+      letter-spacing:.2px;
+      margin:0 0 8px;
+      font-size: 14px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .bigMoney{
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing:.2px;
       padding: 10px 12px;
       border-radius: 14px;
-      border: 1px solid var(--line);
-      background: rgba(0,0,0,.14);
-      font-size: 13px;
-      line-height:1.35;
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      margin-bottom: 10px;
+      white-space: pre-wrap;
+      line-height: 1.25;
     }
-    .resultBox .left{ flex: 1 1 auto; }
-    .resultBox .right{ text-align:right; min-width: 130px; font-weight: 950; }
+    .bigMoney .pos{ color:#5eead4; }
+    .bigMoney .neg{ color:#fda4af; }
 
-    .rowActions{
-      display:flex;
-      gap:10px;
-      justify-content:flex-end;
-      flex-wrap:wrap;
-      margin-top: 12px;
-    }
-    .rowActions .btn{ padding: 10px 12px; font-size: 14px; }
-
-    .goodTxt{ color: #5eead4; font-weight:900; }
-    .badTxt{ color: #fda4af; font-weight:900; }
-    .warnTxt{ color: #fde68a; font-weight:900; }
-
-    /* ---------- Autocomplete ---------- */
-    .acWrap{ position: relative; }
-    .acList{
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: calc(100% + 6px);
-      z-index: 999;
+    .settleList{
+      padding: 10px 12px;
       border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(5,17,11,.96);
-      box-shadow: 0 18px 40px rgba(0,0,0,.50);
-      overflow: hidden;
-      display:none;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      line-height: 1.35;
+    }
+
+    /* Autocomplete */
+    .acWrap{ position: relative; }
+    .acBox{
+      position:absolute;
+      left:0; right:0; top: calc(100% + 6px);
+      z-index: 50;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(6,16,12,.98);
+      box-shadow: 0 18px 50px rgba(0,0,0,.55);
       max-height: 220px;
-      overflow-y:auto;
+      overflow:auto;
+      display:none;
     }
     .acItem{
       padding: 10px 12px;
-      cursor: pointer;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      color: var(--text);
+      cursor:pointer;
+      border-bottom: 1px solid rgba(255,255,255,.06);
       font-weight: 850;
       font-size: 14px;
     }
     .acItem:last-child{ border-bottom:0; }
     .acItem:hover{ background: rgba(255,255,255,.06); }
+    .acHint{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 6px;
+      line-height: 1.25;
+    }
 
-    /* ---------- Bottom hub bar ---------- */
-    .hubbar{
+    /* Bottom sticky bar */
+    .bottombar{
       position: fixed;
       left: 0; right: 0; bottom: 0;
       z-index: 9999;
-      padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) 12px;
-      background: linear-gradient(180deg, rgba(5,17,11,.45), rgba(5,17,11,.92));
+      padding: 10px 12px;
+      background: linear-gradient(180deg, rgba(5,17,11,.70), rgba(5,17,11,.92));
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-top: 1px solid rgba(255,255,255,.10);
     }
-    .hubbarRow{
-      max-width: 1020px;
+    .bottombarRow{
+      max-width: 1100px;
       margin: 0 auto;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
+      flex-wrap:wrap;
     }
-    .hubbarTitle{
-      color: #eaf5ef;
+    .btTitle{
       font-weight: 950;
       font-size: 13px;
-      max-width: 45%;
+      color: var(--text);
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
-      opacity:.95;
+      max-width: 50vw;
     }
-    .hubBtns{
-      display:flex; gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .hubBtn{
+    .btBtns{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .btBtn{
       border:0;
       border-radius: 12px;
-      padding: 10px 12px;
+      padding: 10px 10px;
       font-size: 13px;
       font-weight: 950;
       cursor:pointer;
       user-select:none;
-      white-space:nowrap;
     }
-    .hubBtnGhost{
+    .btBtnGhost{
       background: rgba(255,255,255,.08);
       color:#eaf5ef;
       border: 1px solid rgba(255,255,255,.10);
     }
-    .hubBtnDanger{
+    .btBtnDanger{
       background: linear-gradient(135deg, #fb7185, #ef4444);
       color:#08110c;
-      border: 1px solid rgba(255,255,255,.06);
     }
   </style>
 </head>
@@ -345,882 +366,791 @@
 <body>
 <div class="wrap">
 
-  <header>
+  <div class="topbar">
     <div>
-      <h1>Best Ball Bet Sheet <span class="tag">sheet style</span></h1>
+      <h1>Best Ball Bet Sheet</h1>
       <div class="sub">
-        Fill matchups like a paper sheet. Teams are on opposite sides.
-        Load Squabbit CSV to auto-calc scores and payouts. Shortcut: enter <b>""</b> or <b>""""</b> to reuse the previous row team on that side.
+        Sheet-style entry. Team A (left) vs Team B (right). Autocomplete names as you type.
+        Shortcut: type <b>""</b> (or <b>''</b>) to reuse the previous row’s Team A/Team B.
       </div>
     </div>
     <div class="pill"><span class="dot"></span><span><b>Local save</b> (stays on your phone)</span></div>
-  </header>
+  </div>
 
-  <div class="card">
-    <div class="topline"><span>1) Defaults</span><span class="tag" id="csvTag">CSV: none</span></div>
-
-    <div class="grid2">
-      <div>
-        <label>$ per shot</label>
-        <input id="dollarsPerShot" type="number" min="0" step="0.5" value="5" />
-      </div>
-      <div>
-        <label>Default max shots</label>
-        <input id="defaultMaxShots" type="number" min="1" step="1" value="5" />
-      </div>
+  <div class="controls">
+    <div class="ctl">
+      <label>$ per shot (global)</label>
+      <input id="dollarsPerShot" type="number" min="1" step="1" value="5" />
     </div>
-
-    <div class="grid2">
-      <div>
-        <label>Payout style</label>
-        <select id="payoutStyle">
-          <option value="per-player" selected>Each loser pays each winner</option>
-          <option value="team-split">Team pays team (split evenly)</option>
-        </select>
-        <div class="mini">
-          <b>Each loser pays each winner</b> is the easiest for settlement.
-        </div>
-      </div>
-
-      <div>
-        <label>Holes used</label>
-        <select id="holesMode">
-          <option value="18" selected>18 holes</option>
-          <option value="9f">Front 9 only</option>
-          <option value="9b">Back 9 only</option>
-        </select>
-      </div>
+    <div class="ctl">
+      <label>Max shots cap (global)</label>
+      <input id="maxShotsGlobal" type="number" min="1" step="1" value="5" />
     </div>
-
-    <div class="grid2">
-      <div>
-        <label>Import Squabbit CSV</label>
-        <input id="csvFile" type="file" accept=".csv,text/csv" />
-        <div class="mini" id="csvStatus">No CSV loaded.</div>
-      </div>
-      <div>
-        <label>Find a row by name</label>
-        <input id="filterText" placeholder="Type a name… (Zack)" />
-        <div class="mini">This filters rows that contain that text.</div>
-      </div>
+    <div class="ctl">
+      <label>Holes</label>
+      <input id="holes" type="number" min="1" max="36" value="18" />
     </div>
-
-    <div class="btnRow" style="margin-top:12px;">
-      <button id="addRowBtn" class="btn btnPrimary" type="button">Add Row</button>
-      <button id="copyLastRowBtn" class="btn btnGhost" type="button">Copy Last Row</button>
-      <button id="clearSheetBtn" class="btn btnBad" type="button">Clear Sheet</button>
+    <div class="ctl">
+      <label>Squabbit CSV (optional)</label>
+      <input id="csvFile" type="file" accept=".csv,text/csv" />
     </div>
-
-    <div class="mini">
-      Example entries:<br/>
-      <span class="mono">Zack, Nick</span> vs <span class="mono">Blair</span> (2v1)<br/>
-      <span class="mono">Zack, Keith, Nick</span> vs <span class="mono">Blair, Garrett</span> (3v2)
+    <div class="ctl" style="flex: 1 1 260px; min-width: 240px;">
+      <label>Quick find (filters rows by name)</label>
+      <input id="rowSearch" placeholder="Type a name… (Zack, Blair, etc)" />
+      <div class="acHint">Tip: also builds your autocomplete list once CSV is loaded.</div>
     </div>
   </div>
 
-  <div class="card">
+  <div class="sheetWrap">
     <div class="sheetHeader">
-      <strong>2) Bet Sheet</strong>
-      <div class="sheetCount" id="rowCount">Showing 0 row(s).</div>
+      <div class="left" id="sheetMeta">0 row(s)</div>
+      <div class="right">
+        <button class="btn btnPrimary" id="addRowTop">Add Row</button>
+        <button class="btn btnGhost" id="copyLastRowTop">Copy Last Row</button>
+        <button class="btn btnBad" id="clearSheetTop">Clear Sheet</button>
+      </div>
     </div>
-    <div class="rowList" id="rowList"></div>
+
+    <div class="tableScroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="colN">#</th>
+            <th class="colTeam">Team A (left)</th>
+            <th class="colTeam">Team B (right)</th>
+            <th class="colMid">Winner</th>
+            <th class="colSmall">Shots</th>
+            <th class="colSmall">Payout</th>
+            <th class="colActions">Row actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="card">
-    <div class="topline"><span>3) Copy / Export</span><span class="tag">optional</span></div>
-    <div class="btnRow">
-      <button id="copySummaryBtn" class="btn btnGhost" type="button">Copy Payout Summary</button>
-      <button id="downloadSheetBtn" class="btn btnGhost" type="button">Download Sheet CSV</button>
+  <div class="payouts">
+    <div class="card">
+      <div class="cardTitle">Payout summary</div>
+      <div class="bigMoney" id="payoutSummary">Add rows to see payouts.</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btnGhost" id="copyPayoutsBtn">Copy Payout Summary</button>
+        <button class="btn btnGhost" id="downloadCsvBtn">Download Sheet CSV</button>
+      </div>
     </div>
-    <div class="mini mono" id="summaryBox" style="margin-top:10px;">Summary will appear here…</div>
-  </div>
 
+    <div class="card">
+      <div class="cardTitle">Settlement</div>
+      <div class="settleList" id="settlementBox">No settlement yet.</div>
+    </div>
+  </div>
 </div>
 
-<!-- Bottom sticky bar -->
-<div class="hubbar">
-  <div class="hubbarRow">
-    <div class="hubbarTitle" id="hubToolTitle">Golf Tool</div>
-    <div class="hubBtns">
-      <button class="hubBtn hubBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
-      <button class="hubBtn hubBtnGhost" type="button" id="hubResetThisBtn">Reset This Tool</button>
-      <button class="hubBtn hubBtnDanger" type="button" id="hubResetAllBtn">Reset Everything</button>
+<!-- Bottom bar -->
+<div class="bottombar">
+  <div class="bottombarRow">
+    <div class="btTitle">Best Ball Bet Sheet</div>
+    <div class="btBtns">
+      <button class="btBtn btBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
+      <button class="btBtn btBtnGhost" type="button" id="resetThisBtn">Reset This Tool</button>
+      <button class="btBtn btBtnDanger" type="button" id="resetAllBtn">Reset Everything</button>
     </div>
   </div>
 </div>
 
 <script>
 (() => {
-  // -----------------------------
-  // Hub bar config
-  // -----------------------------
-  window.TOOL_NAME = "Best Ball Bet Sheet";
-  window.TOOL_STORAGE_KEYS = ["bestball_bet_sheet_v2"];
-  window.HUB_INDEX = "index.html";
-
   const LS_KEY = "bestball_bet_sheet_v2";
+  const HUB_INDEX = "index.html";
 
   const $ = (id) => document.getElementById(id);
-  const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
   const state = {
-    dollarsPerShot: 5,
-    defaultMaxShots: 5,
-    payoutStyle: "per-player",  // per-player | team-split
-    holesMode: "18",            // 18 | 9f | 9b
-    filterText: "",
-    rows: [],                   // {id, teamA, teamB, maxShots, note}
-    csvPlayers: [],             // {name, strokes[18], total, front, back}
-    csvLoadedAt: null
+    rows: [],
+    // autocomplete names list, built from CSV OR manual entry
+    names: [],
+    csvPlayers: null, // Map name -> {strokes[18], ...} if you want later
   };
 
-  function save(){
-    localStorage.setItem(LS_KEY, JSON.stringify(state));
-  }
+  // ---------- local storage ----------
   function load(){
     const raw = localStorage.getItem(LS_KEY);
     if(!raw) return;
     try{
-      const obj = JSON.parse(raw);
-      Object.assign(state, obj);
-    } catch {}
+      const parsed = JSON.parse(raw);
+      if(parsed && Array.isArray(parsed.rows)) state.rows = parsed.rows;
+      if(parsed && Array.isArray(parsed.names)) state.names = parsed.names;
+      if(parsed && parsed.meta){
+        $("dollarsPerShot").value = parsed.meta.dollarsPerShot ?? $("dollarsPerShot").value;
+        $("maxShotsGlobal").value = parsed.meta.maxShotsGlobal ?? $("maxShotsGlobal").value;
+        $("holes").value = parsed.meta.holes ?? $("holes").value;
+      }
+    }catch(e){}
+  }
+  function save(){
+    const meta = {
+      dollarsPerShot: num($("dollarsPerShot").value, 5),
+      maxShotsGlobal: num($("maxShotsGlobal").value, 5),
+      holes: num($("holes").value, 18),
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify({ rows: state.rows, names: state.names, meta }));
   }
 
-  // -----------------------------
-  // CSV parsing (more flexible)
-  // -----------------------------
-  function splitCSVLine(line){
+  function num(v, fallback){
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  // ---------- CSV parse (names list + optional scores for future use) ----------
+  const splitCSVLine = (line) => {
     const out = [];
     let cur = "";
     let inQ = false;
-    for(let i=0;i<line.length;i++){
+    for (let i = 0; i < line.length; i++) {
       const c = line[i];
-      if(c === '"'){
-        if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+      if (c === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
         else inQ = !inQ;
-      } else if(c === ',' && !inQ){
-        out.push(cur); cur = "";
-      } else {
-        cur += c;
-      }
+      } else if (c === ',' && !inQ) {
+        out.push(cur);
+        cur = "";
+      } else cur += c;
     }
     out.push(cur);
-    return out.map(s => (s ?? "").trim());
-  }
-  function parseCSVRows(text){
-    return text.split(/\r?\n/).filter(r => r.trim().length).map(splitCSVLine);
-  }
-  function toInt(v){
+    return out.map(s => (s || "").trim());
+  };
+  const parseCSVRows = (text) => text.split(/\r?\n/).map(splitCSVLine);
+
+  const toInt = (v) => {
     const s = (v ?? "").toString().trim();
-    if(!/^\d+$/.test(s)) return null;
+    if (!/^\d+$/.test(s)) return null;
     const n = parseInt(s, 10);
     return Number.isFinite(n) ? n : null;
-  }
+  };
+  const titleCase = (n) =>
+    n.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
 
-  function titleCaseName(s){
-    const t = (s || "").trim();
-    if(!t) return "";
-    return t.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-  }
-
-  function findHeaderHoleIndexes(headerRow){
-    // Find columns that look like Hole 1..18
+  const buildHoleIndex = (row) => {
     const idx = {};
-    for(let i=0;i<headerRow.length;i++){
-      const h = (headerRow[i] || "").toLowerCase().replace(/\s+/g," ").trim();
-      for(let k=1;k<=18;k++){
-        if(h === `hole ${k}` || h === `hole${k}` || h === `${k}`){
-          idx[k] = i;
-        }
+    row.forEach((c, i) => {
+      const s = (c || "").toLowerCase().trim();
+      for (let h = 1; h <= 18; h++) {
+        if (s === `hole ${h}` || s === `${h}` || s === `hole${h}`) idx[h] = i;
       }
-    }
-    return Object.keys(idx).length >= 12 ? idx : null; // require enough holes to be confident
-  }
+    });
+    return Object.keys(idx).length ? idx : null;
+  };
+  const isPlayerRow = (r) =>
+    (r[1] || "").toLowerCase().includes("tee") && (r[0] || "").trim();
 
-  function findNameColumn(headerRow){
-    // Try to find "player" / "name"
-    let best = 0, bestI = 0;
-    for(let i=0;i<headerRow.length;i++){
-      const h = (headerRow[i] || "").toLowerCase();
-      let score = 0;
-      if(h.includes("player")) score += 3;
-      if(h.includes("name")) score += 2;
-      if(h.includes("golfer")) score += 2;
-      if(score > best){ best = score; bestI = i; }
-    }
-    return best > 0 ? bestI : 0; // fallback to first col
-  }
-
-  function parsePlayersFromSquabbitCSV(text){
-    const rows = parseCSVRows(text);
-
-    // Find a header row that contains hole columns
+  function parsePlayersFromCSV(txt){
+    const rows = parseCSVRows(txt);
     let holeIdx = null;
-    let headerRow = null;
-    for(const row of rows){
-      const idx = findHeaderHoleIndexes(row);
-      if(idx){
-        holeIdx = idx;
-        headerRow = row;
-        break;
-      }
-    }
-    if(!holeIdx || !headerRow) return [];
-
-    const nameCol = findNameColumn(headerRow);
     const playersMap = new Map();
 
-    for(const row of rows){
-      // must have enough columns
-      if(row.length < Math.max(...Object.values(holeIdx)) + 1) continue;
+    for (const row of rows) {
+      if (row.some(c => /hole\s*1/i.test(c || ""))) {
+        holeIdx = buildHoleIndex(row);
+        continue;
+      }
+      if (!holeIdx) continue;
 
-      const rawName = (row[nameCol] || "").trim();
-      if(!rawName) continue;
+      const lowerJoined = row.map(c => (c || "").toLowerCase()).join(" ");
+      if (
+        lowerJoined.includes("individual gross skins") ||
+        lowerJoined.includes("strokeplay") ||
+        lowerJoined.includes("best ball") ||
+        lowerJoined.includes("par") ||
+        lowerJoined.startsWith("s.i.")
+      ) continue;
 
-      // Attempt to read 18 hole strokes
+      if (!isPlayerRow(row)) continue;
+
+      const rawName = (row[0] || "").trim();
+      if (!rawName) continue;
+
+      const name = titleCase(rawName);
       const strokes = [];
-      for(let h=1; h<=18; h++){
+      for (let h = 1; h <= 18; h++) {
         const col = holeIdx[h];
-        const val = toInt(row[col]);
-        if(val == null){ strokes.length = 0; break; }
+        const val = col != null ? toInt(row[col]) : null;
+        if (val == null) { strokes.length = 0; break; }
         strokes.push(val);
       }
-      if(strokes.length !== 18) continue;
-
-      // Filter out obvious non-player rows if they sneak in
-      const lowerName = rawName.toLowerCase();
-      if(lowerName.includes("par") || lowerName.includes("handicap") || lowerName.includes("gross") || lowerName.includes("net")) continue;
-
-      const name = titleCaseName(rawName);
-      const front = strokes.slice(0,9).reduce((a,b)=>a+b,0);
-      const back  = strokes.slice(9,18).reduce((a,b)=>a+b,0);
-      const total = front + back;
-
-      playersMap.set(name.toLowerCase(), { name, strokes, front, back, total });
+      if (strokes.length === 18) playersMap.set(name, { name, strokes });
     }
-
-    return [...playersMap.values()].sort((a,b)=> a.name.localeCompare(b.name));
+    return [...playersMap.values()];
   }
 
-  function buildPlayerIndex(){
-    const map = new Map();
-    (state.csvPlayers || []).forEach(p => map.set(p.name.toLowerCase(), p));
-    return map;
+  // ---------- row model ----------
+  function newRow(){
+    return {
+      a: "",      // Team A text
+      b: "",      // Team B text
+      winner: "", // "A" | "B" | "P"
+      shots: "",  // number string
+      notes: "",
+      createdAt: Date.now()
+    };
   }
 
-  // -----------------------------
-  // Best ball calc
-  // -----------------------------
-  function holesRange(){
-    if(state.holesMode === "9f") return { start:0, end:8 };
-    if(state.holesMode === "9b") return { start:9, end:17 };
-    return { start:0, end:17 };
+  function normalizeTeamText(raw, prev){
+    const t = (raw || "").trim();
+    if(t === '""' || t === "''") return prev || "";
+    return t;
   }
 
-  function splitNames(str){
-    return (str || "")
+  function teamNamesFromText(text){
+    return (text || "")
       .split(",")
       .map(s => s.trim())
       .filter(Boolean);
   }
 
-  function normalizeQuotesShortcut(s){
-    const t = (s || "").trim();
-    return (t === '""' || t === '""""');
-  }
-
-  function applyQuoteShortcuts(rows){
-    // If a side is "" or """", copy previous row's same side
-    for(let i=0;i<rows.length;i++){
-      const r = rows[i];
-      if(i === 0) continue;
-      const prev = rows[i-1];
-
-      if(normalizeQuotesShortcut(r.teamA)) r.teamA = prev.teamA;
-      if(normalizeQuotesShortcut(r.teamB)) r.teamB = prev.teamB;
+  // ---------- autocomplete ----------
+  function addNameToAutocomplete(name){
+    const clean = titleCase(name.trim());
+    if(!clean) return;
+    const exists = state.names.some(n => n.toLowerCase() === clean.toLowerCase());
+    if(!exists){
+      state.names.push(clean);
+      state.names.sort((a,b)=> a.localeCompare(b));
     }
   }
 
-  function bestBallTotal(teamNames, playerMap){
-    if(!state.csvPlayers || state.csvPlayers.length === 0) return { ok:false, reason:"Need CSV", total:null };
-
-    const players = [];
-    for(const n of teamNames){
-      const p = playerMap.get(n.toLowerCase());
-      if(!p) return { ok:false, reason:`Missing player: ${n}`, total:null };
-      players.push(p);
+  function buildAutocompleteBox(inputEl){
+    let box = inputEl.parentElement.querySelector(".acBox");
+    if(!box){
+      box = document.createElement("div");
+      box.className = "acBox";
+      inputEl.parentElement.appendChild(box);
     }
-    if(players.length === 0) return { ok:false, reason:"No names", total:null };
-
-    const { start, end } = holesRange();
-    let sum = 0;
-    for(let i=start;i<=end;i++){
-      let best = Infinity;
-      for(const p of players){
-        best = Math.min(best, p.strokes[i]);
-      }
-      if(!Number.isFinite(best)) return { ok:false, reason:"Bad strokes", total:null };
-      sum += best;
-    }
-    return { ok:true, reason:"", total:sum };
+    return box;
   }
 
-  function computeRow(row, rowIndex, rowsForShortcuts, playerMap){
-    const aNames = splitNames(row.teamA);
-    const bNames = splitNames(row.teamB);
-
-    if(aNames.length === 0 || bNames.length === 0){
-      return { status:"need", badge:"Need teams", badgeClass:"badgeWarn", text:"Enter Team A and Team B.", transfer:0 };
-    }
-
-    if(!state.csvPlayers || state.csvPlayers.length === 0){
-      return { status:"need", badge:"Need CSV", badgeClass:"badgeWarn", text:"Load Squabbit CSV to calculate scores and payouts.", transfer:0 };
-    }
-
-    const a = bestBallTotal(aNames, playerMap);
-    const b = bestBallTotal(bNames, playerMap);
-
-    if(!a.ok || !b.ok){
-      const why = !a.ok ? a.reason : b.reason;
-      return { status:"need", badge:"Need names", badgeClass:"badgeWarn", text: why, transfer:0 };
-    }
-
-    const diff = b.total - a.total; // positive means A wins (lower)
-    if(diff === 0){
-      return { status:"push", badge:"Push", badgeClass:"badgeWarn", text:`A ${a.total} vs B ${b.total}.`, transfer:0, shots:0 };
-    }
-
-    const shotsRaw = Math.abs(diff);
-    const maxShots = Number(row.maxShots || state.defaultMaxShots || 0);
-    const shots = Math.min(shotsRaw, maxShots > 0 ? maxShots : shotsRaw);
-
-    const perShot = Number(state.dollarsPerShot || 0);
-    const base = shots * perShot;
-
-    const aWins = diff > 0;
-    const winners = aWins ? aNames : bNames;
-    const losers  = aWins ? bNames : aNames;
-
-    const transfer = (state.payoutStyle === "per-player")
-      ? base * (winners.length * losers.length)
-      : base;
-
-    const badge = aWins ? "Team A wins" : "Team B wins";
-    const badgeClass = aWins ? "badgeGood" : "badgeBad";
-
-    const detail =
-      `A (${aNames.join(", ")}): ${a.total} • B (${bNames.join(", ")}): ${b.total}\n` +
-      `Shots: ${shotsRaw} (cap → ${shots}) • $/shot: ${perShot}\n` +
-      (state.payoutStyle === "per-player"
-        ? `Per-player: $${base} per opponent pair → Total transfer $${transfer}`
-        : `Team-split: Total transfer $${transfer}`);
-
-    return {
-      status:"win",
-      badge,
-      badgeClass,
-      text: detail,
-      transfer,
-      base,
-      shots,
-      winners,
-      losers
-    };
+  function currentTokenInfo(value){
+    // token after last comma
+    const idx = value.lastIndexOf(",");
+    const token = idx === -1 ? value.trim() : value.slice(idx+1).trim();
+    return { idx, token };
   }
 
-  function buildSummary(playerMap){
-    // Apply quote shortcuts on a cloned array (so summary reflects it)
-    const rowsClone = state.rows.map(r => ({...r}));
-    applyQuoteShortcuts(rowsClone);
+  function replaceTokenWith(value, replacement){
+    const { idx } = currentTokenInfo(value);
+    if(idx === -1) return replacement + ", ";
+    return value.slice(0, idx+1) + " " + replacement + ", ";
+  }
 
-    const net = new Map();
-    const lines = [];
-    let computed = 0;
+  function showSuggestions(inputEl){
+    const box = buildAutocompleteBox(inputEl);
+    const { token } = currentTokenInfo(inputEl.value);
+    const q = token.toLowerCase();
 
-    function addNet(name, amt){
-      net.set(name, (net.get(name) || 0) + amt);
+    const list = (state.names || [])
+      .filter(n => !q || n.toLowerCase().includes(q))
+      .slice(0, 10);
+
+    if(!list.length){
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
     }
 
-    rowsClone.forEach((row, i) => {
-      const r = computeRow(row, i, rowsClone, playerMap);
-      if(r.status !== "win") return;
-      computed++;
+    box.innerHTML = list.map(n => `<div class="acItem">${n}</div>`).join("");
+    box.style.display = "block";
 
-      if(state.payoutStyle === "per-player"){
-        // each loser pays each winner base
-        const base = r.base;
-        r.winners.forEach(w => addNet(w, base * r.losers.length));
-        r.losers.forEach(l => addNet(l, -base * r.winners.length));
-        lines.push(`Row ${i+1}: ${row.teamA} vs ${row.teamB} | ${r.badge} | shots ${r.shots} | total $${r.transfer}`);
-      } else {
-        // team split
-        const total = r.transfer;
-        const winShare = total / r.winners.length;
-        const loseShare = total / r.losers.length;
-        r.winners.forEach(w => addNet(w, winShare));
-        r.losers.forEach(l => addNet(l, -loseShare));
-        lines.push(`Row ${i+1}: ${row.teamA} vs ${row.teamB} | ${r.badge} | shots ${r.shots} | total $${total} (split)`);
+    [...box.querySelectorAll(".acItem")].forEach(item => {
+      item.onclick = () => {
+        inputEl.value = replaceTokenWith(inputEl.value, item.textContent);
+        inputEl.dispatchEvent(new Event("input"));
+        box.style.display = "none";
+      };
+    });
+  }
+
+  function hideSuggestions(inputEl){
+    const box = inputEl.parentElement.querySelector(".acBox");
+    if(box) box.style.display = "none";
+  }
+
+  // ---------- payouts ----------
+  function calcPayout(row, globals){
+    const dollarsPerShot = globals.dollarsPerShot;
+    const cap = globals.maxShotsGlobal;
+
+    const shots = Math.max(0, Math.min(cap, num(row.shots, 0)));
+    if(!shots) return 0;
+
+    // payout is per-player settlement in best-ball style:
+    // Team A loses -> each A player pays each B player? You previously did per-player settlement.
+    // We'll keep simple + consistent:
+    // Total pot = shots * dollarsPerShot * min(sizeA, sizeB)
+    // and settlement splits by min pairing count.
+    const a = teamNamesFromText(row.a);
+    const b = teamNamesFromText(row.b);
+    const pairs = Math.min(a.length, b.length);
+    const total = shots * dollarsPerShot * pairs;
+    return total;
+  }
+
+  function computeSettlement(rows, globals){
+    // Build balances per player using min pairs concept.
+    // If A wins: each B pays each A evenly by pairs.
+    // If B wins: each A pays each B evenly by pairs.
+    const bal = new Map(); // player -> $ balance (+ is owed, - owes)
+    const add = (p, amt) => bal.set(p, (bal.get(p)||0) + amt);
+
+    rows.forEach(r => {
+      if(!r) return;
+      const winner = r.winner;
+      if(!(winner === "A" || winner === "B")) return;
+
+      const a = teamNamesFromText(r.a);
+      const b = teamNamesFromText(r.b);
+      const pairs = Math.min(a.length, b.length);
+      if(pairs <= 0) return;
+
+      const shots = Math.max(0, Math.min(globals.maxShotsGlobal, num(r.shots, 0)));
+      if(!shots) return;
+
+      const unit = shots * globals.dollarsPerShot; // per pair
+      // Pair up by index: A[i] vs B[i]
+      for(let i=0;i<pairs;i++){
+        const payer = (winner === "A") ? b[i] : a[i];
+        const payee = (winner === "A") ? a[i] : b[i];
+        add(payee, unit);
+        add(payer, -unit);
       }
     });
 
-    const creditors = [];
-    const debtors = [];
-    for(const [name, amt] of net.entries()){
-      const rounded = Math.round(amt * 100) / 100;
-      if(rounded > 0) creditors.push({ name, amt: rounded });
-      else if(rounded < 0) debtors.push({ name, amt: -rounded });
-    }
+    // Convert balances to payment instructions
+    const creditors = [...bal.entries()].filter(([_,v])=> v>0).map(([name,amt])=>({name,amt}));
+    const debtors = [...bal.entries()].filter(([_,v])=> v<0).map(([name,amt])=>({name,amt:-amt}));
+
     creditors.sort((a,b)=> b.amt - a.amt);
     debtors.sort((a,b)=> b.amt - a.amt);
 
     let i=0, j=0;
-    const settle = [];
+    const lines=[];
     while(i<debtors.length && j<creditors.length){
       const pay = Math.min(debtors[i].amt, creditors[j].amt);
-      if(pay > 0.009){
-        settle.push(`${debtors[i].name} pays ${creditors[j].name}: $${pay.toFixed(2)}`);
+      if(pay > 0.0001){
+        lines.push(`${debtors[i].name} pays ${creditors[j].name}: $${pay.toFixed(2)}`);
         debtors[i].amt -= pay;
         creditors[j].amt -= pay;
       }
-      if(debtors[i].amt <= 0.009) i++;
-      if(creditors[j].amt <= 0.009) j++;
+      if(debtors[i].amt <= 0.0001) i++;
+      if(creditors[j].amt <= 0.0001) j++;
     }
 
-    const holesLabel = state.holesMode === "18" ? "18" : (state.holesMode === "9f" ? "Front 9" : "Back 9");
-
-    return (
-      `Best Ball Bet Sheet Summary\n` +
-      `Holes: ${holesLabel}\n` +
-      `$/shot: ${Number(state.dollarsPerShot||0)} • Default max: ${Number(state.defaultMaxShots||0)} • Style: ${state.payoutStyle}\n` +
-      `Rows with results: ${computed}\n\n` +
-      `Rows:\n${lines.length ? lines.join("\n") : "(no calculated rows yet)"}\n\n` +
-      `Settlement:\n${settle.length ? settle.join("\n") : "All square."}`
-    );
+    return { balances: bal, lines };
   }
 
-  // -----------------------------
-  // Autocomplete (tap to insert)
-  // -----------------------------
-  function getLastToken(text){
-    // Last comma-separated token
-    const parts = text.split(",");
-    return (parts[parts.length - 1] || "").trim();
+  // ---------- render ----------
+  function globals(){
+    return {
+      dollarsPerShot: num($("dollarsPerShot").value, 5),
+      maxShotsGlobal: num($("maxShotsGlobal").value, 5),
+      holes: num($("holes").value, 18),
+    };
   }
 
-  function replaceLastToken(text, newName){
-    const parts = text.split(",");
-    if(parts.length === 1) return newName;
-    parts[parts.length - 1] = " " + newName;
-    return parts.join(",").replace(/\s+,/g, ",");
+  function updateMeta(){
+    $("sheetMeta").textContent = `${state.rows.length} row(s) • $/shot ${globals().dollarsPerShot} • cap ${globals().maxShotsGlobal}`;
   }
 
-  function attachAutocomplete(textarea, listEl, getNames){
-    function close(){ listEl.style.display = "none"; listEl.innerHTML = ""; }
-    function open(items){
-      listEl.innerHTML = "";
-      items.forEach(name => {
-        const div = document.createElement("div");
-        div.className = "acItem";
-        div.textContent = name;
-        div.onclick = () => {
-          const cur = textarea.value || "";
-          const token = getLastToken(cur);
-          // if empty token, append with comma if needed
-          if(cur.trim().length === 0){
-            textarea.value = name;
-          } else if(token.length === 0 && cur.trim().endsWith(",")){
-            textarea.value = cur + " " + name;
-          } else {
-            textarea.value = replaceLastToken(cur, name);
-          }
-          textarea.dispatchEvent(new Event("input"));
-          close();
-          textarea.focus();
-        };
-        listEl.appendChild(div);
-      });
-      listEl.style.display = items.length ? "block" : "none";
-    }
-
-    textarea.addEventListener("input", () => {
-      const names = getNames();
-      if(!names.length) return close();
-
-      const token = getLastToken(textarea.value || "");
-      const q = token.toLowerCase();
-
-      // Do not autocomplete for quote shortcuts
-      if(q === '""' || q === '""""') return close();
-
-      if(q.length < 1) return close();
-
-      const matches = names
-        .filter(n => n.toLowerCase().includes(q))
-        .slice(0, 10);
-
-      open(matches);
-    });
-
-    textarea.addEventListener("blur", () => setTimeout(close, 120));
-    textarea.addEventListener("focus", () => {
-      // show suggestions if token already there
-      textarea.dispatchEvent(new Event("input"));
-    });
-
-    document.addEventListener("scroll", close, { passive:true });
-  }
-
-  // -----------------------------
-  // UI + rendering
-  // -----------------------------
-  function applyInputsToState(){
-    state.dollarsPerShot = Number($("dollarsPerShot").value || 0);
-    state.defaultMaxShots = Number($("defaultMaxShots").value || 0);
-    state.payoutStyle = $("payoutStyle").value;
-    state.holesMode = $("holesMode").value;
-    state.filterText = $("filterText").value || "";
-    save();
-  }
-
-  function filteredRows(){
-    const q = (state.filterText || "").trim().toLowerCase();
-    if(!q) return state.rows;
-    return state.rows.filter(r => (`${r.teamA||""} ${r.teamB||""} ${r.note||""}`).toLowerCase().includes(q));
+  function rowMatchesSearch(row, query){
+    if(!query) return true;
+    const q = query.toLowerCase();
+    return (row.a || "").toLowerCase().includes(q) ||
+           (row.b || "").toLowerCase().includes(q) ||
+           (row.notes || "").toLowerCase().includes(q);
   }
 
   function render(){
-    $("dollarsPerShot").value = String(state.dollarsPerShot ?? 5);
-    $("defaultMaxShots").value = String(state.defaultMaxShots ?? 5);
-    $("payoutStyle").value = state.payoutStyle || "per-player";
-    $("holesMode").value = state.holesMode || "18";
-    $("filterText").value = state.filterText || "";
+    updateMeta();
+    const q = ($("rowSearch").value || "").trim();
+    const tb = $("tbody");
+    tb.innerHTML = "";
 
-    const playerMap = buildPlayerIndex();
-    const namesList = (state.csvPlayers || []).map(p => p.name);
+    const prev = (idx, side) => {
+      for(let i=idx-1;i>=0;i--){
+        const t = (side==="a") ? state.rows[i].a : state.rows[i].b;
+        if((t||"").trim()) return t;
+      }
+      return "";
+    };
 
-    // CSV status
-    if(state.csvPlayers && state.csvPlayers.length){
-      const when = state.csvLoadedAt ? ` • ${new Date(state.csvLoadedAt).toLocaleString()}` : "";
-      $("csvStatus").textContent = `Loaded ${state.csvPlayers.length} players${when}. Start typing names in Team A / Team B fields.`;
-      $("csvTag").textContent = `CSV: ${state.csvPlayers.length} players`;
-    } else {
-      $("csvStatus").textContent = "No CSV loaded. Load Squabbit CSV so scores and names work.";
-      $("csvTag").textContent = "CSV: none";
+    state.rows.forEach((r, idx) => {
+      if(!rowMatchesSearch(r, q)) return;
+
+      const tr = document.createElement("tr");
+
+      // # col
+      tr.innerHTML += `<td class="colN">${idx+1}</td>`;
+
+      // Team A
+      const tdA = document.createElement("td");
+      tdA.className = "colTeam";
+      tdA.innerHTML = `
+        <div class="acWrap">
+          <span class="cellLabel">Team A</span>
+          <input class="teamInput" data-idx="${idx}" data-side="a" placeholder="Zack, Keith" value="${escapeHtml(r.a)}" />
+        </div>
+        <div class="acHint">Shortcut: type "" to reuse previous Team A</div>
+      `;
+      tr.appendChild(tdA);
+
+      // Team B
+      const tdB = document.createElement("td");
+      tdB.className = "colTeam";
+      tdB.innerHTML = `
+        <div class="acWrap">
+          <span class="cellLabel">Team B</span>
+          <input class="teamInput" data-idx="${idx}" data-side="b" placeholder="Blair, Garrett" value="${escapeHtml(r.b)}" />
+        </div>
+        <div class="acHint">Shortcut: type "" to reuse previous Team B</div>
+      `;
+      tr.appendChild(tdB);
+
+      // Winner
+      const tdW = document.createElement("td");
+      tdW.className = "colMid";
+      tdW.innerHTML = `
+        <span class="cellLabel">Winner</span>
+        <select data-idx="${idx}" data-field="winner">
+          <option value="">—</option>
+          <option value="A" ${r.winner==="A"?"selected":""}>Team A</option>
+          <option value="B" ${r.winner==="B"?"selected":""}>Team B</option>
+          <option value="P" ${r.winner==="P"?"selected":""}>Push</option>
+        </select>
+      `;
+      tr.appendChild(tdW);
+
+      // Shots
+      const tdS = document.createElement("td");
+      tdS.className = "colSmall";
+      tdS.innerHTML = `
+        <span class="cellLabel">Shots</span>
+        <input type="number" min="0" step="1" data-idx="${idx}" data-field="shots" value="${escapeHtml(r.shots)}" placeholder="0" />
+        <div class="acHint">Max ${globals().maxShotsGlobal}</div>
+      `;
+      tr.appendChild(tdS);
+
+      // Payout
+      const tdP = document.createElement("td");
+      tdP.className = "colSmall";
+      const g = globals();
+      const aResolved = normalizeTeamText(r.a, prev(idx,"a"));
+      const bResolved = normalizeTeamText(r.b, prev(idx,"b"));
+      const tempRow = { ...r, a: aResolved, b: bResolved };
+      const payout = calcPayout(tempRow, g);
+
+      const pillClass = (r.winner==="A" ? "good" : (r.winner==="B" ? "bad" : "mid"));
+      const pillText = payout ? `$${payout}` : "—";
+
+      tdP.innerHTML = `
+        <span class="cellLabel">Payout</span>
+        <div class="resultPill ${pillClass}">${pillText}</div>
+      `;
+      tr.appendChild(tdP);
+
+      // Actions
+      const tdAct = document.createElement("td");
+      tdAct.className = "colActions";
+      tdAct.innerHTML = `
+        <span class="cellLabel">Actions</span>
+        <div class="rowBtns">
+          <button class="btn btnGhost" data-action="copyPrevA" data-idx="${idx}">Copy Prev A</button>
+          <button class="btn btnGhost" data-action="copyPrevB" data-idx="${idx}">Copy Prev B</button>
+          <button class="btn btnGhost" data-action="dup" data-idx="${idx}">Duplicate</button>
+          <button class="btn btnBad" data-action="del" data-idx="${idx}">Delete</button>
+          <button class="btn btnPrimary" data-action="addNext" data-idx="${idx}">Add Next Row</button>
+        </div>
+        <div class="acHint">Fast reuse: put "" in A or B to reuse that side from the previous row.</div>
+      `;
+      tr.appendChild(tdAct);
+
+      tb.appendChild(tr);
+    });
+
+    wireInputs();
+    renderPayouts();
+    save();
+  }
+
+  function renderPayouts(){
+    const g = globals();
+    // Resolve "" per row
+    const resolvedRows = [];
+    for(let i=0;i<state.rows.length;i++){
+      const prevA = i>0 ? resolvedRows[i-1].a : "";
+      const prevB = i>0 ? resolvedRows[i-1].b : "";
+      const r = state.rows[i];
+      resolvedRows.push({
+        ...r,
+        a: normalizeTeamText(r.a, prevA),
+        b: normalizeTeamText(r.b, prevB),
+      });
     }
 
-    // Clone rows for quote shortcuts during display calculations
-    const rowsForCalc = state.rows.map(r => ({...r}));
-    applyQuoteShortcuts(rowsForCalc);
+    // Summary text (big + readable)
+    const lines = [];
+    const used = resolvedRows.filter(r => (r.a||"").trim() || (r.b||"").trim() || r.winner || r.shots);
+    lines.push(`Holes: ${g.holes}`);
+    lines.push(`$/shot: ${g.dollarsPerShot} • Max shots: ${g.maxShotsGlobal}`);
+    lines.push(`Rows: ${state.rows.length} • Rows with data: ${used.length}`);
+    lines.push("");
 
-    const rows = filteredRows();
-    $("rowCount").textContent = `Showing ${rows.length} row(s).`;
-
-    const list = $("rowList");
-    list.innerHTML = "";
-
-    rows.forEach((row, visibleIndex) => {
-      const realIndex = state.rows.findIndex(x => x.id === row.id);
-      const rowCalc = rowsForCalc[realIndex] || row;
-
-      const r = computeRow(rowCalc, realIndex, rowsForCalc, playerMap);
-
-      const badgeText = r.badge || "—";
-      const badgeClass = r.badgeClass || "badgeWarn";
-      const right = (r.status === "win") ? `$${(r.transfer||0).toFixed(2)}` : (r.status === "push" ? "$0.00" : "—");
-
-      const card = document.createElement("div");
-      card.className = "rowCard";
-      card.innerHTML = `
-        <div class="rowTop">
-          <div class="rowTitle">
-            Row ${realIndex + 1}
-            <span class="badge ${badgeClass}">${badgeText}</span>
-          </div>
-          <div class="badge">${state.holesMode === "18" ? "18" : (state.holesMode === "9f" ? "Front 9" : "Back 9")}</div>
-        </div>
-
-        <div class="matchGrid">
-          <div>
-            <div class="sideTitle">
-              <strong>Team A</strong>
-              <span class="sideHint">comma names</span>
-            </div>
-            <div class="acWrap">
-              <textarea data-a="${row.id}" placeholder="Zack, Nick">${row.teamA||""}</textarea>
-              <div class="acList" data-ac="${row.id}-a"></div>
-            </div>
-          </div>
-
-          <div class="vsCol">VS</div>
-
-          <div>
-            <div class="sideTitle">
-              <strong>Team B</strong>
-              <span class="sideHint">comma names</span>
-            </div>
-            <div class="acWrap">
-              <textarea data-b="${row.id}" placeholder="Blair, Garrett">${row.teamB||""}</textarea>
-              <div class="acList" data-ac="${row.id}-b"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="smallGrid">
-          <div>
-            <label>Max shots (row)</label>
-            <input data-m="${row.id}" type="number" min="1" step="1" placeholder="${state.defaultMaxShots}" value="${row.maxShots||""}" />
-          </div>
-          <div>
-            <label>Notes</label>
-            <input data-n="${row.id}" type="text" placeholder='Optional…' value="${row.note||""}" />
-          </div>
-        </div>
-
-        <div class="resultBox">
-          <div class="left">${(r.text||"—").replaceAll("\n","<br/>")}</div>
-          <div class="right">${right}</div>
-        </div>
-
-        <div class="rowActions">
-          <button class="btn btnGhost" type="button" data-copyprev="${row.id}">Copy Prev</button>
-          <button class="btn btnGhost" type="button" data-dup="${row.id}">Duplicate</button>
-          <button class="btn btnBad" type="button" data-del="${row.id}">Delete</button>
-        </div>
-
-        <div class="mini">
-          Shortcut: type <span class="mono">""</span> or <span class="mono">""""</span> in Team A/Team B to reuse the previous row on that side.
-        </div>
-      `;
-      list.appendChild(card);
-
-      // Bind autocomplete (only if CSV loaded)
-      const taA = card.querySelector(`textarea[data-a="${row.id}"]`);
-      const taB = card.querySelector(`textarea[data-b="${row.id}"]`);
-      const acA = card.querySelector(`div[data-ac="${row.id}-a"]`);
-      const acB = card.querySelector(`div[data-ac="${row.id}-b"]`);
-
-      if(taA && acA) attachAutocomplete(taA, acA, () => namesList);
-      if(taB && acB) attachAutocomplete(taB, acB, () => namesList);
+    resolvedRows.forEach((r, idx) => {
+      const a = (r.a||"").trim();
+      const b = (r.b||"").trim();
+      if(!a && !b) return;
+      const winnerTxt = r.winner==="A" ? "Team A wins" : (r.winner==="B" ? "Team B wins" : (r.winner==="P" ? "Push" : "—"));
+      const shots = Math.max(0, Math.min(g.maxShotsGlobal, num(r.shots, 0)));
+      const payout = calcPayout(r, g);
+      lines.push(`Row ${idx+1}: ${a}  vs  ${b}`);
+      lines.push(`  Result: ${winnerTxt} • Shots: ${shots || "—"} • Payout: ${payout ? "$"+payout : "—"}`);
+      lines.push("");
     });
 
-    // Bind input changes
-    [...list.querySelectorAll("textarea[data-a], textarea[data-b], input[data-m], input[data-n]")].forEach(el => {
-      el.oninput = () => {
-        const id = el.getAttribute("data-a") || el.getAttribute("data-b") || el.getAttribute("data-m") || el.getAttribute("data-n");
-        const row = state.rows.find(x => x.id === id);
-        if(!row) return;
+    $("payoutSummary").textContent = lines.join("\n");
 
-        if(el.hasAttribute("data-a")) row.teamA = el.value;
-        if(el.hasAttribute("data-b")) row.teamB = el.value;
-        if(el.hasAttribute("data-m")) row.maxShots = el.value;
-        if(el.hasAttribute("data-n")) row.note = el.value;
-
-        save();
-        renderSummaryOnly();
-      };
-    });
-
-    // Actions
-    [...list.querySelectorAll("button[data-copyprev]")].forEach(btn => {
-      btn.onclick = () => {
-        const id = btn.getAttribute("data-copyprev");
-        const idx = state.rows.findIndex(x => x.id === id);
-        if(idx <= 0) return alert("No previous row to copy.");
-        const prev = state.rows[idx-1];
-        const cur = state.rows[idx];
-        cur.teamA = prev.teamA;
-        cur.teamB = prev.teamB;
-        cur.maxShots = prev.maxShots;
-        save();
-        render();
-      };
-    });
-
-    [...list.querySelectorAll("button[data-dup]")].forEach(btn => {
-      btn.onclick = () => {
-        const id = btn.getAttribute("data-dup");
-        const idx = state.rows.findIndex(x => x.id === id);
-        if(idx < 0) return;
-        const src = state.rows[idx];
-        const copy = { ...src, id: uid() };
-        state.rows.splice(idx+1, 0, copy);
-        save();
-        render();
-        window.scrollTo({ top: document.body.scrollHeight, behavior:"smooth" });
-      };
-    });
-
-    [...list.querySelectorAll("button[data-del]")].forEach(btn => {
-      btn.onclick = () => {
-        const id = btn.getAttribute("data-del");
-        const idx = state.rows.findIndex(x => x.id === id);
-        if(idx < 0) return;
-        state.rows.splice(idx, 1);
-        save();
-        render();
-      };
-    });
-
-    renderSummaryOnly();
+    // Settlement
+    const set = computeSettlement(resolvedRows, g);
+    $("settlementBox").textContent = set.lines.length ? set.lines.join("\n") : "No settlement yet.";
   }
 
-  function renderSummaryOnly(){
-    const playerMap = buildPlayerIndex();
-    $("summaryBox").textContent = buildSummary(playerMap);
+  // ---------- wiring ----------
+  function wireInputs(){
+    // Team inputs with autocomplete
+    document.querySelectorAll('input.teamInput').forEach(inp => {
+      const idx = Number(inp.getAttribute("data-idx"));
+      const side = inp.getAttribute("data-side");
+
+      // wrap input in acWrap already
+      inp.addEventListener("input", () => {
+        // collect names typed so far into autocomplete pool
+        const names = teamNamesFromText(inp.value);
+        names.forEach(addNameToAutocomplete);
+
+        state.rows[idx][side] = inp.value;
+
+        // show suggestions for current token
+        showSuggestions(inp);
+        renderPayouts();
+        save();
+      });
+
+      inp.addEventListener("focus", () => showSuggestions(inp));
+
+      inp.addEventListener("blur", () => {
+        // small delay to allow click
+        setTimeout(() => hideSuggestions(inp), 150);
+      });
+    });
+
+    // winner + shots
+    document.querySelectorAll('select[data-field="winner"]').forEach(sel => {
+      sel.onchange = () => {
+        const idx = Number(sel.getAttribute("data-idx"));
+        state.rows[idx].winner = sel.value;
+        render();
+      };
+    });
+    document.querySelectorAll('input[data-field="shots"]').forEach(inp => {
+      inp.oninput = () => {
+        const idx = Number(inp.getAttribute("data-idx"));
+        state.rows[idx].shots = inp.value;
+        renderPayouts();
+        save();
+      };
+    });
+
+    // row actions
+    document.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.onclick = () => {
+        const idx = Number(btn.getAttribute("data-idx"));
+        const action = btn.getAttribute("data-action");
+
+        const prevA = findPrevTeam(idx, "a");
+        const prevB = findPrevTeam(idx, "b");
+
+        if(action === "copyPrevA"){
+          state.rows[idx].a = prevA || "";
+          render();
+          focusRow(idx, "a");
+        }
+        if(action === "copyPrevB"){
+          state.rows[idx].b = prevB || "";
+          render();
+          focusRow(idx, "b");
+        }
+        if(action === "dup"){
+          const copy = JSON.parse(JSON.stringify(state.rows[idx]));
+          copy.createdAt = Date.now();
+          state.rows.splice(idx+1, 0, copy);
+          render();
+          focusRow(idx+1, "a");
+        }
+        if(action === "del"){
+          state.rows.splice(idx, 1);
+          if(state.rows.length === 0) state.rows.push(newRow());
+          render();
+        }
+        if(action === "addNext"){
+          state.rows.splice(idx+1, 0, newRow());
+          render();
+          focusRow(idx+1, "a");
+        }
+      };
+    });
   }
 
-  // -----------------------------
-  // Add / copy / clear
-  // -----------------------------
-  function addRow(copyLast){
-    const last = state.rows[state.rows.length - 1];
-    const row = {
-      id: uid(),
-      teamA: copyLast && last ? last.teamA : "",
-      teamB: copyLast && last ? last.teamB : "",
-      maxShots: copyLast && last ? last.maxShots : String(state.defaultMaxShots || 5),
-      note: ""
-    };
-    state.rows.push(row);
-    save();
+  function findPrevTeam(idx, side){
+    for(let i=idx-1;i>=0;i--){
+      const v = (side==="a") ? state.rows[i].a : state.rows[i].b;
+      if((v||"").trim()) return v;
+    }
+    return "";
+  }
+
+  function focusRow(idx, side){
+    // find the visible table input for this row
+    const selector = `input.teamInput[data-idx="${idx}"][data-side="${side}"]`;
+    const el = document.querySelector(selector);
+    if(el){
+      el.focus();
+      // put cursor at end
+      const v = el.value;
+      el.setSelectionRange(v.length, v.length);
+      el.scrollIntoView({ behavior:"smooth", block:"center" });
+    }
+  }
+
+  function escapeHtml(s){
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+
+  // ---------- controls ----------
+  $("addRowTop").onclick = () => { state.rows.push(newRow()); render(); focusRow(state.rows.length-1, "a"); };
+  $("copyLastRowTop").onclick = () => {
+    if(!state.rows.length) state.rows.push(newRow());
+    const last = state.rows[state.rows.length-1];
+    const copy = JSON.parse(JSON.stringify(last));
+    copy.createdAt = Date.now();
+    state.rows.push(copy);
     render();
-    window.scrollTo({ top: document.body.scrollHeight, behavior:"smooth" });
-  }
-
-  function clearSheet(){
-    const ok = confirm("Clear the sheet rows?\n\nThis keeps your CSV loaded.");
-    if(!ok) return;
-    state.rows = [];
-    save();
+    focusRow(state.rows.length-1, "a");
+  };
+  $("clearSheetTop").onclick = () => {
+    if(!confirm("Clear the entire sheet?")) return;
+    state.rows = [newRow()];
     render();
-  }
+  };
 
-  // -----------------------------
-  // Clipboard + download
-  // -----------------------------
-  async function copyToClipboard(text){
+  $("rowSearch").oninput = () => render();
+
+  ["dollarsPerShot","maxShotsGlobal","holes"].forEach(id => {
+    $(id).oninput = () => { render(); };
+  });
+
+  // Copy payouts
+  $("copyPayoutsBtn").onclick = async () => {
+    const text = $("payoutSummary").textContent + "\n\nSettlement:\n" + $("settlementBox").textContent;
     try{
       await navigator.clipboard.writeText(text);
-      alert("Copied.");
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      alert("Copied.");
+      alert("Copied payout summary.");
+    }catch(e){
+      alert("Copy failed. Try selecting and copying manually.");
     }
-  }
+  };
 
-  function downloadText(filename, content){
-    const blob = new Blob([content], { type:"text/plain;charset=utf-8" });
+  // Download sheet CSV
+  $("downloadCsvBtn").onclick = () => {
+    const g = globals();
+    // resolve "" per row
+    const resolved = [];
+    for(let i=0;i<state.rows.length;i++){
+      const prevA = i>0 ? resolved[i-1].a : "";
+      const prevB = i>0 ? resolved[i-1].b : "";
+      const r = state.rows[i];
+      resolved.push({ ...r, a: normalizeTeamText(r.a, prevA), b: normalizeTeamText(r.b, prevB) });
+    }
+
+    const header = ["row","teamA","teamB","winner","shots","dollarsPerShot","maxShotsCap","holes"];
+    const lines = [header.join(",")];
+
+    resolved.forEach((r, i) => {
+      const row = [
+        i+1,
+        csvSafe(r.a),
+        csvSafe(r.b),
+        r.winner || "",
+        r.shots || "",
+        g.dollarsPerShot,
+        g.maxShotsGlobal,
+        g.holes
+      ];
+      lines.push(row.join(","));
+    });
+
+    const blob = new Blob([lines.join("\n")], { type:"text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename;
+    a.download = "bestball-bet-sheet.csv";
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(()=> URL.revokeObjectURL(url), 1000);
-  }
+    URL.revokeObjectURL(url);
+  };
 
-  function downloadSheetCSV(){
-    const header = ["Row","Team A","Team B","Max Shots","Notes"].join(",");
-    const lines = state.rows.map((r, i) => {
-      return [
-        i+1,
-        csvCell(r.teamA),
-        csvCell(r.teamB),
-        csvCell(r.maxShots),
-        csvCell(r.note)
-      ].join(",");
-    });
-    downloadText("bestball_bet_sheet.csv", [header, ...lines].join("\n"));
-
-    function csvCell(v){
-      const s = (v ?? "").toString();
-      if(s.includes('"') || s.includes(",") || s.includes("\n")){
-        return `"${s.replaceAll('"','""')}"`;
-      }
-      return s;
+  function csvSafe(v){
+    const s = (v ?? "").toString();
+    if(s.includes(",") || s.includes('"') || s.includes("\n")){
+      return '"' + s.replaceAll('"','""') + '"';
     }
+    return s;
   }
 
-  // -----------------------------
-  // Bind top inputs
-  // -----------------------------
-  ["dollarsPerShot","defaultMaxShots","payoutStyle","holesMode","filterText"].forEach(id => {
-    $(id).addEventListener("input", () => { applyInputsToState(); render(); });
-    $(id).addEventListener("change", () => { applyInputsToState(); render(); });
-  });
-
-  $("addRowBtn").onclick = () => addRow(false);
-  $("copyLastRowBtn").onclick = () => addRow(true);
-  $("clearSheetBtn").onclick = clearSheet;
-
-  $("copySummaryBtn").onclick = () => copyToClipboard($("summaryBox").textContent || "");
-  $("downloadSheetBtn").onclick = downloadSheetCSV;
-
-  // CSV upload
+  // CSV import (optional) -> builds name list
   $("csvFile").addEventListener("change", async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if(!f) return;
-    const text = await f.text();
-
-    const players = parsePlayersFromSquabbitCSV(text);
-    if(!players.length){
-      alert("Could not read players from this CSV.\n\nMake sure it's the Squabbit export that includes Hole 1–18 columns.");
-      return;
-    }
-
-    state.csvPlayers = players;
-    state.csvLoadedAt = new Date().toISOString();
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const text = await file.text();
+    const players = parsePlayersFromCSV(text);
+    players.forEach(p => addNameToAutocomplete(p.name));
     save();
-    render();
+    alert(`Loaded ${players.length} player name(s) from Squabbit CSV. Autocomplete updated.`);
   });
 
-  // -----------------------------
-  // Bottom hub bar
-  // -----------------------------
-  (function(){
-    const TOOL_NAME = window.TOOL_NAME || document.title || "Golf Tool";
-    const TOOL_KEYS = Array.isArray(window.TOOL_STORAGE_KEYS) ? window.TOOL_STORAGE_KEYS : [];
-    const HUB_INDEX = window.HUB_INDEX || "index.html";
+  // Bottom bar buttons
+  $("hubBackBtn").onclick = () => window.location.href = HUB_INDEX;
 
-    $("hubToolTitle").textContent = TOOL_NAME;
+  $("resetThisBtn").onclick = () => {
+    const ok = confirm("Reset this tool?\n\nThis clears your saved bet sheet on this device.");
+    if(!ok) return;
+    localStorage.removeItem(LS_KEY);
+    state.rows = [newRow()];
+    state.names = [];
+    render();
+  };
 
-    $("hubBackBtn").onclick = () => { window.location.href = HUB_INDEX; };
+  $("resetAllBtn").onclick = () => {
+    const ok = confirm("Reset EVERYTHING for this site on this device?\n\nThis clears all local saved data.");
+    if(!ok) return;
+    localStorage.clear();
+    window.location.href = HUB_INDEX;
+  };
 
-    $("hubResetThisBtn").onclick = () => {
-      if(!TOOL_KEYS.length){
-        alert("No reset keys set for this tool yet.");
-        return;
-      }
-      const ok = confirm(`Reset this tool?\n\nThis clears:\n- ${TOOL_KEYS.join("\n- ")}`);
-      if(!ok) return;
-      TOOL_KEYS.forEach(k => localStorage.removeItem(k));
-      alert("Tool reset. Reloading…");
-      window.location.reload();
-    };
-
-    $("hubResetAllBtn").onclick = () => {
-      const ok = confirm("Reset EVERYTHING for this site on this device?\n\nThis clears all local saved data.");
-      if(!ok) return;
-      localStorage.clear();
-      alert("Everything reset. Returning to hub…");
-      window.location.href = HUB_INDEX;
-    };
-  })();
-
-  // -----------------------------
-  // Init
-  // -----------------------------
+  // init
   load();
-  if(!state.rows || !state.rows.length){
-    state.rows = [{ id: uid(), teamA:"", teamB:"", maxShots: String(state.defaultMaxShots || 5), note:"" }];
-    save();
-  }
+  if(!state.rows.length) state.rows = [newRow()];
   render();
 })();
 </script>
