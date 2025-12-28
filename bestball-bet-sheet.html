@@ -20,24 +20,27 @@
 
       --shadow: 0 14px 45px rgba(0,0,0,.45);
       --radius: 16px;
+
+      --panel: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      --panel2: rgba(0,0,0,.16);
     }
     *{ box-sizing:border-box; }
     body{
       margin:0;
       min-height:100vh;
       color:var(--text);
-      font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial;
+      font-family:-apple-system, system-ui, Segoe UI, Roboto, Arial;
       background:
         radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
         radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
         linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #06110c);
-      padding:16px 16px calc(110px + env(safe-area-inset-bottom)) 16px; /* bottom bar space */
+      padding:16px 16px calc(110px + env(safe-area-inset-bottom)) 16px;
     }
-    .wrap{ max-width: 980px; margin: 0 auto; }
+    .wrap{ max-width: 1020px; margin: 0 auto; }
 
     header{
       display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
-      margin: 6px 0 14px;
+      margin:6px 0 14px;
     }
     h1{ margin:0; font-size:22px; letter-spacing:.2px; }
     .sub{ color:var(--muted); font-size:13px; line-height:1.35; margin-top:6px; }
@@ -57,7 +60,7 @@
     }
 
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      background: var(--panel);
       border: 1px solid var(--line);
       border-radius: var(--radius);
       padding: 14px;
@@ -67,14 +70,26 @@
       margin: 12px 0;
     }
     .topline{
-      display:flex; gap:10px; align-items:center; justify-content:space-between;
-      margin: 0 0 6px; color: var(--muted); font-size: 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin:0 0 8px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .tag{
+      display:inline-block;
+      padding: 2px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-size: 12px;
+      white-space:nowrap;
     }
 
-    label{ display:block; margin: 10px 0 6px; color: var(--muted); font-size: 12.5px; }
+    label{ display:block; margin:10px 0 6px; color:var(--muted); font-size:12.5px; }
     input, select, textarea{
       width:100%;
-      padding: 12px 12px;
+      padding:12px 12px;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,.14);
       background: rgba(9, 24, 17, .55);
@@ -82,7 +97,7 @@
       outline: none;
       font-size: 16px;
     }
-    textarea{ min-height: 48px; resize: vertical; }
+    textarea{ min-height: 54px; resize: vertical; }
 
     select{
       appearance:none;
@@ -97,7 +112,7 @@
 
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .grid3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
-    @media (max-width: 640px){
+    @media (max-width: 720px){
       .grid2, .grid3{ grid-template-columns: 1fr; }
       header{ flex-direction:column; align-items:flex-start; }
     }
@@ -116,49 +131,36 @@
     }
     .btn:active{ transform: scale(.99); }
     .btnPrimary{ background: linear-gradient(135deg, var(--accent2), var(--accent)); box-shadow: 0 12px 30px rgba(34,197,94,.25); }
-    .btnGhost{ background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--line); font-weight:900; }
-    .btnWarn{ background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 12px 30px rgba(245,158,11,.18); color:#08110c; }
+    .btnGhost{ background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--line); }
     .btnBad{ background: linear-gradient(135deg, #fb7185, #ef4444); box-shadow: 0 12px 30px rgba(239,68,68,.20); color:#08110c; }
-    .btnMid{ background: linear-gradient(135deg, #94a3b8, #cbd5e1); color:#0b1510; }
 
     .btnRow{ display:flex; gap:10px; flex-wrap:wrap; }
     .btnRow .btn{ flex: 1 1 auto; }
 
-    .mini{ font-size:12px; color: var(--muted); margin-top: 8px; line-height:1.35; }
+    .mini{ font-size:12px; color:var(--muted); margin-top: 8px; line-height:1.35; }
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; }
 
-    .tag{
-      display:inline-block;
-      padding: 2px 8px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.05);
-      color: var(--muted);
-      font-size: 12px;
-      margin-left: 6px;
-      white-space:nowrap;
-    }
-
-    /* --- SHEET LOOK --- */
+    /* ---------- SHEET ROW ---------- */
     .sheetHeader{
       display:flex; align-items:center; justify-content:space-between; gap:10px;
       padding: 10px 12px;
       border-radius: 14px;
       border: 1px solid var(--line);
-      background: rgba(0,0,0,.14);
-      margin-top: 10px;
+      background: var(--panel2);
+      margin-top: 6px;
     }
     .sheetHeader strong{ font-size:14px; }
     .sheetCount{ color: var(--muted); font-size:12px; }
 
-    .rowList{ display:flex; flex-direction:column; gap:12px; margin-top: 12px; }
+    .rowList{ display:flex; flex-direction:column; gap:14px; margin-top: 12px; }
 
     .rowCard{
-      border-radius: 16px;
+      border-radius: 18px;
       border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.10);
+      background: rgba(0,0,0,.12);
       padding: 12px;
       box-shadow: 0 10px 28px rgba(0,0,0,.22);
+      position: relative;
     }
 
     .rowTop{
@@ -168,31 +170,79 @@
     .rowTitle{
       display:flex; align-items:center; gap:10px; flex-wrap:wrap;
       font-weight: 950;
+      letter-spacing:.2px;
     }
-    .pillSmall{
+    .badge{
       display:inline-flex; align-items:center; gap:8px;
       padding: 6px 10px;
       border-radius:999px;
       border: 1px solid var(--line);
       background: rgba(255,255,255,.06);
-      color: var(--text);
-      font-size: 12px;
-      font-weight: 900;
+      font-size:12px;
+      font-weight:900;
       white-space:nowrap;
     }
-    .pillGood{ border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.10); }
-    .pillBad{ border-color: rgba(251,113,133,.35); background: rgba(251,113,133,.10); }
-    .pillWarn{ border-color: rgba(251,191,36,.35); background: rgba(251,191,36,.10); }
+    .badgeGood{ border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.10); }
+    .badgeBad{ border-color: rgba(251,113,133,.35); background: rgba(251,113,133,.10); }
+    .badgeWarn{ border-color: rgba(251,191,36,.35); background: rgba(251,191,36,.10); }
 
-    .rowGrid{
+    /* Opposite sides layout */
+    .matchGrid{
       display:grid;
-      grid-template-columns: 1fr 1fr 110px 1fr;
+      grid-template-columns: 1fr 70px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    @media (max-width: 820px){
+      .matchGrid{ grid-template-columns: 1fr; }
+      .vsCol{ display:none; }
+    }
+    .vsCol{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius: 16px;
+      border: 1px dashed rgba(255,255,255,.14);
+      background: rgba(255,255,255,.03);
+      height: 100%;
+      min-height: 130px;
+      color: var(--muted);
+      font-weight: 950;
+      letter-spacing: .3px;
+    }
+    .sideTitle{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom: 8px;
+    }
+    .sideTitle strong{ font-size: 13px; color: var(--text); }
+    .sideHint{ font-size:12px; color: var(--muted); }
+
+    .smallGrid{
+      display:grid;
+      grid-template-columns: 140px 1fr;
       gap:10px;
-      align-items:start;
+      margin-top: 10px;
+      align-items: end;
     }
-    @media (max-width: 760px){
-      .rowGrid{ grid-template-columns: 1fr 1fr; }
+    @media (max-width: 720px){
+      .smallGrid{ grid-template-columns: 1fr; }
     }
+
+    .resultBox{
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      font-size: 13px;
+      line-height:1.35;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .resultBox .left{ flex: 1 1 auto; }
+    .resultBox .right{ text-align:right; min-width: 130px; font-weight: 950; }
 
     .rowActions{
       display:flex;
@@ -203,42 +253,51 @@
     }
     .rowActions .btn{ padding: 10px 12px; font-size: 14px; }
 
-    .resultBox{
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: rgba(0,0,0,.14);
-      color: var(--text);
-      font-size: 13px;
-      line-height:1.35;
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .resultBox .left{ flex: 1 1 auto; }
-    .resultBox .right{ text-align:right; min-width: 120px; font-weight: 950; }
-
     .goodTxt{ color: #5eead4; font-weight:900; }
     .badTxt{ color: #fda4af; font-weight:900; }
     .warnTxt{ color: #fde68a; font-weight:900; }
 
-    /* --- BOTTOM HUB BAR --- */
-    .hubbar{
-      position: fixed;
+    /* ---------- Autocomplete ---------- */
+    .acWrap{ position: relative; }
+    .acList{
+      position: absolute;
       left: 0;
       right: 0;
-      bottom: 0;
+      top: calc(100% + 6px);
+      z-index: 999;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(5,17,11,.96);
+      box-shadow: 0 18px 40px rgba(0,0,0,.50);
+      overflow: hidden;
+      display:none;
+      max-height: 220px;
+      overflow-y:auto;
+    }
+    .acItem{
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      color: var(--text);
+      font-weight: 850;
+      font-size: 14px;
+    }
+    .acItem:last-child{ border-bottom:0; }
+    .acItem:hover{ background: rgba(255,255,255,.06); }
+
+    /* ---------- Bottom hub bar ---------- */
+    .hubbar{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
       z-index: 9999;
       padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) 12px;
-      background: linear-gradient(180deg, rgba(5,17,11,.50), rgba(5,17,11,.92));
+      background: linear-gradient(180deg, rgba(5,17,11,.45), rgba(5,17,11,.92));
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-top: 1px solid rgba(255,255,255,.10);
     }
     .hubbarRow{
-      max-width: 980px;
+      max-width: 1020px;
       margin: 0 auto;
       display:flex;
       align-items:center;
@@ -249,7 +308,6 @@
       color: #eaf5ef;
       font-weight: 950;
       font-size: 13px;
-      letter-spacing:.2px;
       max-width: 45%;
       white-space:nowrap;
       overflow:hidden;
@@ -257,8 +315,7 @@
       opacity:.95;
     }
     .hubBtns{
-      display:flex;
-      gap:8px;
+      display:flex; gap:8px;
       flex-wrap:wrap;
       justify-content:flex-end;
     }
@@ -290,17 +347,17 @@
 
   <header>
     <div>
-      <h1>Best Ball Bet Sheet <span class="tag">local save</span></h1>
+      <h1>Best Ball Bet Sheet <span class="tag">sheet style</span></h1>
       <div class="sub">
-        Import Squabbit (optional), fill matchups like a sheet (2v1, 2v2, 3v2…). Each row can <b>Copy Prev</b>.
-        Set <b>$ per shot</b> and <b>max shots</b> to match your group.
+        Fill matchups like a paper sheet. Teams are on opposite sides.
+        Load Squabbit CSV to auto-calc scores and payouts. Shortcut: enter <b>""</b> or <b>""""</b> to reuse the previous row team on that side.
       </div>
     </div>
     <div class="pill"><span class="dot"></span><span><b>Local save</b> (stays on your phone)</span></div>
   </header>
 
   <div class="card">
-    <div class="topline"><span>1) Round + Defaults</span><span class="tag">optional CSV</span></div>
+    <div class="topline"><span>1) Defaults</span><span class="tag" id="csvTag">CSV: none</span></div>
 
     <div class="grid2">
       <div>
@@ -317,27 +374,14 @@
       <div>
         <label>Payout style</label>
         <select id="payoutStyle">
-          <option value="per-player" selected>Each loser pays each winner (most common)</option>
+          <option value="per-player" selected>Each loser pays each winner</option>
           <option value="team-split">Team pays team (split evenly)</option>
         </select>
         <div class="mini">
-          <b>Per-player</b>: payout is multiplied by winners × losers.<br/>
-          <b>Team-split</b>: single payout amount; split across winners/losers.
+          <b>Each loser pays each winner</b> is the easiest for settlement.
         </div>
       </div>
 
-      <div>
-        <label>Import Squabbit CSV (optional)</label>
-        <input id="csvFile" type="file" accept=".csv,text/csv" />
-        <div class="mini" id="csvStatus">No CSV loaded. You can still fill the sheet; results will show “Need CSV / names”.</div>
-      </div>
-    </div>
-
-    <div class="grid2">
-      <div>
-        <label>Find row / player</label>
-        <input id="filterText" placeholder="Type a name (Zack) or anything…" />
-      </div>
       <div>
         <label>Holes used</label>
         <select id="holesMode">
@@ -348,6 +392,19 @@
       </div>
     </div>
 
+    <div class="grid2">
+      <div>
+        <label>Import Squabbit CSV</label>
+        <input id="csvFile" type="file" accept=".csv,text/csv" />
+        <div class="mini" id="csvStatus">No CSV loaded.</div>
+      </div>
+      <div>
+        <label>Find a row by name</label>
+        <input id="filterText" placeholder="Type a name… (Zack)" />
+        <div class="mini">This filters rows that contain that text.</div>
+      </div>
+    </div>
+
     <div class="btnRow" style="margin-top:12px;">
       <button id="addRowBtn" class="btn btnPrimary" type="button">Add Row</button>
       <button id="copyLastRowBtn" class="btn btnGhost" type="button">Copy Last Row</button>
@@ -355,7 +412,7 @@
     </div>
 
     <div class="mini">
-      Team inputs are comma-separated. Examples:<br/>
+      Example entries:<br/>
       <span class="mono">Zack, Nick</span> vs <span class="mono">Blair</span> (2v1)<br/>
       <span class="mono">Zack, Keith, Nick</span> vs <span class="mono">Blair, Garrett</span> (3v2)
     </div>
@@ -363,7 +420,7 @@
 
   <div class="card">
     <div class="sheetHeader">
-      <strong>2) Sheet</strong>
+      <strong>2) Bet Sheet</strong>
       <div class="sheetCount" id="rowCount">Showing 0 row(s).</div>
     </div>
     <div class="rowList" id="rowList"></div>
@@ -371,12 +428,10 @@
 
   <div class="card">
     <div class="topline"><span>3) Copy / Export</span><span class="tag">optional</span></div>
-
     <div class="btnRow">
       <button id="copySummaryBtn" class="btn btnGhost" type="button">Copy Payout Summary</button>
       <button id="downloadSheetBtn" class="btn btnGhost" type="button">Download Sheet CSV</button>
     </div>
-
     <div class="mini mono" id="summaryBox" style="margin-top:10px;">Summary will appear here…</div>
   </div>
 
@@ -397,35 +452,31 @@
 <script>
 (() => {
   // -----------------------------
-  // Tool + local storage settings
+  // Hub bar config
   // -----------------------------
   window.TOOL_NAME = "Best Ball Bet Sheet";
-  window.TOOL_STORAGE_KEYS = ["bestball_bet_sheet_v1"];
+  window.TOOL_STORAGE_KEYS = ["bestball_bet_sheet_v2"];
   window.HUB_INDEX = "index.html";
 
-  const LS_KEY = "bestball_bet_sheet_v1";
+  const LS_KEY = "bestball_bet_sheet_v2";
 
   const $ = (id) => document.getElementById(id);
-  const escapeHtml = (s) => (s ?? "").toString()
-    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
-  // -----------------------------
-  // State
-  // -----------------------------
   const state = {
     dollarsPerShot: 5,
     defaultMaxShots: 5,
-    payoutStyle: "per-player",   // per-player | team-split
-    holesMode: "18",             // 18 | 9f | 9b
+    payoutStyle: "per-player",  // per-player | team-split
+    holesMode: "18",            // 18 | 9f | 9b
     filterText: "",
-    rows: [],                    // {id, teamA, teamB, maxShots, note}
-    csvPlayers: [],              // {name, strokes[18], total, front, back}
-    csvMap: new Map(),           // lowerName -> player obj
+    rows: [],                   // {id, teamA, teamB, maxShots, note}
+    csvPlayers: [],             // {name, strokes[18], total, front, back}
     csvLoadedAt: null
   };
 
-  const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
-
+  function save(){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
   function load(){
     const raw = localStorage.getItem(LS_KEY);
     if(!raw) return;
@@ -433,153 +484,177 @@
       const obj = JSON.parse(raw);
       Object.assign(state, obj);
     } catch {}
-    rebuildCsvMap();
-  }
-
-  function save(){
-    const out = {
-      dollarsPerShot: state.dollarsPerShot,
-      defaultMaxShots: state.defaultMaxShots,
-      payoutStyle: state.payoutStyle,
-      holesMode: state.holesMode,
-      filterText: state.filterText,
-      rows: state.rows,
-      csvPlayers: state.csvPlayers,
-      csvLoadedAt: state.csvLoadedAt
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify(out));
-  }
-
-  function rebuildCsvMap(){
-    state.csvMap = new Map();
-    (state.csvPlayers || []).forEach(p => state.csvMap.set(p.name.toLowerCase(), p));
   }
 
   // -----------------------------
-  // Squabbit CSV parsing (Hole 1–18)
+  // CSV parsing (more flexible)
   // -----------------------------
-  const splitCSVLine = (line) => {
+  function splitCSVLine(line){
     const out = [];
     let cur = "";
     let inQ = false;
-    for (let i = 0; i < line.length; i++) {
+    for(let i=0;i<line.length;i++){
       const c = line[i];
-      if (c === '"') {
-        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+      if(c === '"'){
+        if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
         else inQ = !inQ;
-      } else if (c === ',' && !inQ) {
-        out.push(cur);
-        cur = "";
+      } else if(c === ',' && !inQ){
+        out.push(cur); cur = "";
       } else {
         cur += c;
       }
     }
     out.push(cur);
-    return out.map(s => (s || "").trim());
-  };
-
-  const parseCSVRows = (text) => text.split(/\r?\n/).filter(Boolean).map(splitCSVLine);
-
-  const toInt = (v) => {
+    return out.map(s => (s ?? "").trim());
+  }
+  function parseCSVRows(text){
+    return text.split(/\r?\n/).filter(r => r.trim().length).map(splitCSVLine);
+  }
+  function toInt(v){
     const s = (v ?? "").toString().trim();
-    if (!/^\d+$/.test(s)) return null;
+    if(!/^\d+$/.test(s)) return null;
     const n = parseInt(s, 10);
     return Number.isFinite(n) ? n : null;
-  };
+  }
 
-  const titleCase = (n) =>
-    n.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+  function titleCaseName(s){
+    const t = (s || "").trim();
+    if(!t) return "";
+    return t.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+  }
 
-  const buildHoleIndex = (row) => {
+  function findHeaderHoleIndexes(headerRow){
+    // Find columns that look like Hole 1..18
     const idx = {};
-    row.forEach((c, i) => {
-      const s = (c || "").toLowerCase().trim();
-      for (let h = 1; h <= 18; h++) {
-        if (s === `hole ${h}` || s === `${h}` || s === `hole${h}`) idx[h] = i;
-      }
-    });
-    return Object.keys(idx).length ? idx : null;
-  };
-
-  const isPlayerRow = (r) => (r[0] || "").trim() && (r[1] || "").toLowerCase().includes("tee");
-
-  function parsePlayersFromSquabbitCSV(txt){
-    const rows = parseCSVRows(txt);
-    let holeIdx = null;
-    const playersMap = new Map();
-
-    for (const row of rows) {
-      if (row.some(c => /hole\s*1/i.test(c || ""))) {
-        holeIdx = buildHoleIndex(row);
-        continue;
-      }
-      if (!holeIdx) continue;
-
-      const lowerJoined = row.map(c => (c || "").toLowerCase()).join(" ");
-      if (
-        lowerJoined.includes("individual gross skins") ||
-        lowerJoined.includes("strokeplay") ||
-        lowerJoined.includes("best ball") ||
-        lowerJoined.includes("par") ||
-        lowerJoined.startsWith("s.i.")
-      ) continue;
-
-      if (!isPlayerRow(row)) continue;
-
-      const rawName = (row[0] || "").trim();
-      if (!rawName) continue;
-
-      const name = titleCase(rawName);
-      const strokes = [];
-
-      for (let h = 1; h <= 18; h++) {
-        const col = holeIdx[h];
-        const val = col != null ? toInt(row[col]) : null;
-        if (val == null) { strokes.length = 0; break; }
-        strokes.push(val);
-      }
-
-      if (strokes.length === 18) {
-        const front = strokes.slice(0, 9).reduce((a, b) => a + b, 0);
-        const back  = strokes.slice(9, 18).reduce((a, b) => a + b, 0);
-        const total = front + back;
-        playersMap.set(name, { name, strokes, front, back, total });
+    for(let i=0;i<headerRow.length;i++){
+      const h = (headerRow[i] || "").toLowerCase().replace(/\s+/g," ").trim();
+      for(let k=1;k<=18;k++){
+        if(h === `hole ${k}` || h === `hole${k}` || h === `${k}`){
+          idx[k] = i;
+        }
       }
     }
+    return Object.keys(idx).length >= 12 ? idx : null; // require enough holes to be confident
+  }
 
-    return [...playersMap.values()];
+  function findNameColumn(headerRow){
+    // Try to find "player" / "name"
+    let best = 0, bestI = 0;
+    for(let i=0;i<headerRow.length;i++){
+      const h = (headerRow[i] || "").toLowerCase();
+      let score = 0;
+      if(h.includes("player")) score += 3;
+      if(h.includes("name")) score += 2;
+      if(h.includes("golfer")) score += 2;
+      if(score > best){ best = score; bestI = i; }
+    }
+    return best > 0 ? bestI : 0; // fallback to first col
+  }
+
+  function parsePlayersFromSquabbitCSV(text){
+    const rows = parseCSVRows(text);
+
+    // Find a header row that contains hole columns
+    let holeIdx = null;
+    let headerRow = null;
+    for(const row of rows){
+      const idx = findHeaderHoleIndexes(row);
+      if(idx){
+        holeIdx = idx;
+        headerRow = row;
+        break;
+      }
+    }
+    if(!holeIdx || !headerRow) return [];
+
+    const nameCol = findNameColumn(headerRow);
+    const playersMap = new Map();
+
+    for(const row of rows){
+      // must have enough columns
+      if(row.length < Math.max(...Object.values(holeIdx)) + 1) continue;
+
+      const rawName = (row[nameCol] || "").trim();
+      if(!rawName) continue;
+
+      // Attempt to read 18 hole strokes
+      const strokes = [];
+      for(let h=1; h<=18; h++){
+        const col = holeIdx[h];
+        const val = toInt(row[col]);
+        if(val == null){ strokes.length = 0; break; }
+        strokes.push(val);
+      }
+      if(strokes.length !== 18) continue;
+
+      // Filter out obvious non-player rows if they sneak in
+      const lowerName = rawName.toLowerCase();
+      if(lowerName.includes("par") || lowerName.includes("handicap") || lowerName.includes("gross") || lowerName.includes("net")) continue;
+
+      const name = titleCaseName(rawName);
+      const front = strokes.slice(0,9).reduce((a,b)=>a+b,0);
+      const back  = strokes.slice(9,18).reduce((a,b)=>a+b,0);
+      const total = front + back;
+
+      playersMap.set(name.toLowerCase(), { name, strokes, front, back, total });
+    }
+
+    return [...playersMap.values()].sort((a,b)=> a.name.localeCompare(b.name));
+  }
+
+  function buildPlayerIndex(){
+    const map = new Map();
+    (state.csvPlayers || []).forEach(p => map.set(p.name.toLowerCase(), p));
+    return map;
   }
 
   // -----------------------------
-  // Sheet / math
+  // Best ball calc
   // -----------------------------
-  function parseTeamNames(str){
+  function holesRange(){
+    if(state.holesMode === "9f") return { start:0, end:8 };
+    if(state.holesMode === "9b") return { start:9, end:17 };
+    return { start:0, end:17 };
+  }
+
+  function splitNames(str){
     return (str || "")
       .split(",")
       .map(s => s.trim())
       .filter(Boolean);
   }
 
-  function holesRange(){
-    if(state.holesMode === "9f") return { start: 0, end: 8 };
-    if(state.holesMode === "9b") return { start: 9, end: 17 };
-    return { start: 0, end: 17 };
+  function normalizeQuotesShortcut(s){
+    const t = (s || "").trim();
+    return (t === '""' || t === '""""');
   }
 
-  function bestBallTotal(teamNames){
+  function applyQuoteShortcuts(rows){
+    // If a side is "" or """", copy previous row's same side
+    for(let i=0;i<rows.length;i++){
+      const r = rows[i];
+      if(i === 0) continue;
+      const prev = rows[i-1];
+
+      if(normalizeQuotesShortcut(r.teamA)) r.teamA = prev.teamA;
+      if(normalizeQuotesShortcut(r.teamB)) r.teamB = prev.teamB;
+    }
+  }
+
+  function bestBallTotal(teamNames, playerMap){
     if(!state.csvPlayers || state.csvPlayers.length === 0) return { ok:false, reason:"Need CSV", total:null };
 
     const players = [];
     for(const n of teamNames){
-      const p = state.csvMap.get(n.toLowerCase());
-      if(!p) return { ok:false, reason:`Missing: ${n}`, total:null };
+      const p = playerMap.get(n.toLowerCase());
+      if(!p) return { ok:false, reason:`Missing player: ${n}`, total:null };
       players.push(p);
     }
     if(players.length === 0) return { ok:false, reason:"No names", total:null };
 
     const { start, end } = holesRange();
     let sum = 0;
-    for(let i = start; i <= end; i++){
+    for(let i=start;i<=end;i++){
       let best = Infinity;
       for(const p of players){
         best = Math.min(best, p.strokes[i]);
@@ -590,31 +665,29 @@
     return { ok:true, reason:"", total:sum };
   }
 
-  function computeRowResult(row){
-    const aNames = parseTeamNames(row.teamA);
-    const bNames = parseTeamNames(row.teamB);
+  function computeRow(row, rowIndex, rowsForShortcuts, playerMap){
+    const aNames = splitNames(row.teamA);
+    const bNames = splitNames(row.teamB);
 
     if(aNames.length === 0 || bNames.length === 0){
-      return { status:"need", pill:"Need teams", pillClass:"pillWarn", text:"Enter Team A and Team B.", payout:0 };
+      return { status:"need", badge:"Need teams", badgeClass:"badgeWarn", text:"Enter Team A and Team B.", transfer:0 };
     }
 
-    const a = go(aNames);
-    const b = go(bNames);
-
-    function go(names){
-      const r = bestBallTotal(names);
-      return { names, ...r };
+    if(!state.csvPlayers || state.csvPlayers.length === 0){
+      return { status:"need", badge:"Need CSV", badgeClass:"badgeWarn", text:"Load Squabbit CSV to calculate scores and payouts.", transfer:0 };
     }
+
+    const a = bestBallTotal(aNames, playerMap);
+    const b = bestBallTotal(bNames, playerMap);
 
     if(!a.ok || !b.ok){
       const why = !a.ok ? a.reason : b.reason;
-      const need = (!state.csvPlayers || state.csvPlayers.length === 0) ? "Load Squabbit CSV to calculate." : `CSV missing player: ${why}`;
-      return { status:"need", pill:"Need CSV / names", pillClass:"pillWarn", text:need, payout:0 };
+      return { status:"need", badge:"Need names", badgeClass:"badgeWarn", text: why, transfer:0 };
     }
 
     const diff = b.total - a.total; // positive means A wins (lower)
     if(diff === 0){
-      return { status:"push", pill:"Push", pillClass:"pillWarn", text:`A ${a.total} vs B ${b.total}.`, payout:0, shots:0 };
+      return { status:"push", badge:"Push", badgeClass:"badgeWarn", text:`A ${a.total} vs B ${b.total}.`, transfer:0, shots:0 };
     }
 
     const shotsRaw = Math.abs(diff);
@@ -622,110 +695,74 @@
     const shots = Math.min(shotsRaw, maxShots > 0 ? maxShots : shotsRaw);
 
     const perShot = Number(state.dollarsPerShot || 0);
-    const basePayout = shots * perShot;
-
-    const aCount = a.names.length;
-    const bCount = b.names.length;
+    const base = shots * perShot;
 
     const aWins = diff > 0;
-    const winnerNames = aWins ? a.names : b.names;
-    const loserNames  = aWins ? b.names : a.names;
+    const winners = aWins ? aNames : bNames;
+    const losers  = aWins ? bNames : aNames;
 
-    // payout math depends on style
-    // per-player: each loser pays each winner basePayout => total transfer basePayout * winners * losers
-    // team-split: single basePayout => split evenly among winners/losers for per-person settlement
-    const totalTransfer = (state.payoutStyle === "per-player")
-      ? basePayout * (winnerNames.length * loserNames.length)
-      : basePayout;
+    const transfer = (state.payoutStyle === "per-player")
+      ? base * (winners.length * losers.length)
+      : base;
 
-    const pill = aWins ? "Team A wins" : "Team B wins";
-    const pillClass = aWins ? "pillGood" : "pillBad";
+    const badge = aWins ? "Team A wins" : "Team B wins";
+    const badgeClass = aWins ? "badgeGood" : "badgeBad";
 
-    const aLabel = `A (${a.names.join(", ")})`;
-    const bLabel = `B (${b.names.join(", ")})`;
-
-    const text =
-      `${aLabel}: ${a.total}  •  ${bLabel}: ${b.total}\n` +
-      `Shots: ${shotsRaw} (capped to ${shots})  •  $/shot: ${perShot}\n` +
-      `Base payout: $${basePayout}\n` +
+    const detail =
+      `A (${aNames.join(", ")}): ${a.total} • B (${bNames.join(", ")}): ${b.total}\n` +
+      `Shots: ${shotsRaw} (cap → ${shots}) • $/shot: ${perShot}\n` +
       (state.payoutStyle === "per-player"
-        ? `Per-player style: $${basePayout} per opponent pair → Total transfer: $${totalTransfer}`
-        : `Team-split style: Total transfer: $${totalTransfer}`);
+        ? `Per-player: $${base} per opponent pair → Total transfer $${transfer}`
+        : `Team-split: Total transfer $${transfer}`);
 
     return {
       status:"win",
-      pill,
-      pillClass,
-      text,
-      aTotal:a.total,
-      bTotal:b.total,
-      shotsRaw,
+      badge,
+      badgeClass,
+      text: detail,
+      transfer,
+      base,
       shots,
-      basePayout,
-      totalTransfer,
-      winnerNames,
-      loserNames
+      winners,
+      losers
     };
   }
 
-  function buildPayoutSummary(){
-    // Build net per player, based on payout style:
-    // per-player:
-    //   each loser pays each winner basePayout. So each winner receives basePayout * #losers
-    //   each loser pays basePayout * #winners
-    // team-split:
-    //   totalTransfer split evenly among winners; and evenly among losers (each loser pays equal share)
-    const net = new Map(); // name -> dollars
+  function buildSummary(playerMap){
+    // Apply quote shortcuts on a cloned array (so summary reflects it)
+    const rowsClone = state.rows.map(r => ({...r}));
+    applyQuoteShortcuts(rowsClone);
+
+    const net = new Map();
     const lines = [];
-    let totalRows = 0;
+    let computed = 0;
 
     function addNet(name, amt){
       net.set(name, (net.get(name) || 0) + amt);
     }
 
-    for(const row of state.rows){
-      const r = computeRowResult(row);
-      if(r.status !== "win") continue;
-      totalRows++;
-
-      const perShot = Number(state.dollarsPerShot || 0);
-      const base = r.basePayout;
+    rowsClone.forEach((row, i) => {
+      const r = computeRow(row, i, rowsClone, playerMap);
+      if(r.status !== "win") return;
+      computed++;
 
       if(state.payoutStyle === "per-player"){
-        const winners = r.winnerNames;
-        const losers = r.loserNames;
-
-        // Each loser pays each winner base
-        for(const w of winners){
-          addNet(w, base * losers.length);
-        }
-        for(const l of losers){
-          addNet(l, -base * winners.length);
-        }
-
-        lines.push(
-          `Row: ${escapeOneLine(row.teamA)} vs ${escapeOneLine(row.teamB)} | ` +
-          `${r.pill} | shots ${r.shots} | $${base} per pair | total $${r.totalTransfer}`
-        );
+        // each loser pays each winner base
+        const base = r.base;
+        r.winners.forEach(w => addNet(w, base * r.losers.length));
+        r.losers.forEach(l => addNet(l, -base * r.winners.length));
+        lines.push(`Row ${i+1}: ${row.teamA} vs ${row.teamB} | ${r.badge} | shots ${r.shots} | total $${r.transfer}`);
       } else {
-        const winners = r.winnerNames;
-        const losers = r.loserNames;
-        const total = r.totalTransfer;
-
-        const winShare = total / winners.length;
-        const loseShare = total / losers.length;
-
-        winners.forEach(w => addNet(w, winShare));
-        losers.forEach(l => addNet(l, -loseShare));
-
-        lines.push(
-          `Row: ${escapeOneLine(row.teamA)} vs ${escapeOneLine(row.teamB)} | ` +
-          `${r.pill} | shots ${r.shots} | total $${total} (split)`
-        );
+        // team split
+        const total = r.transfer;
+        const winShare = total / r.winners.length;
+        const loseShare = total / r.losers.length;
+        r.winners.forEach(w => addNet(w, winShare));
+        r.losers.forEach(l => addNet(l, -loseShare));
+        lines.push(`Row ${i+1}: ${row.teamA} vs ${row.teamB} | ${r.badge} | shots ${r.shots} | total $${total} (split)`);
       }
-    }
+    });
 
-    // settlement lines (who pays who) greedy match
     const creditors = [];
     const debtors = [];
     for(const [name, amt] of net.entries()){
@@ -738,7 +775,7 @@
 
     let i=0, j=0;
     const settle = [];
-    while(i < debtors.length && j < creditors.length){
+    while(i<debtors.length && j<creditors.length){
       const pay = Math.min(debtors[i].amt, creditors[j].amt);
       if(pay > 0.009){
         settle.push(`${debtors[i].name} pays ${creditors[j].name}: $${pay.toFixed(2)}`);
@@ -749,25 +786,92 @@
       if(creditors[j].amt <= 0.009) j++;
     }
 
-    let header =
+    const holesLabel = state.holesMode === "18" ? "18" : (state.holesMode === "9f" ? "Front 9" : "Back 9");
+
+    return (
       `Best Ball Bet Sheet Summary\n` +
-      `Holes: ${state.holesMode === "18" ? "18" : (state.holesMode === "9f" ? "Front 9" : "Back 9")}\n` +
-      `$/shot: ${Number(state.dollarsPerShot || 0)} | Default max: ${Number(state.defaultMaxShots || 0)}\n` +
-      `Style: ${state.payoutStyle}\n` +
-      `Rows with results: ${totalRows}\n`;
-
-    const detail = lines.length ? ("\nRows:\n" + lines.join("\n")) : "\nRows:\n(no calculated rows yet)";
-    const settleText = settle.length ? ("\n\nSettlement:\n" + settle.join("\n")) : "\n\nSettlement:\nAll square.";
-
-    return header + detail + settleText;
-
-    function escapeOneLine(s){
-      return (s || "").toString().replaceAll("\n"," ").trim();
-    }
+      `Holes: ${holesLabel}\n` +
+      `$/shot: ${Number(state.dollarsPerShot||0)} • Default max: ${Number(state.defaultMaxShots||0)} • Style: ${state.payoutStyle}\n` +
+      `Rows with results: ${computed}\n\n` +
+      `Rows:\n${lines.length ? lines.join("\n") : "(no calculated rows yet)"}\n\n` +
+      `Settlement:\n${settle.length ? settle.join("\n") : "All square."}`
+    );
   }
 
   // -----------------------------
-  // Rendering
+  // Autocomplete (tap to insert)
+  // -----------------------------
+  function getLastToken(text){
+    // Last comma-separated token
+    const parts = text.split(",");
+    return (parts[parts.length - 1] || "").trim();
+  }
+
+  function replaceLastToken(text, newName){
+    const parts = text.split(",");
+    if(parts.length === 1) return newName;
+    parts[parts.length - 1] = " " + newName;
+    return parts.join(",").replace(/\s+,/g, ",");
+  }
+
+  function attachAutocomplete(textarea, listEl, getNames){
+    function close(){ listEl.style.display = "none"; listEl.innerHTML = ""; }
+    function open(items){
+      listEl.innerHTML = "";
+      items.forEach(name => {
+        const div = document.createElement("div");
+        div.className = "acItem";
+        div.textContent = name;
+        div.onclick = () => {
+          const cur = textarea.value || "";
+          const token = getLastToken(cur);
+          // if empty token, append with comma if needed
+          if(cur.trim().length === 0){
+            textarea.value = name;
+          } else if(token.length === 0 && cur.trim().endsWith(",")){
+            textarea.value = cur + " " + name;
+          } else {
+            textarea.value = replaceLastToken(cur, name);
+          }
+          textarea.dispatchEvent(new Event("input"));
+          close();
+          textarea.focus();
+        };
+        listEl.appendChild(div);
+      });
+      listEl.style.display = items.length ? "block" : "none";
+    }
+
+    textarea.addEventListener("input", () => {
+      const names = getNames();
+      if(!names.length) return close();
+
+      const token = getLastToken(textarea.value || "");
+      const q = token.toLowerCase();
+
+      // Do not autocomplete for quote shortcuts
+      if(q === '""' || q === '""""') return close();
+
+      if(q.length < 1) return close();
+
+      const matches = names
+        .filter(n => n.toLowerCase().includes(q))
+        .slice(0, 10);
+
+      open(matches);
+    });
+
+    textarea.addEventListener("blur", () => setTimeout(close, 120));
+    textarea.addEventListener("focus", () => {
+      // show suggestions if token already there
+      textarea.dispatchEvent(new Event("input"));
+    });
+
+    document.addEventListener("scroll", close, { passive:true });
+  }
+
+  // -----------------------------
+  // UI + rendering
   // -----------------------------
   function applyInputsToState(){
     state.dollarsPerShot = Number($("dollarsPerShot").value || 0);
@@ -781,98 +885,125 @@
   function filteredRows(){
     const q = (state.filterText || "").trim().toLowerCase();
     if(!q) return state.rows;
-    return state.rows.filter(r => {
-      const hay = `${r.teamA||""} ${r.teamB||""} ${r.note||""}`.toLowerCase();
-      return hay.includes(q);
-    });
+    return state.rows.filter(r => (`${r.teamA||""} ${r.teamB||""} ${r.note||""}`).toLowerCase().includes(q));
   }
 
   function render(){
-    // sync UI inputs
     $("dollarsPerShot").value = String(state.dollarsPerShot ?? 5);
     $("defaultMaxShots").value = String(state.defaultMaxShots ?? 5);
     $("payoutStyle").value = state.payoutStyle || "per-player";
     $("holesMode").value = state.holesMode || "18";
     $("filterText").value = state.filterText || "";
 
-    // csv status
+    const playerMap = buildPlayerIndex();
+    const namesList = (state.csvPlayers || []).map(p => p.name);
+
+    // CSV status
     if(state.csvPlayers && state.csvPlayers.length){
-      const when = state.csvLoadedAt ? ` • Loaded: ${new Date(state.csvLoadedAt).toLocaleString()}` : "";
-      $("csvStatus").textContent = `CSV loaded: ${state.csvPlayers.length} players${when}.`;
+      const when = state.csvLoadedAt ? ` • ${new Date(state.csvLoadedAt).toLocaleString()}` : "";
+      $("csvStatus").textContent = `Loaded ${state.csvPlayers.length} players${when}. Start typing names in Team A / Team B fields.`;
+      $("csvTag").textContent = `CSV: ${state.csvPlayers.length} players`;
     } else {
-      $("csvStatus").textContent = "No CSV loaded. You can still fill the sheet; results will show “Need CSV / names”.";
+      $("csvStatus").textContent = "No CSV loaded. Load Squabbit CSV so scores and names work.";
+      $("csvTag").textContent = "CSV: none";
     }
 
-    const list = $("rowList");
+    // Clone rows for quote shortcuts during display calculations
+    const rowsForCalc = state.rows.map(r => ({...r}));
+    applyQuoteShortcuts(rowsForCalc);
+
     const rows = filteredRows();
     $("rowCount").textContent = `Showing ${rows.length} row(s).`;
 
+    const list = $("rowList");
     list.innerHTML = "";
 
-    rows.forEach((row, idx) => {
+    rows.forEach((row, visibleIndex) => {
+      const realIndex = state.rows.findIndex(x => x.id === row.id);
+      const rowCalc = rowsForCalc[realIndex] || row;
+
+      const r = computeRow(rowCalc, realIndex, rowsForCalc, playerMap);
+
+      const badgeText = r.badge || "—";
+      const badgeClass = r.badgeClass || "badgeWarn";
+      const right = (r.status === "win") ? `$${(r.transfer||0).toFixed(2)}` : (r.status === "push" ? "$0.00" : "—");
+
       const card = document.createElement("div");
       card.className = "rowCard";
-
-      const r = computeRowResult(row);
-      const pillText = r.pill || "—";
-      const pillClass = r.pillClass || "pillWarn";
-
-      let right = "";
-      if(r.status === "win"){
-        right = `$${(r.totalTransfer || 0).toFixed(2)}`;
-      } else if(r.status === "push"){
-        right = "$0.00";
-      } else {
-        right = "—";
-      }
-
       card.innerHTML = `
         <div class="rowTop">
           <div class="rowTitle">
-            Match ${idx + 1}
-            <span class="pillSmall ${pillClass}">${escapeHtml(pillText)}</span>
+            Row ${realIndex + 1}
+            <span class="badge ${badgeClass}">${badgeText}</span>
           </div>
-          <div class="pillSmall">${escapeHtml(state.holesMode === "18" ? "18" : (state.holesMode === "9f" ? "Front 9" : "Back 9"))}</div>
+          <div class="badge">${state.holesMode === "18" ? "18" : (state.holesMode === "9f" ? "Front 9" : "Back 9")}</div>
         </div>
 
-        <div class="rowGrid">
+        <div class="matchGrid">
           <div>
-            <label>Team A</label>
-            <textarea data-a="${escapeHtml(row.id)}" placeholder="Zack, Nick">${escapeHtml(row.teamA || "")}</textarea>
+            <div class="sideTitle">
+              <strong>Team A</strong>
+              <span class="sideHint">comma names</span>
+            </div>
+            <div class="acWrap">
+              <textarea data-a="${row.id}" placeholder="Zack, Nick">${row.teamA||""}</textarea>
+              <div class="acList" data-ac="${row.id}-a"></div>
+            </div>
           </div>
 
-          <div>
-            <label>Team B</label>
-            <textarea data-b="${escapeHtml(row.id)}" placeholder="Blair, Garrett">${escapeHtml(row.teamB || "")}</textarea>
-          </div>
+          <div class="vsCol">VS</div>
 
           <div>
-            <label>Max</label>
-            <input data-m="${escapeHtml(row.id)}" type="number" min="1" step="1" placeholder="${escapeHtml(state.defaultMaxShots)}" value="${escapeHtml(row.maxShots || "")}" />
+            <div class="sideTitle">
+              <strong>Team B</strong>
+              <span class="sideHint">comma names</span>
+            </div>
+            <div class="acWrap">
+              <textarea data-b="${row.id}" placeholder="Blair, Garrett">${row.teamB||""}</textarea>
+              <div class="acList" data-ac="${row.id}-b"></div>
+            </div>
           </div>
+        </div>
 
+        <div class="smallGrid">
+          <div>
+            <label>Max shots (row)</label>
+            <input data-m="${row.id}" type="number" min="1" step="1" placeholder="${state.defaultMaxShots}" value="${row.maxShots||""}" />
+          </div>
           <div>
             <label>Notes</label>
-            <input data-n="${escapeHtml(row.id)}" type="text" placeholder="Optional…" value="${escapeHtml(row.note || "")}" />
+            <input data-n="${row.id}" type="text" placeholder='Optional…' value="${row.note||""}" />
           </div>
         </div>
 
         <div class="resultBox">
-          <div class="left">${escapeHtml(r.text || "—").replaceAll("\n","<br/>")}</div>
-          <div class="right">${escapeHtml(right)}</div>
+          <div class="left">${(r.text||"—").replaceAll("\n","<br/>")}</div>
+          <div class="right">${right}</div>
         </div>
 
         <div class="rowActions">
-          <button class="btn btnGhost" type="button" data-copyprev="${escapeHtml(row.id)}">Copy Prev</button>
-          <button class="btn btnGhost" type="button" data-dup="${escapeHtml(row.id)}">Duplicate</button>
-          <button class="btn btnBad" type="button" data-del="${escapeHtml(row.id)}">Delete</button>
+          <button class="btn btnGhost" type="button" data-copyprev="${row.id}">Copy Prev</button>
+          <button class="btn btnGhost" type="button" data-dup="${row.id}">Duplicate</button>
+          <button class="btn btnBad" type="button" data-del="${row.id}">Delete</button>
+        </div>
+
+        <div class="mini">
+          Shortcut: type <span class="mono">""</span> or <span class="mono">""""</span> in Team A/Team B to reuse the previous row on that side.
         </div>
       `;
-
       list.appendChild(card);
+
+      // Bind autocomplete (only if CSV loaded)
+      const taA = card.querySelector(`textarea[data-a="${row.id}"]`);
+      const taB = card.querySelector(`textarea[data-b="${row.id}"]`);
+      const acA = card.querySelector(`div[data-ac="${row.id}-a"]`);
+      const acB = card.querySelector(`div[data-ac="${row.id}-b"]`);
+
+      if(taA && acA) attachAutocomplete(taA, acA, () => namesList);
+      if(taB && acB) attachAutocomplete(taB, acB, () => namesList);
     });
 
-    // bind inputs
+    // Bind input changes
     [...list.querySelectorAll("textarea[data-a], textarea[data-b], input[data-m], input[data-n]")].forEach(el => {
       el.oninput = () => {
         const id = el.getAttribute("data-a") || el.getAttribute("data-b") || el.getAttribute("data-m") || el.getAttribute("data-n");
@@ -885,23 +1016,18 @@
         if(el.hasAttribute("data-n")) row.note = el.value;
 
         save();
-        // re-render lightly (simple + reliable)
         renderSummaryOnly();
-        render(); // keep it straightforward and consistent
       };
     });
 
-    // Copy Prev
+    // Actions
     [...list.querySelectorAll("button[data-copyprev]")].forEach(btn => {
       btn.onclick = () => {
         const id = btn.getAttribute("data-copyprev");
-        const index = state.rows.findIndex(x => x.id === id);
-        if(index <= 0){
-          alert("No previous row to copy.");
-          return;
-        }
-        const prev = state.rows[index - 1];
-        const cur = state.rows[index];
+        const idx = state.rows.findIndex(x => x.id === id);
+        if(idx <= 0) return alert("No previous row to copy.");
+        const prev = state.rows[idx-1];
+        const cur = state.rows[idx];
         cur.teamA = prev.teamA;
         cur.teamB = prev.teamB;
         cur.maxShots = prev.maxShots;
@@ -910,27 +1036,26 @@
       };
     });
 
-    // Duplicate
     [...list.querySelectorAll("button[data-dup]")].forEach(btn => {
       btn.onclick = () => {
         const id = btn.getAttribute("data-dup");
-        const index = state.rows.findIndex(x => x.id === id);
-        if(index < 0) return;
-        const src = state.rows[index];
+        const idx = state.rows.findIndex(x => x.id === id);
+        if(idx < 0) return;
+        const src = state.rows[idx];
         const copy = { ...src, id: uid() };
-        state.rows.splice(index + 1, 0, copy);
+        state.rows.splice(idx+1, 0, copy);
         save();
         render();
+        window.scrollTo({ top: document.body.scrollHeight, behavior:"smooth" });
       };
     });
 
-    // Delete
     [...list.querySelectorAll("button[data-del]")].forEach(btn => {
       btn.onclick = () => {
         const id = btn.getAttribute("data-del");
-        const index = state.rows.findIndex(x => x.id === id);
-        if(index < 0) return;
-        state.rows.splice(index, 1);
+        const idx = state.rows.findIndex(x => x.id === id);
+        if(idx < 0) return;
+        state.rows.splice(idx, 1);
         save();
         render();
       };
@@ -940,14 +1065,14 @@
   }
 
   function renderSummaryOnly(){
-    const summary = buildPayoutSummary();
-    $("summaryBox").textContent = summary;
+    const playerMap = buildPlayerIndex();
+    $("summaryBox").textContent = buildSummary(playerMap);
   }
 
   // -----------------------------
-  // Actions
+  // Add / copy / clear
   // -----------------------------
-  function addRow(copyLast=false){
+  function addRow(copyLast){
     const last = state.rows[state.rows.length - 1];
     const row = {
       id: uid(),
@@ -959,24 +1084,25 @@
     state.rows.push(row);
     save();
     render();
-    // scroll to bottom so it feels like adding to a sheet
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    window.scrollTo({ top: document.body.scrollHeight, behavior:"smooth" });
   }
 
   function clearSheet(){
-    const ok = confirm("Clear the sheet rows?\n\nThis does not delete your loaded CSV.");
+    const ok = confirm("Clear the sheet rows?\n\nThis keeps your CSV loaded.");
     if(!ok) return;
     state.rows = [];
     save();
     render();
   }
 
+  // -----------------------------
+  // Clipboard + download
+  // -----------------------------
   async function copyToClipboard(text){
     try{
       await navigator.clipboard.writeText(text);
       alert("Copied.");
     } catch {
-      // fallback
       const ta = document.createElement("textarea");
       ta.value = text;
       document.body.appendChild(ta);
@@ -988,7 +1114,7 @@
   }
 
   function downloadText(filename, content){
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([content], { type:"text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -1000,7 +1126,6 @@
   }
 
   function downloadSheetCSV(){
-    // export rows as a simple CSV
     const header = ["Row","Team A","Team B","Max Shots","Notes"].join(",");
     const lines = state.rows.map((r, i) => {
       return [
@@ -1023,26 +1148,7 @@
   }
 
   // -----------------------------
-  // CSV upload binding
-  // -----------------------------
-  $("csvFile").addEventListener("change", async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if(!f) return;
-    const text = await f.text();
-    const players = parsePlayersFromSquabbitCSV(text);
-    if(!players.length){
-      alert("Could not find player scores. Make sure the Squabbit export includes Hole 1–18 columns.");
-      return;
-    }
-    state.csvPlayers = players;
-    state.csvLoadedAt = new Date().toISOString();
-    rebuildCsvMap();
-    save();
-    render();
-  });
-
-  // -----------------------------
-  // Inputs
+  // Bind top inputs
   // -----------------------------
   ["dollarsPerShot","defaultMaxShots","payoutStyle","holesMode","filterText"].forEach(id => {
     $(id).addEventListener("input", () => { applyInputsToState(); render(); });
@@ -1053,11 +1159,29 @@
   $("copyLastRowBtn").onclick = () => addRow(true);
   $("clearSheetBtn").onclick = clearSheet;
 
-  $("copySummaryBtn").onclick = () => copyToClipboard(buildPayoutSummary());
+  $("copySummaryBtn").onclick = () => copyToClipboard($("summaryBox").textContent || "");
   $("downloadSheetBtn").onclick = downloadSheetCSV;
 
+  // CSV upload
+  $("csvFile").addEventListener("change", async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    const text = await f.text();
+
+    const players = parsePlayersFromSquabbitCSV(text);
+    if(!players.length){
+      alert("Could not read players from this CSV.\n\nMake sure it's the Squabbit export that includes Hole 1–18 columns.");
+      return;
+    }
+
+    state.csvPlayers = players;
+    state.csvLoadedAt = new Date().toISOString();
+    save();
+    render();
+  });
+
   // -----------------------------
-  // Bottom hub bar behavior
+  // Bottom hub bar
   // -----------------------------
   (function(){
     const TOOL_NAME = window.TOOL_NAME || document.title || "Golf Tool";
@@ -1090,11 +1214,10 @@
   })();
 
   // -----------------------------
-  // Initialize
+  // Init
   // -----------------------------
   load();
   if(!state.rows || !state.rows.length){
-    // start with one empty row so it feels like a sheet
     state.rows = [{ id: uid(), teamA:"", teamB:"", maxShots: String(state.defaultMaxShots || 5), note:"" }];
     save();
   }
