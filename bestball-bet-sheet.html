@@ -31,7 +31,7 @@
         radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.18), transparent 55%),
         radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.12), transparent 55%),
         linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #06110c);
-      padding: 14px 14px 92px; /* space for bottom sticky bar */
+      padding: 14px 14px 92px;
     }
     .wrap{ max-width: 980px; margin: 0 auto; }
 
@@ -54,7 +54,7 @@
       justify-content:space-between;
     }
     .title{ margin:0; font-size:18px; font-weight:950; letter-spacing:.2px; }
-    .sub{ margin-top:6px; color:var(--muted); font-size:12.5px; line-height:1.25; max-width: 720px; }
+    .sub{ margin-top:6px; color:var(--muted); font-size:12.5px; line-height:1.25; max-width: 740px; }
 
     .pill{
       display:inline-flex; align-items:center; gap:8px;
@@ -79,7 +79,7 @@
       letter-spacing:.2px;
       margin: 0 0 6px;
     }
-    input, select, textarea{
+    input, textarea{
       width:100%;
       padding: 11px 12px;
       border-radius: 12px;
@@ -91,11 +91,7 @@
     }
     textarea{ min-height: 46px; resize: vertical; }
 
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:10px;
-    }
+    .grid{ display:grid; grid-template-columns: 1fr; gap:10px; }
     @media (min-width: 860px){
       .grid2{ grid-template-columns: 1fr 1fr; }
       .grid3{ grid-template-columns: 1fr 1fr 1fr; }
@@ -141,7 +137,6 @@
       margin-top: 8px;
     }
 
-    /* Row (sheet entry) */
     .rowCard{
       border: 1px solid rgba(255,255,255,.10);
       border-radius: 16px;
@@ -149,6 +144,16 @@
       background: rgba(0,0,0,.14);
       margin-top: 10px;
     }
+    .rowCard.flash{
+      outline: 2px solid rgba(52,211,153,.45);
+      box-shadow: 0 0 0 6px rgba(52,211,153,.12);
+      animation: flash 1.2s ease-out;
+    }
+    @keyframes flash{
+      0%{ transform: translateY(2px); filter: brightness(1.06); }
+      100%{ transform: translateY(0); filter: brightness(1); }
+    }
+
     .rowHeader{
       display:flex;
       align-items:center;
@@ -209,7 +214,6 @@
       user-select:none;
     }
 
-    /* Autocomplete */
     .acWrap{ position: relative; }
     .suggest{
       position:absolute;
@@ -234,7 +238,6 @@
     .suggestItem:last-child{ border-bottom: 0; }
     .suggestItem:hover{ background: rgba(255,255,255,.06); }
 
-    /* Result */
     .resultBox{
       margin-top: 10px;
       border-radius: 16px;
@@ -265,15 +268,28 @@
     }
     .muted{ color: var(--muted); font-size: 12px; line-height:1.25; margin-top: 6px; }
 
-    .rowActions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-      margin-top: 10px;
+    .errorLine{
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(251,113,133,.35);
+      background: rgba(251,113,133,.10);
+      color: #ffd6de;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.25;
     }
 
-    /* Summary / settlement */
+    .rowActions{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top: 10px;
+    }
+    @media (min-width: 560px){
+      .rowActions{ grid-template-columns: 1fr 1fr 1fr; }
+    }
+
     .summaryBox{
       border-radius: 16px;
       border: 1px solid rgba(255,255,255,.10);
@@ -289,7 +305,6 @@
       color: #d6f2e6;
     }
 
-    /* Bottom sticky hub bar */
     .hubbar{
       position: fixed;
       left: 0;
@@ -356,8 +371,8 @@
         <div>
           <h1 class="title">Best Ball Bet Sheet</h1>
           <div class="sub">
-            Load a Squabbit CSV once. Then fill Team A vs Team B. Winner, shots (stroke difference),
-            and payouts are automatic. No side scrolling.
+            Load a Squabbit CSV once. Then fill Team A vs Team B.
+            Winner, stroke difference, and payouts are automatic. No side scrolling.
           </div>
         </div>
         <div class="pill"><span class="dot"></span><span><b>Local save</b> (this device)</span></div>
@@ -380,8 +395,8 @@
 
         <div>
           <label>Max strokes (cap, global)</label>
-          <input id="maxShots" type="number" min="0" step="1" value="5" />
-          <div class="hint">Example: cap at 5 strokes.</div>
+          <input id="maxShots" type="number" min="1" step="1" value="5" />
+          <div class="hint">Example: cap at 5 strokes. (Cannot be 0.)</div>
         </div>
       </div>
 
@@ -391,6 +406,7 @@
           <input id="filterInput" placeholder="Type a name... (Zack, Blair, etc)" />
           <div class="hint">Tip: autocomplete list builds from the CSV player names.</div>
         </div>
+
         <div class="btnRow" style="justify-content:flex-end; align-items:end;">
           <button class="btn btnPrimary" id="addRowBtn" type="button">Add Row</button>
           <button class="btn btnGhost" id="clearSheetBtn" type="button">Clear Sheet</button>
@@ -399,9 +415,9 @@
 
       <div class="hint" style="margin-top:10px;">
         Entry tips:
-        <br>• Teams are comma-separated names (auto-complete helps).
+        <br>• Teams are comma-separated names (autocomplete helps).
         <br>• Shortcut: type <b>""</b> in Team A or Team B to reuse the previous row on that side.
-        <br>• “Add Next (reuse Team A)” is for one team playing multiple matchups.
+        <br>• You cannot use the same player on both teams in the same row.
       </div>
     </div>
 
@@ -426,7 +442,6 @@
 
   </div>
 
-  <!-- Bottom sticky bar -->
   <div class="hubbar">
     <div class="hubbarRow">
       <div class="hubbarTitle" id="hubToolTitle">Best Ball Bet Sheet</div>
@@ -440,12 +455,11 @@
 
 <script>
 (() => {
-  // --------- Settings ----------
   window.TOOL_NAME = "Best Ball Bet Sheet";
-  window.TOOL_STORAGE_KEYS = ["bestball_bet_sheet_v2"];
+  window.TOOL_STORAGE_KEYS = ["bestball_bet_sheet_v3"];
   window.HUB_INDEX = "index.html";
 
-  const LS_KEY = "bestball_bet_sheet_v2";
+  const LS_KEY = "bestball_bet_sheet_v3";
   const $ = (id) => document.getElementById(id);
 
   // --------- CSV parsing helpers ----------
@@ -468,7 +482,6 @@
     out.push(cur);
     return out.map(s => (s || "").trim());
   };
-
   const parseCSVRows = (text) => text.split(/\r?\n/).map(splitCSVLine);
 
   const toInt = (v) => {
@@ -490,8 +503,8 @@
   };
 
   const normalizeName = (n) => (n || "").trim().replace(/\s+/g, " ");
+  const normKey = (n) => normalizeName(n).toLowerCase();
 
-  // Parse players: requires a header row that has Hole 1..18 columns and player rows with 18 numeric hole values.
   const parsePlayersFromSquabbitCSV = (txt) => {
     const rows = parseCSVRows(txt);
     let holeIdx = null;
@@ -507,7 +520,6 @@
         joined.startsWith("s.i.")
       ) continue;
 
-      // detect header row
       if (!holeIdx && row.some(c => /hole\s*1/i.test(c || ""))) {
         holeIdx = buildHoleIndex(row);
         continue;
@@ -526,33 +538,30 @@
       }
       if (strokes.length !== 18) continue;
 
-      const name = nameRaw; // keep as-is (Squabbit export usually has correct casing)
-      map.set(name.toLowerCase(), { name, strokes });
+      map.set(nameRaw.toLowerCase(), { name: nameRaw, strokes });
     }
 
     return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name));
   };
 
-  // --------- Best-ball scoring ----------
+  // --------- best ball ----------
   function bestBallScore(playersByLowerName, teamNames){
-    // score = sum of min strokes per hole among team members
     const members = teamNames
-      .map(n => playersByLowerName.get(n.toLowerCase()))
+      .map(n => playersByLowerName.get(normKey(n)))
       .filter(Boolean);
-
-    if (!members.length) return null;
+    if(!members.length) return null;
 
     let total = 0;
-    for (let i = 0; i < 18; i++) {
+    for(let i=0;i<18;i++){
       let m = Infinity;
-      for (const p of members) m = Math.min(m, p.strokes[i]);
-      if (!Number.isFinite(m)) return null;
+      for(const p of members) m = Math.min(m, p.strokes[i]);
+      if(!Number.isFinite(m)) return null;
       total += m;
     }
     return total;
   }
 
-  // --------- Sheet model ----------
+  // --------- state ----------
   function loadState(){
     try{
       const raw = localStorage.getItem(LS_KEY);
@@ -564,29 +573,79 @@
   function saveState(st){
     localStorage.setItem(LS_KEY, JSON.stringify(st));
   }
-
   function newState(){
     return {
       dollarsPerShot: 5,
       maxShots: 5,
       csvLoadedAt: null,
-      players: [],         // [{name, strokes[18]}]
-      rows: []             // [{a:"", b:""}]
+      players: [],
+      rows: [],
+      lastAddedRowIndex: null
     };
   }
 
-  // --------- Autocomplete ----------
-  function makeAutocomplete(inputEl, getNames, onPick){
+  let state = loadState() || newState();
+
+  function clampSettings(){
+    let d = Number(state.dollarsPerShot);
+    if(!Number.isFinite(d) || d < 0) d = 5;
+
+    let cap = Number(state.maxShots);
+    if(!Number.isFinite(cap) || cap < 1) cap = 5; // IMPORTANT: cap cannot be 0
+
+    state.dollarsPerShot = Math.round(d);
+    state.maxShots = Math.round(cap);
+  }
+
+  function setCSVStatus(msg){ $("csvStatus").textContent = msg; }
+
+  function playersMap(){
+    const m = new Map();
+    state.players.forEach(p => m.set(p.name.toLowerCase(), p));
+    return m;
+  }
+
+  function parseTeamInput(str){
+    const s = (str || "").trim();
+    if(!s) return [];
+    return s.split(",").map(x => normalizeName(x)).filter(Boolean);
+  }
+
+  function teamKeys(teamArr){
+    return teamArr.map(normKey).filter(Boolean);
+  }
+
+  function findDuplicates(arrKeys){
+    const seen = new Set();
+    const dups = new Set();
+    for(const k of arrKeys){
+      if(seen.has(k)) dups.add(k);
+      seen.add(k);
+    }
+    return [...dups];
+  }
+
+  // payout rule: each loser owes (shotsUsed * $/stroke)
+  function computePayout(margin, dollarsPerShot, maxShots, winnersCount, losersCount){
+    const shots = Math.min(margin, Math.max(1, maxShots)); // cap min 1, already clamped
+    const perLoser = shots * dollarsPerShot;
+    const total = perLoser * losersCount;
+    const perWinner = winnersCount > 0 ? (total / winnersCount) : 0;
+    return { shots, perLoser, total, perWinner };
+  }
+
+  function money(n){
+    return (Math.round((n + Number.EPSILON) * 100) / 100).toFixed(2);
+  }
+
+  // --------- autocomplete ----------
+  function makeAutocomplete(inputEl, getNames, getBlockedKeys, onPick){
     let box = null;
 
-    function close(){
-      if (box) box.remove();
-      box = null;
-    }
-
+    function close(){ if(box) box.remove(); box = null; }
     function open(list){
       close();
-      if (!list.length) return;
+      if(!list.length) return;
       box = document.createElement("div");
       box.className = "suggest";
       list.forEach(name => {
@@ -605,38 +664,27 @@
       return (parts[parts.length - 1] || "").trim();
     }
 
-    inputEl.addEventListener("input", () => {
+    function refresh(){
       const token = currentToken(inputEl.value).toLowerCase();
       const names = getNames();
+      const blocked = new Set(getBlockedKeys());
       const list = names
         .filter(n => !token || n.toLowerCase().includes(token))
+        .filter(n => !blocked.has(n.toLowerCase()))
         .slice(0, 10);
       open(list);
-    });
+    }
 
-    inputEl.addEventListener("focus", () => {
-      const token = currentToken(inputEl.value).toLowerCase();
-      const names = getNames();
-      const list = names
-        .filter(n => !token || n.toLowerCase().includes(token))
-        .slice(0, 10);
-      open(list);
-    });
-
-    inputEl.addEventListener("blur", () => {
-      // let click register
-      setTimeout(close, 140);
-    });
-
-    inputEl.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") close();
-    });
+    inputEl.addEventListener("input", refresh);
+    inputEl.addEventListener("focus", refresh);
+    inputEl.addEventListener("blur", () => setTimeout(close, 140));
+    inputEl.addEventListener("keydown", (e) => { if(e.key === "Escape") close(); });
   }
 
   function appendNameWithComma(existing, picked){
     const s = existing || "";
     const parts = s.split(",");
-    parts[parts.length - 1] = " " + picked; // replace last token
+    parts[parts.length - 1] = " " + picked;
     const cleaned = parts.map(p => p.trim()).filter((p, i) => i === parts.length - 1 ? true : p.length);
     let out = cleaned.join(", ");
     out = out.replace(/\s+,/g, ",");
@@ -644,45 +692,7 @@
     return out.replace(/^, /, "");
   }
 
-  function parseTeamInput(str){
-    const s = (str || "").trim();
-    if (!s) return [];
-    return s
-      .split(",")
-      .map(x => normalizeName(x))
-      .filter(Boolean);
-  }
-
-  function rowIncludesName(row, name){
-    const n = name.toLowerCase();
-    return row.a.toLowerCase().includes(n) || row.b.toLowerCase().includes(n);
-  }
-
-  // --------- Payout logic (per-losing-player rule) ----------
-  // If margin = 3 strokes and $/stroke = 5 => each loser owes 15.
-  // Total paid = losersCount * 15.
-  // Winners split total equally. (may be fractional; we keep cents)
-  function computePayout(margin, dollarsPerShot, maxShots, winnersCount, losersCount){
-    const shots = Math.min(margin, Math.max(0, maxShots));
-    const perLoser = shots * dollarsPerShot;
-    const total = perLoser * losersCount;
-    const perWinner = winnersCount > 0 ? (total / winnersCount) : 0;
-    return { shots, perLoser, total, perWinner };
-  }
-
-  function money(n){
-    return (Math.round((n + Number.EPSILON) * 100) / 100).toFixed(2);
-  }
-
-  // --------- Rendering ----------
-  let state = loadState() || newState();
-
-  function setCSVStatus(msg){
-    $("csvStatus").textContent = msg;
-  }
-
   function getNameList(){
-    // from CSV players, plus any typed names
     const set = new Set();
     state.players.forEach(p => set.add(p.name));
     state.rows.forEach(r => {
@@ -692,59 +702,73 @@
     return [...set].sort((a,b)=>a.localeCompare(b));
   }
 
-  function playersMap(){
-    const m = new Map();
-    state.players.forEach(p => m.set(p.name.toLowerCase(), p));
-    return m;
+  function rowIncludesName(row, name){
+    const n = name.toLowerCase();
+    return (row.a||"").toLowerCase().includes(n) || (row.b||"").toLowerCase().includes(n);
   }
 
+  // --------- row result ----------
   function computeRowResult(row, idx){
-    const pMap = playersMap();
+    clampSettings();
+
+    // "" shortcut (reuse previous on that side)
+    const prev = state.rows[idx - 1];
     const aRaw = (row.a || "").trim();
     const bRaw = (row.b || "").trim();
-
-    // "" shortcut (reuse previous)
-    const prev = state.rows[idx - 1];
     const aStr = (aRaw === '""' || aRaw === "“”" || aRaw === "''") && prev ? prev.a : aRaw;
     const bStr = (bRaw === '""' || bRaw === "“”" || bRaw === "''") && prev ? prev.b : bRaw;
 
     const aTeam = parseTeamInput(aStr);
     const bTeam = parseTeamInput(bStr);
 
-    if (!state.players.length) {
-      return { status:"need_csv", aTeam, bTeam, aScore:null, bScore:null };
+    const aKeys = teamKeys(aTeam);
+    const bKeys = teamKeys(bTeam);
+
+    const dupA = findDuplicates(aKeys);
+    const dupB = findDuplicates(bKeys);
+
+    const overlap = aKeys.filter(k => bKeys.includes(k));
+    if (dupA.length || dupB.length || overlap.length){
+      const badNames = new Set();
+      dupA.forEach(k => badNames.add(k));
+      dupB.forEach(k => badNames.add(k));
+      overlap.forEach(k => badNames.add(k));
+      return {
+        status:"invalid",
+        aTeam, bTeam,
+        message:
+          overlap.length
+            ? `Same player on both teams: ${overlap.map(k => (aTeam.find(n=>normKey(n)===k) || bTeam.find(n=>normKey(n)===k) || k)).join(", ")}`
+            : `Duplicate name inside a team. Fix Team A/Team B so each player only appears once.`,
+      };
     }
 
+    if(!state.players.length){
+      return { status:"need_csv", aTeam, bTeam };
+    }
+
+    const pMap = playersMap();
     const aScore = aTeam.length ? bestBallScore(pMap, aTeam) : null;
     const bScore = bTeam.length ? bestBallScore(pMap, bTeam) : null;
 
-    if (aScore == null || bScore == null) {
+    if(aScore == null || bScore == null){
       return { status:"need_names", aTeam, bTeam, aScore, bScore };
     }
 
-    if (aScore === bScore) {
-      return {
-        status:"push",
-        aTeam, bTeam,
-        aScore, bScore,
-        winner:"Push",
-        margin:0,
-        payout: { shots:0, perLoser:0, total:0, perWinner:0 },
-        winners: [],
-        losers: []
-      };
+    if(aScore === bScore){
+      return { status:"push", aTeam, bTeam, aScore, bScore };
     }
 
     const aWins = aScore < bScore;
     const margin = Math.abs(aScore - bScore);
 
     const winners = aWins ? aTeam : bTeam;
-    const losers = aWins ? bTeam : aTeam;
+    const losers  = aWins ? bTeam : aTeam;
 
     const payout = computePayout(
       margin,
-      Number(state.dollarsPerShot || 0),
-      Number(state.maxShots || 0),
+      Number(state.dollarsPerShot),
+      Number(state.maxShots),
       winners.length,
       losers.length
     );
@@ -753,101 +777,80 @@
       status:"ok",
       aTeam, bTeam,
       aScore, bScore,
-      winner: aWins ? "Team A" : "Team B",
-      winnerNames: winners,
-      loserNames: losers,
+      aWins,
       margin,
+      winners,
+      losers,
       payout
     };
   }
 
   function buildSettlement(){
-    // aggregate per player across all rows
-    // losers pay perLoser; winners receive perWinner
-    const credits = new Map(); // player -> +$
-    const debits = new Map();  // player -> -$
+    const credits = new Map();
+    const debits = new Map();
 
     state.rows.forEach((row, idx) => {
       const r = computeRowResult(row, idx);
-      if (r.status !== "ok") return;
-      if (r.payout.shots <= 0) return;
+      if(r.status !== "ok") return;
 
-      r.loserNames.forEach(n => {
-        debits.set(n, (debits.get(n) || 0) + r.payout.perLoser);
-      });
-      r.winnerNames.forEach(n => {
-        credits.set(n, (credits.get(n) || 0) + r.payout.perWinner);
-      });
+      r.losers.forEach(n => debits.set(n, (debits.get(n)||0) + r.payout.perLoser));
+      r.winners.forEach(n => credits.set(n, (credits.get(n)||0) + r.payout.perWinner));
     });
 
-    // create settlement lines (simple greedy)
-    const debtors = [...debits.entries()].map(([name, amt]) => ({ name, amt })).filter(x => x.amt > 0);
-    const creditors = [...credits.entries()].map(([name, amt]) => ({ name, amt })).filter(x => x.amt > 0);
+    const debtors = [...debits.entries()].map(([name,amt])=>({name,amt})).filter(x=>x.amt>0.00001).sort((a,b)=>b.amt-a.amt);
+    const creditors = [...credits.entries()].map(([name,amt])=>({name,amt})).filter(x=>x.amt>0.00001).sort((a,b)=>b.amt-a.amt);
 
-    debtors.sort((a,b)=>b.amt - a.amt);
-    creditors.sort((a,b)=>b.amt - a.amt);
-
-    let i=0, j=0;
-    const lines = [];
-    while (i < debtors.length && j < creditors.length) {
+    let i=0,j=0;
+    const lines=[];
+    while(i<debtors.length && j<creditors.length){
       const pay = Math.min(debtors[i].amt, creditors[j].amt);
-      if (pay > 0.00001) {
+      if(pay>0.00001){
         lines.push(`${debtors[i].name} pays ${creditors[j].name}: $${money(pay)}`);
         debtors[i].amt -= pay;
         creditors[j].amt -= pay;
       }
-      if (debtors[i].amt <= 0.00001) i++;
-      if (creditors[j].amt <= 0.00001) j++;
+      if(debtors[i].amt<=0.00001) i++;
+      if(creditors[j].amt<=0.00001) j++;
     }
-
     return lines;
   }
 
   function updateSummary(){
-    const validRows = state.rows
-      .map((r, i) => computeRowResult(r, i))
-      .filter(x => x.status === "ok");
-
-    const rowsWithMoney = validRows.filter(r => r.payout.shots > 0);
-
-    if (!state.rows.length) {
+    if(!state.rows.length){
       $("summaryBox").style.display = "none";
       return;
     }
-
     $("summaryBox").style.display = "block";
-    $("summaryChip").textContent =
-      `${rowsWithMoney.length}/${state.rows.length} row(s) have results`;
 
-    const lines = [];
+    const computed = state.rows.map((r,i)=>computeRowResult(r,i));
+    const okRows = computed.filter(r => r.status === "ok" || r.status === "push");
+    $("summaryChip").textContent = `${okRows.length}/${state.rows.length} row(s) have results`;
+
+    const lines=[];
     lines.push("Best Ball Bet Sheet Summary");
-    lines.push(`$/stroke: ${Number(state.dollarsPerShot || 0)} • cap: ${Number(state.maxShots || 0)}`);
-    lines.push(`Rows with payouts: ${rowsWithMoney.length}`);
+    lines.push(`$/stroke: ${state.dollarsPerShot} • cap: ${state.maxShots}`);
     lines.push("");
 
     state.rows.forEach((row, idx) => {
       const r = computeRowResult(row, idx);
-      const aStr = (row.a || "").trim();
-      const bStr = (row.b || "").trim();
-
-      const teamA = (aStr === '""' && idx>0) ? state.rows[idx-1].a : row.a;
-      const teamB = (bStr === '""' && idx>0) ? state.rows[idx-1].b : row.b;
-
-      if (r.status === "need_csv") {
-        lines.push(`Row ${idx+1}: ${teamA || "—"} vs ${teamB || "—"} | Need CSV`);
+      if(r.status === "need_csv"){
+        lines.push(`Row ${idx+1}: Need CSV`);
         return;
       }
-      if (r.status === "need_names") {
-        lines.push(`Row ${idx+1}: ${teamA || "—"} vs ${teamB || "—"} | Need names / match CSV`);
+      if(r.status === "need_names"){
+        lines.push(`Row ${idx+1}: Need names / match CSV`);
         return;
       }
-      if (r.status === "push") {
-        lines.push(`Row ${idx+1}: ${teamA} vs ${teamB} | Push (${r.aScore} - ${r.bScore})`);
+      if(r.status === "invalid"){
+        lines.push(`Row ${idx+1}: INVALID — ${r.message}`);
+        return;
+      }
+      if(r.status === "push"){
+        lines.push(`Row ${idx+1}: Push (${r.aScore} - ${r.bScore})`);
         return;
       }
       lines.push(
-        `Row ${idx+1}: ${teamA} (${r.aScore}) vs ${teamB} (${r.bScore}) | ` +
-        `${r.winner === "Team A" ? "Team A wins" : "Team B wins"} by ${r.margin} | ` +
+        `Row ${idx+1}: ${r.aWins ? "Team A wins" : "Team B wins"} by ${r.margin} | ` +
         `shots ${r.payout.shots} | each loser owes $${money(r.payout.perLoser)}`
       );
     });
@@ -860,168 +863,158 @@
     $("summaryText").textContent = lines.join("\n");
   }
 
+  // --------- render rows ----------
   function renderRows(){
-    const filter = ($("filterInput").value || "").trim().toLowerCase();
+    clampSettings();
 
+    const filter = ($("filterInput").value || "").trim().toLowerCase();
     const rowsList = $("rowsList");
     rowsList.innerHTML = "";
 
-    const visibleRows = state.rows
+    const visible = state.rows
       .map((row, idx) => ({ row, idx }))
       .filter(x => !filter || rowIncludesName(x.row, filter));
 
     $("rowsCount").textContent =
       state.rows.length
-        ? `Showing ${visibleRows.length} row(s) • $/stroke ${Number(state.dollarsPerShot || 0)} • cap ${Number(state.maxShots || 0)}`
+        ? `Showing ${visible.length} row(s) • $/stroke ${state.dollarsPerShot} • cap ${state.maxShots}`
         : "No rows yet. Tap “Add Row”.";
 
-    visibleRows.forEach(({ row, idx }) => {
+    visible.forEach(({row, idx}) => {
       const r = computeRowResult(row, idx);
 
       const rc = document.createElement("div");
-      rc.className = "rowCard";
+      rc.className = "rowCard" + (state.lastAddedRowIndex === idx ? " flash" : "");
+      rc.id = `row_${idx}`;
 
-      const header = document.createElement("div");
-      header.className = "rowHeader";
-      header.innerHTML = `
-        <div class="rowTitle">Row ${idx + 1}</div>
-        <span class="chip">${(r.status === "ok" || r.status === "push") ? "Auto" : "Pending"}</span>
-      `;
-      rc.appendChild(header);
+      rc.innerHTML = `
+        <div class="rowHeader">
+          <div class="rowTitle">Row ${idx+1}</div>
+          <span class="chip">${(r.status==="ok" || r.status==="push") ? "Auto" : "Pending"}</span>
+        </div>
 
-      // Teams UI
-      const teams = document.createElement("div");
-      teams.className = "teams";
+        <div class="teams">
+          <div>
+            <div class="sideLabel">
+              <label style="margin:0;">Team A (left)</label>
+              <div class="sideTools">
+                <button class="miniBtn" type="button" data-act="usePrevA">Use prev A</button>
+              </div>
+            </div>
+            <div class="acWrap">
+              <textarea id="a_${idx}" placeholder="Zack, Keith  (comma separated)">${row.a || ""}</textarea>
+            </div>
+            <div class="hint">Autocomplete blocks names already used on Team B (same row).</div>
+          </div>
 
-      // Left (Team A)
-      const left = document.createElement("div");
-      left.innerHTML = `
-        <div class="sideLabel">
-          <label style="margin:0;">Team A (left)</label>
-          <div class="sideTools">
-            <button class="miniBtn" type="button" data-act="usePrevA">Use prev A</button>
+          <div>
+            <div class="sideLabel">
+              <label style="margin:0;">Team B (right)</label>
+              <div class="sideTools">
+                <button class="miniBtn" type="button" data-act="usePrevB">Use prev B</button>
+              </div>
+            </div>
+            <div class="acWrap">
+              <textarea id="b_${idx}" placeholder="Brad, Dawson  (comma separated)">${row.b || ""}</textarea>
+            </div>
+            <div class="hint">Shortcut: type "" to reuse previous row on that side.</div>
           </div>
         </div>
-        <div class="acWrap">
-          <textarea id="a_${idx}" placeholder="Zack, Keith  (comma separated)">${row.a || ""}</textarea>
+
+        <div class="resultBox" id="res_${idx}"></div>
+
+        <div class="rowActions">
+          <button class="btn btnPrimary" type="button" data-act="addNextBlank">Add Next Row</button>
+          <button class="btn btnPrimary" type="button" data-act="addNextReuseA">Add Next (reuse Team A)</button>
+          <button class="btn btnDanger" type="button" data-act="deleteRow">Delete</button>
         </div>
-        <div class="hint">Pick names from the CSV. Autocomplete adds commas for you.</div>
       `;
-      teams.appendChild(left);
 
-      // Right (Team B)
-      const right = document.createElement("div");
-      right.innerHTML = `
-        <div class="sideLabel">
-          <label style="margin:0;">Team B (right)</label>
-          <div class="sideTools">
-            <button class="miniBtn" type="button" data-act="usePrevB">Use prev B</button>
-          </div>
-        </div>
-        <div class="acWrap">
-          <textarea id="b_${idx}" placeholder="Brad, Dawson  (comma separated)">${row.b || ""}</textarea>
-        </div>
-        <div class="hint">Shortcut: type "" to reuse previous row on that side.</div>
-      `;
-      teams.appendChild(right);
+      rowsList.appendChild(rc);
 
-      rc.appendChild(teams);
-
-      // Result box
-      const res = document.createElement("div");
-      res.className = "resultBox";
-
-      if (r.status === "need_csv") {
+      // render result text
+      const res = $(`res_${idx}`);
+      if(r.status === "need_csv"){
         res.innerHTML = `
           <div class="resultTop">
             <div class="winner push">Need Squabbit CSV</div>
             <div class="bigMoney">—</div>
           </div>
-          <div class="muted">Load the Squabbit export once at the top. Then results will populate automatically.</div>
+          <div class="muted">Load the Squabbit export once at the top.</div>
         `;
-      } else if (r.status === "need_names") {
+      } else if(r.status === "need_names"){
         res.innerHTML = `
           <div class="resultTop">
             <div class="winner push">Need names / match CSV</div>
             <div class="bigMoney">—</div>
           </div>
-          <div class="muted">Make sure names match the Squabbit export. Autocomplete helps.</div>
+          <div class="muted">Use names exactly as in the Squabbit export. Autocomplete helps.</div>
         `;
-      } else if (r.status === "push") {
+      } else if(r.status === "invalid"){
+        res.innerHTML = `
+          <div class="resultTop">
+            <div class="winner push">Fix this row</div>
+            <div class="bigMoney">—</div>
+          </div>
+          <div class="errorLine">${r.message}</div>
+        `;
+      } else if(r.status === "push"){
         res.innerHTML = `
           <div class="resultTop">
             <div class="winner push">Push</div>
             <div class="bigMoney">$0.00</div>
           </div>
-          <div class="muted">
-            Team A: <b>${r.aScore}</b> • Team B: <b>${r.bScore}</b>
-          </div>
+          <div class="muted">Team A: <b>${r.aScore}</b> • Team B: <b>${r.bScore}</b></div>
         `;
       } else {
-        const aWins = r.winner === "Team A";
-        const wCls = aWins ? "good" : "bad";
-        const winnerNames = aWins ? r.aTeam.join(", ") : r.bTeam.join(", ");
-        const loserNames = aWins ? r.bTeam.join(", ") : r.aTeam.join(", ");
-
         res.innerHTML = `
           <div class="resultTop">
-            <div class="winner ${wCls}">
-              ${aWins ? "Team A wins" : "Team B wins"} by ${r.margin}
-            </div>
-            <div class="bigMoney">
-              Each loser owes $${money(r.payout.perLoser)}
-            </div>
+            <div class="winner ${r.aWins ? "good" : "bad"}">${r.aWins ? "Team A wins" : "Team B wins"} by ${r.margin}</div>
+            <div class="bigMoney">Each loser owes $${money(r.payout.perLoser)}</div>
           </div>
           <div class="muted">
             Team A score: <b>${r.aScore}</b> • Team B score: <b>${r.bScore}</b><br>
-            Shots used: <b>${r.payout.shots}</b> (cap ${Number(state.maxShots || 0)}) • Total paid: <b>$${money(r.payout.total)}</b><br>
+            Shots used: <b>${r.payout.shots}</b> (cap ${state.maxShots}) • Total paid: <b>$${money(r.payout.total)}</b><br>
             Winners split: <b>$${money(r.payout.perWinner)}</b> each<br>
-            Winners: <b>${winnerNames}</b><br>
-            Losers: <b>${loserNames}</b>
+            Winners: <b>${r.winners.join(", ")}</b><br>
+            Losers: <b>${r.losers.join(", ")}</b>
           </div>
         `;
       }
 
-      rc.appendChild(res);
-
-      // Row actions (Add-next + delete)
-      const actions = document.createElement("div");
-      actions.className = "rowActions";
-      actions.innerHTML = `
-        <button class="btn btnPrimary" type="button" data-act="addNextReuseA">Add Next (reuse Team A)</button>
-        <button class="btn btnGhost" type="button" data-act="duplicateRow">Duplicate Row</button>
-        <button class="btn btnDanger" type="button" data-act="deleteRow">Delete</button>
-      `;
-      rc.appendChild(actions);
-
-      rowsList.appendChild(rc);
-
-      // wire inputs + autocomplete
-      const aEl = $("a_" + idx);
-      const bEl = $("b_" + idx);
+      // wire inputs + autocomplete with cross-team blocking
+      const aEl = $(`a_${idx}`);
+      const bEl = $(`b_${idx}`);
 
       const getNames = () => getNameList();
 
-      makeAutocomplete(aEl, getNames, (picked) => {
-        aEl.value = appendNameWithComma(aEl.value, picked);
-        state.rows[idx].a = aEl.value;
-        saveState(state);
-        renderRows();
-        updateSummary();
-      });
+      makeAutocomplete(
+        aEl,
+        getNames,
+        () => teamKeys(parseTeamInput(bEl.value || "")),
+        (picked) => {
+          aEl.value = appendNameWithComma(aEl.value, picked);
+          state.rows[idx].a = aEl.value;
+          saveState(state);
+          renderRows();
+        }
+      );
 
-      makeAutocomplete(bEl, getNames, (picked) => {
-        bEl.value = appendNameWithComma(bEl.value, picked);
-        state.rows[idx].b = bEl.value;
-        saveState(state);
-        renderRows();
-        updateSummary();
-      });
+      makeAutocomplete(
+        bEl,
+        getNames,
+        () => teamKeys(parseTeamInput(aEl.value || "")),
+        (picked) => {
+          bEl.value = appendNameWithComma(bEl.value, picked);
+          state.rows[idx].b = bEl.value;
+          saveState(state);
+          renderRows();
+        }
+      );
 
       aEl.addEventListener("input", () => {
         state.rows[idx].a = aEl.value;
         saveState(state);
-        // light refresh: only summary + row results
         updateSummary();
       });
       bEl.addEventListener("input", () => {
@@ -1030,44 +1023,60 @@
         updateSummary();
       });
 
-      // wire buttons inside this row
+      // row buttons
       rc.querySelectorAll("button[data-act]").forEach(btn => {
         btn.onclick = () => {
           const act = btn.getAttribute("data-act");
           const prev = state.rows[idx - 1];
 
-          if (act === "usePrevA" && prev) {
+          if(act === "usePrevA" && prev){
             state.rows[idx].a = prev.a;
             saveState(state);
-            renderRows(); updateSummary();
+            renderRows();
             return;
           }
-          if (act === "usePrevB" && prev) {
+          if(act === "usePrevB" && prev){
             state.rows[idx].b = prev.b;
             saveState(state);
-            renderRows(); updateSummary();
+            renderRows();
             return;
           }
-          if (act === "duplicateRow") {
-            state.rows.splice(idx + 1, 0, { a: state.rows[idx].a, b: state.rows[idx].b });
-            saveState(state);
-            renderRows(); updateSummary();
-            return;
-          }
-          if (act === "deleteRow") {
+          if(act === "deleteRow"){
             state.rows.splice(idx, 1);
             saveState(state);
-            renderRows(); updateSummary();
+            renderRows();
             return;
           }
-          if (act === "addNextReuseA") {
-            state.rows.splice(idx + 1, 0, { a: state.rows[idx].a, b: "" });
+          if(act === "addNextBlank"){
+            const newIndex = idx + 1;
+            state.rows.splice(newIndex, 0, { a:"", b:"" });
+            state.lastAddedRowIndex = newIndex;
             saveState(state);
-            renderRows(); updateSummary();
-            // scroll a bit so the new row is visible
+            renderRows();
             setTimeout(() => {
-              window.scrollBy({ top: 260, behavior: "smooth" });
-            }, 60);
+              const el = document.getElementById(`b_${newIndex}`);
+              if(el) el.focus();
+              const rowEl = document.getElementById(`row_${newIndex}`);
+              if(rowEl) rowEl.scrollIntoView({ behavior:"smooth", block:"center" });
+              state.lastAddedRowIndex = null;
+              saveState(state);
+            }, 80);
+            return;
+          }
+          if(act === "addNextReuseA"){
+            const newIndex = idx + 1;
+            state.rows.splice(newIndex, 0, { a: state.rows[idx].a, b:"" });
+            state.lastAddedRowIndex = newIndex;
+            saveState(state);
+            renderRows();
+            setTimeout(() => {
+              const el = document.getElementById(`b_${newIndex}`);
+              if(el) el.focus();
+              const rowEl = document.getElementById(`row_${newIndex}`);
+              if(rowEl) rowEl.scrollIntoView({ behavior:"smooth", block:"center" });
+              state.lastAddedRowIndex = null;
+              saveState(state);
+            }, 80);
             return;
           }
         };
@@ -1077,19 +1086,28 @@
     updateSummary();
   }
 
-  // --------- Controls ----------
+  // --------- controls ----------
   function addRow(){
+    const idx = state.rows.length;
     state.rows.push({ a:"", b:"" });
+    state.lastAddedRowIndex = idx;
     saveState(state);
     renderRows();
-    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 60);
+    setTimeout(() => {
+      const el = document.getElementById(`a_${idx}`);
+      if(el) el.focus();
+      const rowEl = document.getElementById(`row_${idx}`);
+      if(rowEl) rowEl.scrollIntoView({ behavior:"smooth", block:"center" });
+      state.lastAddedRowIndex = null;
+      saveState(state);
+    }, 80);
   }
 
   $("addRowBtn").onclick = addRow;
 
   $("clearSheetBtn").onclick = () => {
     const ok = confirm("Clear the sheet rows?\n\n(This does not delete the CSV.)");
-    if (!ok) return;
+    if(!ok) return;
     state.rows = [];
     saveState(state);
     renderRows();
@@ -1098,24 +1116,27 @@
   $("filterInput").addEventListener("input", renderRows);
 
   $("dollarsPerShot").addEventListener("input", () => {
-    state.dollarsPerShot = Number($("dollarsPerShot").value || 0);
+    const v = Number($("dollarsPerShot").value);
+    state.dollarsPerShot = Number.isFinite(v) && v >= 0 ? Math.round(v) : 5;
     saveState(state);
     renderRows();
   });
 
   $("maxShots").addEventListener("input", () => {
-    state.maxShots = Number($("maxShots").value || 0);
+    const v = Number($("maxShots").value);
+    state.maxShots = Number.isFinite(v) && v >= 1 ? Math.round(v) : 5; // min 1
+    $("maxShots").value = state.maxShots;
     saveState(state);
     renderRows();
   });
 
   $("csvInput").addEventListener("change", async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if(!file) return;
     const txt = await file.text();
     const players = parsePlayersFromSquabbitCSV(txt);
 
-    if (!players.length) {
+    if(!players.length){
       setCSVStatus("Could not find player hole scores. Make sure this is the Squabbit export with Hole 1–18.");
       return;
     }
@@ -1127,18 +1148,17 @@
     renderRows();
   });
 
-  // --------- Copy / Export ----------
+  // --------- copy / export ----------
   $("copySummaryBtn").onclick = async () => {
     try{
       await navigator.clipboard.writeText($("summaryText").textContent || "");
       alert("Copied payout summary.");
     } catch {
-      alert("Copy failed. (iOS sometimes blocks clipboard.) You can manually select and copy.");
+      alert("Copy failed on this device. You can manually select and copy.");
     }
   };
 
   $("downloadSheetBtn").onclick = () => {
-    // CSV of rows + computed results
     const lines = [];
     lines.push(["Row","Team A","Team B","Team A Score","Team B Score","Winner","Margin","ShotsUsed","EachLoserOwes","EachWinnerGets","TotalPaid"].join(","));
 
@@ -1146,26 +1166,18 @@
       const r = computeRowResult(row, idx);
       const safe = (s) => `"${String(s || "").replace(/"/g,'""')}"`;
 
-      if (r.status !== "ok" && r.status !== "push") {
-        lines.push([
-          idx+1, safe(row.a), safe(row.b),
-          "", "", r.status, "", "", "", "", ""
-        ].join(","));
+      if(r.status === "need_csv" || r.status === "need_names" || r.status === "invalid"){
+        lines.push([idx+1, safe(row.a), safe(row.b), "", "", r.status, "", "", "", "", ""].join(","));
         return;
       }
-
-      if (r.status === "push") {
-        lines.push([
-          idx+1, safe(row.a), safe(row.b),
-          r.aScore, r.bScore, "Push", 0, 0, 0, 0, 0
-        ].join(","));
+      if(r.status === "push"){
+        lines.push([idx+1, safe(row.a), safe(row.b), r.aScore, r.bScore, "Push", 0, 0, 0, 0, 0].join(","));
         return;
       }
-
       lines.push([
         idx+1, safe(row.a), safe(row.b),
         r.aScore, r.bScore,
-        r.winner,
+        r.aWins ? "Team A" : "Team B",
         r.margin,
         r.payout.shots,
         money(r.payout.perLoser),
@@ -1174,7 +1186,7 @@
       ].join(","));
     });
 
-    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([lines.join("\n")], { type:"text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -1185,24 +1197,18 @@
     URL.revokeObjectURL(url);
   };
 
-  // --------- Bottom bar wiring ----------
+  // --------- bottom bar ----------
   (function(){
-    const TOOL_NAME = window.TOOL_NAME || document.title || "Golf Tool";
-    const TOOL_KEYS = Array.isArray(window.TOOL_STORAGE_KEYS) ? window.TOOL_STORAGE_KEYS : [];
-    const HUB_INDEX = window.HUB_INDEX || "index.html";
+    $("hubToolTitle").textContent = window.TOOL_NAME || document.title || "Golf Tool";
 
-    $("hubToolTitle").textContent = TOOL_NAME;
-
-    $("hubBackBtn").onclick = () => { window.location.href = HUB_INDEX; };
+    $("hubBackBtn").onclick = () => { window.location.href = window.HUB_INDEX || "index.html"; };
 
     $("hubResetThisBtn").onclick = () => {
-      if(!TOOL_KEYS.length){
-        alert("No reset keys set for this tool yet.");
-        return;
-      }
-      const ok = confirm(`Reset this tool?\n\nThis clears:\n- ${TOOL_KEYS.join("\n- ")}`);
+      const keys = Array.isArray(window.TOOL_STORAGE_KEYS) ? window.TOOL_STORAGE_KEYS : [];
+      if(!keys.length) return alert("No reset keys set for this tool yet.");
+      const ok = confirm(`Reset this tool?\n\nThis clears:\n- ${keys.join("\n- ")}`);
       if(!ok) return;
-      TOOL_KEYS.forEach(k => localStorage.removeItem(k));
+      keys.forEach(k => localStorage.removeItem(k));
       alert("Tool reset. Reloading…");
       window.location.reload();
     };
@@ -1212,22 +1218,21 @@
       if(!ok) return;
       localStorage.clear();
       alert("Everything reset. Returning to hub…");
-      window.location.href = HUB_INDEX;
+      window.location.href = window.HUB_INDEX || "index.html";
     };
   })();
 
-  // --------- Init ----------
+  // --------- init ----------
   function init(){
-    // hydrate UI
-    $("dollarsPerShot").value = state.dollarsPerShot ?? 5;
-    $("maxShots").value = state.maxShots ?? 5;
+    clampSettings();
+    $("dollarsPerShot").value = state.dollarsPerShot;
+    $("maxShots").value = state.maxShots;
 
-    if (state.players?.length) {
+    if(state.players?.length){
       setCSVStatus(`Loaded ${state.players.length} player(s) from Squabbit export.`);
     } else {
       setCSVStatus("No CSV loaded yet.");
     }
-
     renderRows();
   }
 
