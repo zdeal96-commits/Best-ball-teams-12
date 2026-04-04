@@ -143,7 +143,6 @@
     .btnGhost{ background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--line); }
     .btnDanger{ background: linear-gradient(135deg, #fb7185, #ef4444); color:#07110d; }
 
-    /* Tool list */
     .toolList{ display:flex; flex-direction:column; gap:14px; margin-top: 8px; }
 
     .toolCard{
@@ -170,7 +169,6 @@
       margin:0;
     }
 
-    /* filename is its own line so it doesn't cram */
     .filePill{
       display:inline-flex;
       align-items:center;
@@ -239,8 +237,8 @@
 
     @media (max-width: 560px){
       header{ flex-direction:column; align-items:flex-start; }
-      .toolActions .btn{ flex: 1 1 100%; min-width: 100%; } /* stack buttons on iPhone */
-      .searchRow .btn{ width: 100%; } /* reset button full width */
+      .toolActions .btn{ flex: 1 1 100%; min-width: 100%; }
+      .searchRow .btn{ width: 100%; }
     }
   </style>
 </head>
@@ -262,7 +260,7 @@
       <div class="hubTop">
         <div>
           <div class="sectionTitle">Hub</div>
-          <div class="mini">Search for a tool (ex: “wolf”, “bet sheet”, “front back”).</div>
+          <div class="mini">Search for a tool (ex: wolf, bet sheet, front back).</div>
         </div>
       </div>
 
@@ -276,7 +274,7 @@
       <div class="toolHeader" style="margin-bottom:12px;">
         <div>
           <div class="sectionTitle">Betting Tools</div>
-          <div class="mini">All tools below support betting formats (teams, wolf, sheets). Big buttons and easy reading on mobile.</div>
+          <div class="mini">All tools below support betting formats. Big buttons and easy reading on mobile.</div>
         </div>
         <div class="mini" id="countLine"></div>
       </div>
@@ -284,40 +282,39 @@
       <div id="toolList" class="toolList"></div>
 
       <div class="mini" style="margin-top:14px;">
-        Reset Everything clears all local saved data (Wolf rounds, sheets, etc.) on this device only.
+        Reset Everything clears all local saved data on this device only.
       </div>
     </div>
   </div>
 
 <script>
 (() => {
-  // Add new tools by adding one object here.
   const TOOLS = [
     {
       name: "Best Ball Bet Sheet",
       file: "bestball-bet-sheet.html",
-      desc: "Import Squabbit round and build a bet sheet (2v1, 2v2, 3v2...). Choose $/shot and max shots cap. Includes Copy Last Row and player search.",
+      desc: "Import Squabbit round and build a bet sheet.",
       badges: ["Squabbit export required", "Sheet mode", "Copy last row"],
       needsSquabbit: true
     },
     {
       name: "Wolf Game (Dots)",
       file: "wolfgame.html",
-      desc: "Wolf + dots tracking. Supports 4 or 5 players. Local save. Includes hole log + edits.",
+      desc: "Wolf plus dots tracking with local save.",
       badges: ["Local save", "$3 per dot"],
       needsSquabbit: false
     },
     {
       name: "Front & Back 9 Teams",
       file: "front9-back9-teams.html",
-      desc: "Upload Squabbit CSV and build teams with front/back 9 best ball. Shows side winners and can export PDF.",
+      desc: "Upload Squabbit CSV and build teams with front and back 9 best ball.",
       badges: ["Squabbit export required", "Front/Back winners", "PDF export"],
       needsSquabbit: true
     },
     {
       name: "Best Ball (All Teams)",
-      file: "best-ball-all-teams.html",
-      desc: "Quick team generator / best ball setup.",
+      file: "Best-ball-all-teams.html",
+      desc: "Quick team generator and best ball setup.",
       badges: ["Quick setup"],
       needsSquabbit: false
     }
@@ -334,24 +331,19 @@
   }
 
   function openTool(file){
-    const url = "./" + file;
-    if (window.top && window.top !== window) window.top.location.href = url;
-    else window.location.href = url;
+    window.location.href = file;
   }
 
   async function copyLink(file, btn){
-    // Use absolute link if possible; otherwise copy relative.
-    const base = location.origin ? location.origin : "";
-    const path = location.pathname.replace(/index\.html$/,"");
-    const link = base ? (base + path + file) : ("./" + file);
+    const link = new URL(file, window.location.href).href;
 
     try{
       await navigator.clipboard.writeText(link);
       const old = btn.textContent;
       btn.textContent = "Copied";
-      setTimeout(()=> btn.textContent = old, 900);
+      setTimeout(() => btn.textContent = old, 900);
     }catch(e){
-      alert("Copy blocked on this device. You can long-press the address bar and copy it.");
+      alert("Copy blocked on this device.");
     }
   }
 
@@ -379,7 +371,7 @@
       }).join("");
 
       const note = t.needsSquabbit
-        ? `<div class="noteBox"><b>Squabbit export required:</b> export the event/round from Squabbit and upload it inside this tool.</div>`
+        ? `<div class="noteBox"><b>Squabbit export required:</b> export the round from Squabbit and upload it inside this tool.</div>`
         : "";
 
       const card = document.createElement("div");
