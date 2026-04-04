@@ -125,6 +125,114 @@
     .rotate-0 {
       transform: rotate(0deg);
     }
+
+    .print-wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #fff;
+      min-height: 100vh;
+    }
+
+    .print-title {
+      margin: 0 0 6px;
+      font-size: 28px;
+      line-height: 1.2;
+      font-weight: 900;
+      color: #111827;
+    }
+
+    .print-sub {
+      margin: 0 0 18px;
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    .print-tools {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0 0 18px;
+    }
+
+    .print-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .print-btn-blue {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .print-btn-gray {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .print-note {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      color: #1e3a8a;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .print-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      color: #111827;
+      background: #fff;
+    }
+
+    .print-table th,
+    .print-table td {
+      border: 1px solid #d1d5db;
+      padding: 8px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .print-table th {
+      background: #f3f4f6;
+      font-weight: 800;
+    }
+
+    .print-table tr:nth-child(even) td {
+      background: #fafafa;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .print-tools,
+      .print-note {
+        display: none !important;
+      }
+
+      .print-wrap {
+        max-width: none;
+        padding: 0;
+      }
+
+      .print-table th {
+        background: #f3f4f6 !important;
+      }
+
+      .print-table tr:nth-child(even) td {
+        background: #fafafa !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -251,147 +359,13 @@
       return out.sort((a, b) => a.name.localeCompare(b.name));
     };
 
-    const escapeHtml = (s) =>
-      (s ?? "").toString()
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;");
-
-    const openPrintablePage = (title, subtitle, headers, rows) => {
-      const tableHead = headers.map(h => `<th>${escapeHtml(h)}</th>`).join("");
-      const tableRows = rows.map(row => `
-        <tr>
-          ${row.map(cell => `<td>${escapeHtml(cell)}</td>`).join("")}
-        </tr>
-      `).join("");
-
-      const printableHtml = `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(title)}</title>
-  <style>
-    body{
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      margin: 0;
-      color: #111827;
-      background: #ffffff;
-    }
-    .wrap{
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-    h1{
-      margin: 0 0 6px;
-      font-size: 28px;
-      line-height: 1.2;
-    }
-    .sub{
-      margin: 0 0 18px;
-      color: #4b5563;
-      font-size: 14px;
-    }
-    .tools{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin: 0 0 18px;
-    }
-    .btn{
-      border:0;
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 15px;
-      font-weight: 800;
-      cursor:pointer;
-    }
-    .btnPrint{
-      background:#2563eb;
-      color:#fff;
-    }
-    .btnBack{
-      background:#e5e7eb;
-      color:#111827;
-    }
-    .note{
-      margin: 0 0 18px;
-      padding: 12px 14px;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 10px;
-      color: #1e3a8a;
-      font-size: 13px;
-      line-height: 1.4;
-    }
-    table{
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    th, td{
-      border: 1px solid #d1d5db;
-      padding: 8px 9px;
-      text-align: left;
-      vertical-align: top;
-    }
-    th{
-      background: #f3f4f6;
-      font-weight: 800;
-    }
-    tr:nth-child(even) td{
-      background: #fafafa;
-    }
-    @media print {
-      .tools, .note{
-        display:none;
-      }
-      body{
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <h1>${escapeHtml(title)}</h1>
-    <p class="sub">${escapeHtml(subtitle)}</p>
-
-    <div class="tools">
-      <button class="btn btnPrint" onclick="window.print()">Print / Save PDF</button>
-      <button class="btn btnBack" onclick="history.back()">Back</button>
-    </div>
-
-    <div class="note">
-      On iPhone, tap Print / Save PDF, then pinch out on the preview and use Share to save as a PDF.
-    </div>
-
-    <table>
-      <thead>
-        <tr>${tableHead}</tr>
-      </thead>
-      <tbody>
-        ${tableRows}
-      </tbody>
-    </table>
-  </div>
-</body>
-</html>`;
-
-      document.open();
-      document.write(printableHtml);
-      document.close();
-    };
-
     function App() {
       const [players, setPlayers] = useState([]);
       const [teams, setTeams] = useState([]);
       const [msg, setMsg] = useState("Upload your Squabbit CSV to build all best ball teams.");
       const [search, setSearch] = useState("");
       const [openGroups, setOpenGroups] = useState({});
+      const [printView, setPrintView] = useState(null);
 
       const totals = useMemo(() =>
         players
@@ -484,24 +458,26 @@
         }
       };
 
-      const printWholeSheet = () => {
+      const showWholeSheetPrint = () => {
         const sortedTeams = [...teams].sort((a, b) => a.name.localeCompare(b.name));
-        const rows = sortedTeams.map((t, idx) => [
-          String(idx + 1),
-          t.players[0],
-          t.players[1],
-          String(t.total)
-        ]);
+        const rows = sortedTeams.map((t, idx) => ({
+          rank: String(idx + 1),
+          c1: t.players[0],
+          c2: t.players[1],
+          c3: String(t.total)
+        }));
 
-        openPrintablePage(
-          "Best Ball Teams",
-          `Players: ${players.length} | Teams: ${teams.length}`,
-          ["Rank", "Player 1", "Player 2", "Best Ball Total"],
+        setPrintView({
+          title: "Best Ball Teams",
+          subtitle: `Players: ${players.length} | Teams: ${teams.length}`,
+          headers: ["Rank", "Player 1", "Player 2", "Best Ball Total"],
           rows
-        );
+        });
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
       };
 
-      const printPlayerSheet = (player, list) => {
+      const showPlayerPrint = (player, list) => {
         const total = totals.find(p => p.name === player)?.total ?? "";
         const sortedList = [...list].sort((a, b) => {
           const partnerA = a.partner || a.players.find(p => p !== player) || "";
@@ -511,21 +487,63 @@
 
         const rows = sortedList.map((t, idx) => {
           const other = t.partner || t.players.find(p => p !== player) || "";
-          return [
-            String(idx + 1),
-            player,
-            other,
-            String(t.total)
-          ];
+          return {
+            rank: String(idx + 1),
+            c1: player,
+            c2: other,
+            c3: String(t.total)
+          };
         });
 
-        openPrintablePage(
-          `${player} Best Ball Teams`,
-          `Player total: ${total} | Teams for this player: ${list.length}`,
-          ["Rank", "Player", "Partner", "Best Ball Total"],
+        setPrintView({
+          title: `${player} Best Ball Teams`,
+          subtitle: `Player total: ${total} | Teams for this player: ${list.length}`,
+          headers: ["Rank", "Player", "Partner", "Best Ball Total"],
           rows
-        );
+        });
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
       };
+
+      if (printView) {
+        return html`
+          <div class="print-wrap">
+            <h1 class="print-title">${printView.title}</h1>
+            <p class="print-sub">${printView.subtitle}</p>
+
+            <div class="print-tools">
+              <button class="print-btn print-btn-blue" onClick=${() => window.print()}>
+                Print / Save PDF
+              </button>
+              <button class="print-btn print-btn-gray" onClick=${() => setPrintView(null)}>
+                Back
+              </button>
+            </div>
+
+            <div class="print-note">
+              On iPhone, tap Print / Save PDF, then pinch out on the preview and use Share to save as a PDF.
+            </div>
+
+            <table class="print-table">
+              <thead>
+                <tr>
+                  ${printView.headers.map(head => html`<th>${head}</th>`)}
+                </tr>
+              </thead>
+              <tbody>
+                ${printView.rows.map(row => html`
+                  <tr>
+                    <td>${row.rank}</td>
+                    <td>${row.c1}</td>
+                    <td>${row.c2}</td>
+                    <td>${row.c3}</td>
+                  </tr>
+                `)}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
 
       return html`
         <div class="pb-10">
@@ -544,13 +562,13 @@
                   />
                   <p class="text-green-700 text-sm mt-3">${msg}</p>
                   <p class="small-note mt-2">
-                    This version shows every possible two player team, keeps the main list alphabetical, sorts each player section by partner name, and opens a printable page for saving as PDF.
+                    This version shows every possible two player team, keeps the main list alphabetical, sorts each player section by partner name, and opens an in page printable view for saving as PDF.
                   </p>
                 </div>
 
                 ${players.length > 0 && html`
                   <div class="flex flex-wrap gap-2">
-                    <button class="action-btn btn-green" onClick=${printWholeSheet}>
+                    <button class="action-btn btn-green" onClick=${showWholeSheetPrint}>
                       Save whole sheet as PDF
                     </button>
                     <button class="action-btn btn-gray" onClick=${() => setAllGroups(true)}>
@@ -646,7 +664,7 @@
                           <div class="flex items-center gap-3 flex-wrap">
                             <span class="text-green-700 font-semibold text-sm">Total: ${total}</span>
                             <span class="text-gray-500 text-sm">Teams: ${list.length}</span>
-                            <button class="action-btn btn-blue" onClick=${() => printPlayerSheet(player, list)}>
+                            <button class="action-btn btn-blue" onClick=${() => showPlayerPrint(player, list)}>
                               Save ${player} as PDF
                             </button>
                           </div>
