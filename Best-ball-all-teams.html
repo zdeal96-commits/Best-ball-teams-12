@@ -358,9 +358,13 @@
           map[player] = map[player]
             .map(team => {
               const other = team.players.find(p => p !== player) || "";
-              return { ...team, name: `${player} & ${other}` };
+              return {
+                ...team,
+                partner: other,
+                name: `${player} & ${other}`
+              };
             })
-            .sort((a, b) => a.name.localeCompare(b.name));
+            .sort((a, b) => a.partner.localeCompare(b.partner));
         });
 
         return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
@@ -372,7 +376,8 @@
 
         return teamsByPlayer.filter(([name, list]) =>
           name.toLowerCase().includes(q) ||
-          list.some(t => t.name.toLowerCase().includes(q))
+          list.some(t => t.name.toLowerCase().includes(q)) ||
+          list.some(t => (t.partner || "").toLowerCase().includes(q))
         );
       }, [teamsByPlayer, search]);
 
@@ -463,9 +468,13 @@
         const total = totals.find(p => p.name === player)?.total ?? "";
 
         const rows = [...list]
-          .sort((a, b) => a.name.localeCompare(b.name))
+          .sort((a, b) => {
+            const partnerA = a.partner || a.players.find(p => p !== player) || "";
+            const partnerB = b.partner || b.players.find(p => p !== player) || "";
+            return partnerA.localeCompare(partnerB);
+          })
           .map((t, idx) => {
-            const other = t.players.find(p => p !== player) || "";
+            const other = t.partner || t.players.find(p => p !== player) || "";
             return `
               <tr>
                 <td>${idx + 1}</td>
@@ -515,7 +524,7 @@
                   />
                   <p class="text-green-700 text-sm mt-3">${msg}</p>
                   <p class="small-note mt-2">
-                    This version shows every possible two player team, keeps teams alphabetical, lets you search, and lets you download either one player's team list or the whole sheet as a PDF.
+                    This version shows every possible two player team, keeps the main list alphabetical, sorts each player section by partner name, lets you search, and lets you download either one player's team list or the whole sheet as a PDF.
                   </p>
                 </div>
 
