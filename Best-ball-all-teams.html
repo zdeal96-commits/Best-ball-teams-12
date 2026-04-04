@@ -258,7 +258,7 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;");
 
-    const openPrintWindow = (title, subtitle, headers, rows, suggestedName) => {
+    const openPrintablePage = (title, subtitle, headers, rows) => {
       const tableHead = headers.map(h => `<th>${escapeHtml(h)}</th>`).join("");
       const tableRows = rows.map(row => `
         <tr>
@@ -266,14 +266,7 @@
         </tr>
       `).join("");
 
-      const win = window.open("", "_blank");
-      if (!win) {
-        alert("Pop up blocked. Please allow pop ups for this page.");
-        return;
-      }
-
-      win.document.open();
-      win.document.write(`<!doctype html>
+      const printableHtml = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -301,8 +294,30 @@
       color: #4b5563;
       font-size: 14px;
     }
-    .save-note{
-      margin: 0 0 16px;
+    .tools{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin: 0 0 18px;
+    }
+    .btn{
+      border:0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor:pointer;
+    }
+    .btnPrint{
+      background:#2563eb;
+      color:#fff;
+    }
+    .btnBack{
+      background:#e5e7eb;
+      color:#111827;
+    }
+    .note{
+      margin: 0 0 18px;
       padding: 12px 14px;
       background: #eff6ff;
       border: 1px solid #bfdbfe;
@@ -330,7 +345,7 @@
       background: #fafafa;
     }
     @media print {
-      .save-note{
+      .tools, .note{
         display:none;
       }
       body{
@@ -344,9 +359,16 @@
   <div class="wrap">
     <h1>${escapeHtml(title)}</h1>
     <p class="sub">${escapeHtml(subtitle)}</p>
-    <div class="save-note">
-      On iPhone, tap Share or Print, then save it as a PDF. Suggested file name: ${escapeHtml(suggestedName)}
+
+    <div class="tools">
+      <button class="btn btnPrint" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn btnBack" onclick="history.back()">Back</button>
     </div>
+
+    <div class="note">
+      On iPhone, tap Print / Save PDF, then pinch out on the preview and use Share to save as a PDF.
+    </div>
+
     <table>
       <thead>
         <tr>${tableHead}</tr>
@@ -356,14 +378,12 @@
       </tbody>
     </table>
   </div>
-  <script>
-    window.onload = () => {
-      setTimeout(() => window.print(), 350);
-    };
-  <\/script>
 </body>
-</html>`);
-      win.document.close();
+</html>`;
+
+      document.open();
+      document.write(printableHtml);
+      document.close();
     };
 
     function App() {
@@ -372,7 +392,6 @@
       const [msg, setMsg] = useState("Upload your Squabbit CSV to build all best ball teams.");
       const [search, setSearch] = useState("");
       const [openGroups, setOpenGroups] = useState({});
-      const [fileName, setFileName] = useState("");
 
       const totals = useMemo(() =>
         players
@@ -447,7 +466,6 @@
 
           setPlayers(parsedPlayers);
           setTeams(builtTeams);
-          setFileName(file.name || "squabbit.csv");
 
           const nextOpen = {};
           parsedPlayers.forEach(p => {
@@ -475,12 +493,11 @@
           String(t.total)
         ]);
 
-        openPrintWindow(
+        openPrintablePage(
           "Best Ball Teams",
-          `Source file: ${fileName || "CSV upload"} | Players: ${players.length} | Teams: ${teams.length}`,
+          `Players: ${players.length} | Teams: ${teams.length}`,
           ["Rank", "Player 1", "Player 2", "Best Ball Total"],
-          rows,
-          "best-ball-all-teams.pdf"
+          rows
         );
       };
 
@@ -502,12 +519,11 @@
           ];
         });
 
-        openPrintWindow(
+        openPrintablePage(
           `${player} Best Ball Teams`,
           `Player total: ${total} | Teams for this player: ${list.length}`,
           ["Rank", "Player", "Partner", "Best Ball Total"],
-          rows,
-          `${player.toLowerCase().replace(/\s+/g, "-")}-best-ball-teams.pdf`
+          rows
         );
       };
 
@@ -528,7 +544,7 @@
                   />
                   <p class="text-green-700 text-sm mt-3">${msg}</p>
                   <p class="small-note mt-2">
-                    This version shows every possible two player team, keeps the main list alphabetical, sorts each player section by partner name, and opens a print friendly sheet you can save as PDF on iPhone.
+                    This version shows every possible two player team, keeps the main list alphabetical, sorts each player section by partner name, and opens a printable page for saving as PDF.
                   </p>
                 </div>
 
