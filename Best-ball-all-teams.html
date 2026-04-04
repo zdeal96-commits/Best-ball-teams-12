@@ -9,7 +9,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     body {
@@ -71,47 +70,6 @@
     .small-note {
       font-size: 0.85rem;
       color: #4b5563;
-    }
-
-    .pdf-sheet {
-      background: white;
-      color: #111827;
-      width: 100%;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 28px;
-      box-sizing: border-box;
-    }
-
-    .pdf-title {
-      font-size: 26px;
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
-
-    .pdf-subtitle {
-      font-size: 14px;
-      color: #4b5563;
-      margin-bottom: 18px;
-    }
-
-    .pdf-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    .pdf-table th,
-    .pdf-table td {
-      border: 1px solid #d1d5db;
-      padding: 7px 8px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    .pdf-table th {
-      background: #f3f4f6;
-      font-weight: 800;
     }
 
     .top-sticky {
@@ -205,9 +163,7 @@
     };
 
     const parseCSVRows = (text) => text.split(/\r?\n/).filter(Boolean).map(splitCSVLine);
-
     const toInt = (v) => /^-?\d+$/.test((v || "").trim()) ? parseInt(v, 10) : null;
-
     const normalizeSpace = (s) => (s || "").replace(/\s+/g, " ").trim();
 
     const titleCase = (n) =>
@@ -295,39 +251,119 @@
       return out.sort((a, b) => a.name.localeCompare(b.name));
     };
 
-    const safeFileName = (s) =>
-      (s || "best-ball")
-        .replace(/[\\/:*?"<>|]+/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-")
-        .toLowerCase();
+    const escapeHtml = (s) =>
+      (s ?? "").toString()
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
 
-    const downloadPdfFromHtml = async (filename, contentHtml) => {
-      const wrapper = document.createElement("div");
-      wrapper.style.position = "fixed";
-      wrapper.style.left = "-100000px";
-      wrapper.style.top = "0";
-      wrapper.style.width = "900px";
-      wrapper.innerHTML = `<div class="pdf-sheet">${contentHtml}</div>`;
-      document.body.appendChild(wrapper);
+    const openPrintWindow = (title, subtitle, headers, rows, suggestedName) => {
+      const tableHead = headers.map(h => `<th>${escapeHtml(h)}</th>`).join("");
+      const tableRows = rows.map(row => `
+        <tr>
+          ${row.map(cell => `<td>${escapeHtml(cell)}</td>`).join("")}
+        </tr>
+      `).join("");
 
-      try {
-        const opt = {
-          margin: [0.25, 0.25, 0.25, 0.25],
-          filename,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
-          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-          pagebreak: { mode: ["avoid-all", "css", "legacy"] }
-        };
-
-        await html2pdf().set(opt).from(wrapper.firstElementChild).save();
-      } catch (err) {
-        alert("PDF download failed. If you are on GitHub Pages, make sure the page fully loaded first.");
-        console.error(err);
-      } finally {
-        wrapper.remove();
+      const win = window.open("", "_blank");
+      if (!win) {
+        alert("Pop up blocked. Please allow pop ups for this page.");
+        return;
       }
+
+      win.document.open();
+      win.document.write(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      color: #111827;
+      background: #ffffff;
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1{
+      margin: 0 0 6px;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+    .sub{
+      margin: 0 0 18px;
+      color: #4b5563;
+      font-size: 14px;
+    }
+    .save-note{
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      color: #1e3a8a;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    table{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td{
+      border: 1px solid #d1d5db;
+      padding: 8px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th{
+      background: #f3f4f6;
+      font-weight: 800;
+    }
+    tr:nth-child(even) td{
+      background: #fafafa;
+    }
+    @media print {
+      .save-note{
+        display:none;
+      }
+      body{
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>${escapeHtml(title)}</h1>
+    <p class="sub">${escapeHtml(subtitle)}</p>
+    <div class="save-note">
+      On iPhone, tap Share or Print, then save it as a PDF. Suggested file name: ${escapeHtml(suggestedName)}
+    </div>
+    <table>
+      <thead>
+        <tr>${tableHead}</tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+      </tbody>
+    </table>
+  </div>
+  <script>
+    window.onload = () => {
+      setTimeout(() => window.print(), 350);
+    };
+  <\/script>
+</body>
+</html>`);
+      win.document.close();
     };
 
     function App() {
@@ -430,80 +466,48 @@
         }
       };
 
-      const downloadWholeSheetPdf = async () => {
-        const rows = [...teams]
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((t, idx) => `
-            <tr>
-              <td>${idx + 1}</td>
-              <td>${t.players[0]}</td>
-              <td>${t.players[1]}</td>
-              <td>${t.total}</td>
-            </tr>
-          `).join("");
+      const printWholeSheet = () => {
+        const sortedTeams = [...teams].sort((a, b) => a.name.localeCompare(b.name));
+        const rows = sortedTeams.map((t, idx) => [
+          String(idx + 1),
+          t.players[0],
+          t.players[1],
+          String(t.total)
+        ]);
 
-        const htmlContent = `
-          <div class="pdf-title">Best Ball Teams</div>
-          <div class="pdf-subtitle">Source file: ${fileName || "CSV upload"} | Players: ${players.length} | Teams: ${teams.length}</div>
-          <table class="pdf-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Player 1</th>
-                <th>Player 2</th>
-                <th>Best Ball Total</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        `;
-
-        await downloadPdfFromHtml(
-          `${safeFileName((fileName || "best-ball-all-teams").replace(/\.[^.]+$/, ""))}.pdf`,
-          htmlContent
+        openPrintWindow(
+          "Best Ball Teams",
+          `Source file: ${fileName || "CSV upload"} | Players: ${players.length} | Teams: ${teams.length}`,
+          ["Rank", "Player 1", "Player 2", "Best Ball Total"],
+          rows,
+          "best-ball-all-teams.pdf"
         );
       };
 
-      const downloadPlayerPdf = async (player, list) => {
+      const printPlayerSheet = (player, list) => {
         const total = totals.find(p => p.name === player)?.total ?? "";
+        const sortedList = [...list].sort((a, b) => {
+          const partnerA = a.partner || a.players.find(p => p !== player) || "";
+          const partnerB = b.partner || b.players.find(p => p !== player) || "";
+          return partnerA.localeCompare(partnerB);
+        });
 
-        const rows = [...list]
-          .sort((a, b) => {
-            const partnerA = a.partner || a.players.find(p => p !== player) || "";
-            const partnerB = b.partner || b.players.find(p => p !== player) || "";
-            return partnerA.localeCompare(partnerB);
-          })
-          .map((t, idx) => {
-            const other = t.partner || t.players.find(p => p !== player) || "";
-            return `
-              <tr>
-                <td>${idx + 1}</td>
-                <td>${player}</td>
-                <td>${other}</td>
-                <td>${t.total}</td>
-              </tr>
-            `;
-          }).join("");
+        const rows = sortedList.map((t, idx) => {
+          const other = t.partner || t.players.find(p => p !== player) || "";
+          return [
+            String(idx + 1),
+            player,
+            other,
+            String(t.total)
+          ];
+        });
 
-        const htmlContent = `
-          <div class="pdf-title">${player} Best Ball Teams</div>
-          <div class="pdf-subtitle">Player total: ${total} | Teams for this player: ${list.length}</div>
-          <table class="pdf-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Partner</th>
-                <th>Best Ball Total</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        `;
-
-        await downloadPdfFromHtml(
-          `${safeFileName(player)}-best-ball-teams.pdf`,
-          htmlContent
+        openPrintWindow(
+          `${player} Best Ball Teams`,
+          `Player total: ${total} | Teams for this player: ${list.length}`,
+          ["Rank", "Player", "Partner", "Best Ball Total"],
+          rows,
+          `${player.toLowerCase().replace(/\s+/g, "-")}-best-ball-teams.pdf`
         );
       };
 
@@ -524,14 +528,14 @@
                   />
                   <p class="text-green-700 text-sm mt-3">${msg}</p>
                   <p class="small-note mt-2">
-                    This version shows every possible two player team, keeps the main list alphabetical, sorts each player section by partner name, lets you search, and lets you download either one player's team list or the whole sheet as a PDF.
+                    This version shows every possible two player team, keeps the main list alphabetical, sorts each player section by partner name, and opens a print friendly sheet you can save as PDF on iPhone.
                   </p>
                 </div>
 
                 ${players.length > 0 && html`
                   <div class="flex flex-wrap gap-2">
-                    <button class="action-btn btn-green" onClick=${downloadWholeSheetPdf}>
-                      Download whole sheet PDF
+                    <button class="action-btn btn-green" onClick=${printWholeSheet}>
+                      Save whole sheet as PDF
                     </button>
                     <button class="action-btn btn-gray" onClick=${() => setAllGroups(true)}>
                       Open all
@@ -626,8 +630,8 @@
                           <div class="flex items-center gap-3 flex-wrap">
                             <span class="text-green-700 font-semibold text-sm">Total: ${total}</span>
                             <span class="text-gray-500 text-sm">Teams: ${list.length}</span>
-                            <button class="action-btn btn-blue" onClick=${() => downloadPlayerPdf(player, list)}>
-                              Download ${player} PDF
+                            <button class="action-btn btn-blue" onClick=${() => printPlayerSheet(player, list)}>
+                              Save ${player} as PDF
                             </button>
                           </div>
                         </div>
