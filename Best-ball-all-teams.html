@@ -3,39 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Best Ball Teams</title>
+  <title>Best Ball Teams PDF Tool</title>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: linear-gradient(to bottom right, #2ecc71, #dff9fb);
       min-height: 100vh;
       color: #1a202c;
+      margin: 0;
     }
+
     .card {
       background: white;
       border-radius: 1.25rem;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       padding: 1.25rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
-    .pair-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.4rem 0;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .pair-row:nth-child(odd) {
-      background-color: #f9f9f9;
-    }
-    .collapsible {
-      transition: max-height 0.4s ease, opacity 0.4s ease;
-      overflow: hidden;
-    }
+
     .header-bar {
       background: linear-gradient(to right, #1e8449, #27ae60);
       color: white;
@@ -45,6 +37,135 @@
       font-size: 1.75rem;
       border-bottom: 4px solid #145a32;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .action-btn {
+      border: 0;
+      border-radius: 0.9rem;
+      padding: 0.7rem 0.9rem;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .1s ease, opacity .2s ease;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-green {
+      background: linear-gradient(135deg, #1e8449, #27ae60);
+      color: white;
+    }
+
+    .btn-blue {
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      color: white;
+    }
+
+    .btn-gray {
+      background: #edf2f7;
+      color: #1f2937;
+    }
+
+    .small-note {
+      font-size: 0.85rem;
+      color: #4b5563;
+    }
+
+    .pdf-sheet {
+      background: white;
+      color: #111827;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px;
+      box-sizing: border-box;
+    }
+
+    .pdf-title {
+      font-size: 26px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .pdf-subtitle {
+      font-size: 14px;
+      color: #4b5563;
+      margin-bottom: 18px;
+    }
+
+    .pdf-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .pdf-table th,
+    .pdf-table td {
+      border: 1px solid #d1d5db;
+      padding: 7px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .pdf-table th {
+      background: #f3f4f6;
+      font-weight: 800;
+    }
+
+    .top-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(10px);
+    }
+
+    .pair-list {
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      overflow: hidden;
+    }
+
+    .pair-header,
+    .pair-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 120px;
+      gap: 12px;
+      padding: 10px 12px;
+      align-items: center;
+    }
+
+    .pair-header {
+      background: #f3f4f6;
+      font-size: 12px;
+      font-weight: 800;
+      color: #4b5563;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .pair-row {
+      border-top: 1px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    .pair-row:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .collapsible {
+      overflow: hidden;
+      transition: max-height 0.35s ease, opacity 0.35s ease, margin-top 0.35s ease;
+    }
+
+    .rotate-90 {
+      transform: rotate(90deg);
+    }
+
+    .rotate-0 {
+      transform: rotate(0deg);
     }
   </style>
 </head>
@@ -58,133 +179,473 @@
     const html = htm.bind(h);
 
     const splitCSVLine = (line) => {
-      const out = []; let cur = "", inQ = false;
+      const out = [];
+      let cur = "";
+      let inQ = false;
+
       for (let i = 0; i < line.length; i++) {
         const c = line[i];
-        if (c === '"') { if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
-        else if (c === ',' && !inQ) { out.push(cur); cur = ""; }
-        else { cur += c; }
+        if (c === '"') {
+          if (inQ && line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQ = !inQ;
+          }
+        } else if (c === "," && !inQ) {
+          out.push(cur);
+          cur = "";
+        } else {
+          cur += c;
+        }
       }
+
       out.push(cur);
       return out.map(s => (s || "").trim());
     };
-    const parseCSVRows = (text) => text.split(/\r?\n/).map(splitCSVLine);
-    const toInt = (v) => /^\d+$/.test(v?.trim() ?? "") ? parseInt(v) : null;
-    const titleCase = (n) => n.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+
+    const parseCSVRows = (text) => text.split(/\r?\n/).filter(Boolean).map(splitCSVLine);
+
+    const toInt = (v) => /^-?\d+$/.test((v || "").trim()) ? parseInt(v, 10) : null;
+
+    const normalizeSpace = (s) => (s || "").replace(/\s+/g, " ").trim();
+
+    const titleCase = (n) =>
+      normalizeSpace(n)
+        .split(" ")
+        .map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : "")
+        .join(" ");
+
     const buildHoleIndex = (row) => {
-      const idx = {}; row.forEach((c, i) => { for (let h = 1; h <= 18; h++) {
-        const s = c.toLowerCase().trim(); if (s === `hole ${h}` || s === `${h}` || s === `hole${h}`) idx[h] = i; } });
+      const idx = {};
+      row.forEach((c, i) => {
+        const s = normalizeSpace(c).toLowerCase();
+        for (let h = 1; h <= 18; h++) {
+          if (s === `hole ${h}` || s === `${h}` || s === `hole${h}`) {
+            idx[h] = i;
+          }
+        }
+      });
       return Object.keys(idx).length ? idx : null;
     };
-    const isPlayerRow = (r) => (r[1] || "").toLowerCase().includes("tee") && (r[0] || "").trim();
-    const parsePlayers = (txt) => {
-      const rows = parseCSVRows(txt); let holeIdx = null; const map = new Map();
-      for (const row of rows) {
-        if (row.some(c => /hole\s*1/i.test(c || ""))) { holeIdx = buildHoleIndex(row); continue; }
-        if (!holeIdx) continue;
-        if (!isPlayerRow(row)) continue;
-        const name = titleCase((row[0] || "").trim()); const strokes = [];
-        for (let h = 1; h <= 18; h++) { const val = toInt(row[holeIdx[h]]); if (val == null) { strokes.length = 0; break; } strokes.push(val); }
-        if (strokes.length === 18) map.set(name, strokes);
-      }
-      return [...map].map(([name, strokes]) => ({ name, strokes }));
+
+    const isPlayerRow = (row) => {
+      const first = normalizeSpace(row[0]);
+      if (!first) return false;
+
+      const rowText = row.map(x => normalizeSpace(x).toLowerCase()).join(" | ");
+      const hasTee = rowText.includes("tee");
+      const hasScores = row.some(c => /^-?\d+$/.test((c || "").trim()));
+
+      return hasTee && hasScores;
     };
-    const bestBall = (a, b) => a.reduce((t, _, i) => t + Math.min(a[i], b[i]), 0);
-    const buildTeams = (list) => {
-      const out = [];
-      for (let i = 0; i < list.length; i++) {
-        for (let j = i + 1; j < list.length; j++) {
-          const A = list[i], B = list[j];
-          out.push({ name: `${A.name} & ${B.name}`, total: bestBall(A.strokes, B.strokes), players: [A.name, B.name] });
+
+    const parsePlayers = (txt) => {
+      const rows = parseCSVRows(txt);
+      let holeIdx = null;
+      const map = new Map();
+
+      for (const row of rows) {
+        if (row.some(c => /hole\s*1/i.test(c || ""))) {
+          holeIdx = buildHoleIndex(row);
+          continue;
+        }
+
+        if (!holeIdx || !isPlayerRow(row)) continue;
+
+        const name = titleCase(row[0] || "");
+        const strokes = [];
+
+        for (let h = 1; h <= 18; h++) {
+          const val = toInt(row[holeIdx[h]]);
+          if (val == null) {
+            strokes.length = 0;
+            break;
+          }
+          strokes.push(val);
+        }
+
+        if (name && strokes.length === 18) {
+          map.set(name, strokes);
         }
       }
-      return out.map(t => {
-        const parts = t.name.split(' & ');
-        parts.sort((a, b) => a.localeCompare(b));
-        const newName = `${parts[0]} & ${parts[1]}`;
-        return { ...t, name: newName };
-      }).sort((a, b) => a.name.localeCompare(b.name));
+
+      return [...map].map(([name, strokes]) => ({ name, strokes }));
+    };
+
+    const bestBall = (a, b) => a.reduce((t, _, i) => t + Math.min(a[i], b[i]), 0);
+
+    const buildTeams = (list) => {
+      const out = [];
+
+      for (let i = 0; i < list.length; i++) {
+        for (let j = i + 1; j < list.length; j++) {
+          const A = list[i];
+          const B = list[j];
+          const parts = [A.name, B.name].sort((a, b) => a.localeCompare(b));
+
+          out.push({
+            name: `${parts[0]} & ${parts[1]}`,
+            total: bestBall(A.strokes, B.strokes),
+            players: parts
+          });
+        }
+      }
+
+      return out.sort((a, b) => a.total - b.total || a.name.localeCompare(b.name));
+    };
+
+    const safeFileName = (s) =>
+      (s || "best-ball")
+        .replace(/[\\/:*?"<>|]+/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .toLowerCase();
+
+    const downloadPdfFromHtml = async (filename, contentHtml) => {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "fixed";
+      wrapper.style.left = "-100000px";
+      wrapper.style.top = "0";
+      wrapper.style.width = "900px";
+      wrapper.innerHTML = `<div class="pdf-sheet">${contentHtml}</div>`;
+      document.body.appendChild(wrapper);
+
+      try {
+        const opt = {
+          margin: [0.25, 0.25, 0.25, 0.25],
+          filename,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+          pagebreak: { mode: ["avoid-all", "css", "legacy"] }
+        };
+
+        await html2pdf().set(opt).from(wrapper.firstElementChild).save();
+      } catch (err) {
+        alert("PDF download failed. If you are on GitHub Pages, make sure the page fully loaded first.");
+        console.error(err);
+      } finally {
+        wrapper.remove();
+      }
     };
 
     function App() {
-      const [players, setPlayers] = useState([]), [teams, setTeams] = useState([]), [msg, setMsg] = useState(""), [search, setSearch] = useState("");
+      const [players, setPlayers] = useState([]);
+      const [teams, setTeams] = useState([]);
+      const [msg, setMsg] = useState("Upload your Squabbit CSV to build all best ball teams.");
+      const [search, setSearch] = useState("");
       const [openGroups, setOpenGroups] = useState({});
-      const toggleGroup = (key) => setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
+      const [fileName, setFileName] = useState("");
 
-      const load = async f => {
-        const t = await f.text(); const p = parsePlayers(t); setPlayers(p); setTeams(buildTeams(p)); setMsg(`Loaded ${p.length} players.`);
-      };
-
-      const totals = useMemo(() => players.map(p => ({ name: p.name, total: p.strokes.reduce((a,b)=>a+b,0) })).sort((a,b)=>a.total-b.total), [players]);
+      const totals = useMemo(() =>
+        players
+          .map(p => ({ name: p.name, total: p.strokes.reduce((a, b) => a + b, 0) }))
+          .sort((a, b) => a.total - b.total || a.name.localeCompare(b.name)),
+        [players]
+      );
 
       const teamsByPlayer = useMemo(() => {
         const map = {};
+
         for (const t of teams) {
           for (const player of t.players) {
             (map[player] ??= []).push(t);
           }
         }
+
         Object.keys(map).forEach(player => {
-          map[player] = map[player].map(team => {
-            const parts = team.name.split(' & ');
-            const sortedName = parts.includes(player)
-              ? `${player} & ${parts.find(p => p !== player)}`
-              : team.name;
-            return { ...team, name: sortedName };
-          });
+          map[player] = map[player]
+            .map(team => {
+              const other = team.players.find(p => p !== player) || "";
+              return { ...team, name: `${player} & ${other}` };
+            })
+            .sort((a, b) => a.total - b.total || a.name.localeCompare(b.name));
         });
-        return Object.entries(map).sort(([a],[b])=>a.localeCompare(b));
+
+        return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
       }, [teams]);
 
-      const filtered = useMemo(() => {
-        const q = search.toLowerCase();
+      const filteredTeamsByPlayer = useMemo(() => {
+        const q = search.toLowerCase().trim();
         if (!q) return teamsByPlayer;
+
         return teamsByPlayer.filter(([name, list]) =>
-          name.toLowerCase().includes(q) || list.some(t => t.name.toLowerCase().includes(q)));
+          name.toLowerCase().includes(q) ||
+          list.some(t => t.name.toLowerCase().includes(q))
+        );
       }, [teamsByPlayer, search]);
+
+      const filteredAllTeams = useMemo(() => {
+        const q = search.toLowerCase().trim();
+        if (!q) return teams;
+
+        return teams.filter(t =>
+          t.name.toLowerCase().includes(q) ||
+          t.players.some(p => p.toLowerCase().includes(q))
+        );
+      }, [teams, search]);
+
+      const toggleGroup = (key) => {
+        setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
+      };
+
+      const setAllGroups = (value) => {
+        const next = {};
+        teamsByPlayer.forEach(([player]) => {
+          next[player] = value;
+        });
+        setOpenGroups(next);
+      };
+
+      const load = async (file) => {
+        try {
+          const text = await file.text();
+          const parsedPlayers = parsePlayers(text);
+          const builtTeams = buildTeams(parsedPlayers);
+
+          setPlayers(parsedPlayers);
+          setTeams(builtTeams);
+          setFileName(file.name || "squabbit.csv");
+
+          const nextOpen = {};
+          parsedPlayers.forEach(p => {
+            nextOpen[p.name] = true;
+          });
+          setOpenGroups(nextOpen);
+
+          if (!parsedPlayers.length) {
+            setMsg("No players were found. Make sure you uploaded the raw Squabbit CSV with all 18 holes.");
+          } else {
+            setMsg(`Loaded ${parsedPlayers.length} players and ${builtTeams.length} teams.`);
+          }
+        } catch (err) {
+          console.error(err);
+          setMsg("Could not read that CSV file.");
+        }
+      };
+
+      const downloadWholeSheetPdf = async () => {
+        const rows = teams.map((t, idx) => `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${t.players[0]}</td>
+            <td>${t.players[1]}</td>
+            <td>${t.total}</td>
+          </tr>
+        `).join("");
+
+        const htmlContent = `
+          <div class="pdf-title">Best Ball Teams</div>
+          <div class="pdf-subtitle">Source file: ${fileName || "CSV upload"} | Players: ${players.length} | Teams: ${teams.length}</div>
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Player 1</th>
+                <th>Player 2</th>
+                <th>Best Ball Total</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+
+        await downloadPdfFromHtml(
+          `${safeFileName((fileName || "best-ball-all-teams").replace(/\.[^.]+$/, ""))}.pdf`,
+          htmlContent
+        );
+      };
+
+      const downloadPlayerPdf = async (player, list) => {
+        const total = totals.find(p => p.name === player)?.total ?? "";
+        const rows = list.map((t, idx) => {
+          const other = t.players.find(p => p !== player) || "";
+          return `
+            <tr>
+              <td>${idx + 1}</td>
+              <td>${player}</td>
+              <td>${other}</td>
+              <td>${t.total}</td>
+            </tr>
+          `;
+        }).join("");
+
+        const htmlContent = `
+          <div class="pdf-title">${player} Best Ball Teams</div>
+          <div class="pdf-subtitle">Player total: ${total} | Teams for this player: ${list.length}</div>
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Partner</th>
+                <th>Best Ball Total</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+
+        await downloadPdfFromHtml(
+          `${safeFileName(player)}-best-ball-teams.pdf`,
+          htmlContent
+        );
+      };
 
       return html`
         <div class="pb-10">
-          <div class="header-bar">🏌️‍♂️ Best Ball Teams</div>
+          <div class="header-bar">🏌️‍♂️ Best Ball Teams PDF Tool</div>
 
-          <div class="max-w-xl mx-auto p-5">
+          <div class="max-w-6xl mx-auto p-4 md:p-5">
             <div class="card">
-              <h2 class="font-semibold text-lg mb-3 text-green-700">1) Upload CSV</h2>
-              <input type="file" accept=".csv,text/csv" class="block w-full text-sm text-gray-700"
-                onChange=${e => e.target.files?.[0] && load(e.target.files[0])} />
-              ${msg && html`<p class="text-green-700 text-sm mt-2">${msg}</p>`}
+              <div class="grid md:grid-cols-[1fr_auto] gap-4 items-end">
+                <div>
+                  <h2 class="font-semibold text-xl mb-2 text-green-700">Upload your Squabbit CSV</h2>
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    class="block w-full text-sm text-gray-700"
+                    onChange=${e => e.target.files?.[0] && load(e.target.files[0])}
+                  />
+                  <p class="text-green-700 text-sm mt-3">${msg}</p>
+                  <p class="small-note mt-2">
+                    This version shows every possible two player team, lets you search, and lets you download either one player's team list or the whole sheet as a PDF.
+                  </p>
+                </div>
+
+                ${players.length > 0 && html`
+                  <div class="flex flex-wrap gap-2">
+                    <button class="action-btn btn-green" onClick=${downloadWholeSheetPdf}>
+                      Download whole sheet PDF
+                    </button>
+                    <button class="action-btn btn-gray" onClick=${() => setAllGroups(true)}>
+                      Open all
+                    </button>
+                    <button class="action-btn btn-gray" onClick=${() => setAllGroups(false)}>
+                      Close all
+                    </button>
+                  </div>
+                `}
+              </div>
             </div>
 
             ${players.length > 0 && html`
-              <div class="card">
-                <div class="flex items-center justify-between mb-4">
-                  <h2 class="font-semibold text-lg text-green-700">2) Player Sections</h2>
-                  <input type="text" placeholder="🔍 Search players or teams"
-                    value=${search} onInput=${e => setSearch(e.target.value)}
-                    class="ml-2 w-1/2 text-sm rounded-md px-2 py-1 border border-gray-300 focus:ring-2 focus:ring-green-400" />
+              <div class="grid xl:grid-cols-[1.1fr_1.3fr] gap-5">
+                <div class="space-y-5">
+                  <div class="card">
+                    <div class="flex flex-wrap gap-3 items-center justify-between mb-3">
+                      <h2 class="font-semibold text-lg text-green-700">Players</h2>
+                      <input
+                        type="text"
+                        placeholder="Search players or teams"
+                        value=${search}
+                        onInput=${e => setSearch(e.target.value)}
+                        class="w-full sm:w-72 text-sm rounded-md px-3 py-2 border border-gray-300 focus:ring-2 focus:ring-green-400"
+                      />
+                    </div>
+
+                    <div class="overflow-x-auto">
+                      <table class="w-full text-sm">
+                        <thead>
+                          <tr class="text-left border-b">
+                            <th class="py-2">Player</th>
+                            <th class="py-2">Stroke Total</th>
+                            <th class="py-2">Teams</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${totals.map(p => html`
+                            <tr class="border-b last:border-b-0">
+                              <td class="py-2 pr-2 font-semibold">${p.name}</td>
+                              <td class="py-2 pr-2">${p.total}</td>
+                              <td class="py-2">${teamsByPlayer.find(([name]) => name === p.name)?.[1]?.length || 0}</td>
+                            </tr>
+                          `)}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div class="card">
+                    <h2 class="font-semibold text-lg mb-3 text-green-700">All teams</h2>
+                    <p class="small-note mb-3">Sorted from best team total to highest total.</p>
+
+                    <div class="max-h-[700px] overflow-y-auto pair-list">
+                      <div class="pair-header top-sticky">
+                        <div>Rank</div>
+                        <div>Team</div>
+                        <div>Total</div>
+                      </div>
+
+                      ${filteredAllTeams.map((t, idx) => html`
+                        <div class="pair-row">
+                          <div>${idx + 1}</div>
+                          <div class="font-medium">${t.name}</div>
+                          <div class="font-bold">${t.total}</div>
+                        </div>
+                      `)}
+                    </div>
+                  </div>
                 </div>
 
-                ${filtered.map(([player, list]) => {
-                  const total = totals.find(p => p.name === player)?.total || '-';
-                  return html`
-                    <div class="mb-5">
-                      <button onClick=${() => toggleGroup(player)}
-                        class="w-full flex justify-between items-center text-left font-bold text-green-800 text-lg border-b pb-1 mb-2">
-                        <span>${player}</span>
-                        <span class="transform transition-transform ${openGroups[player] ? 'rotate-90' : 'rotate-0'}">▶</span>
-                      </button>
-                      <p class="text-green-600 font-semibold mb-2">Total: ${total}</p>
+                <div class="card">
+                  <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-semibold text-lg text-green-700">Teams by player</h2>
+                    <div class="small-note">${filteredTeamsByPlayer.length} player section(s)</div>
+                  </div>
 
-                      <div class="collapsible ${openGroups[player] ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}">
-                        ${list.map(t => html`
-                          <div class="pair-row font-mono text-lg">
-                            <span>${t.name}</span>
-                            <span class="font-semibold text-gray-800">${t.total}</span>
+                  ${filteredTeamsByPlayer.map(([player, list]) => {
+                    const total = totals.find(p => p.name === player)?.total || "-";
+
+                    return html`
+                      <div class="mb-5 border rounded-xl p-3">
+                        <div class="flex flex-wrap gap-3 items-center justify-between">
+                          <button
+                            onClick=${() => toggleGroup(player)}
+                            class="flex-1 min-w-[220px] flex justify-between items-center text-left font-bold text-green-800 text-lg"
+                          >
+                            <span>${player}</span>
+                            <span class="${openGroups[player] ? 'rotate-90' : 'rotate-0'}" style="transition: transform .2s ease;">▶</span>
+                          </button>
+
+                          <div class="flex items-center gap-3 flex-wrap">
+                            <span class="text-green-700 font-semibold text-sm">Total: ${total}</span>
+                            <span class="text-gray-500 text-sm">Teams: ${list.length}</span>
+                            <button class="action-btn btn-blue" onClick=${() => downloadPlayerPdf(player, list)}>
+                              Download ${player} PDF
+                            </button>
                           </div>
-                        `)}
+                        </div>
+
+                        <div
+                          class="collapsible"
+                          style=${{
+                            maxHeight: openGroups[player] ? "4000px" : "0",
+                            opacity: openGroups[player] ? "1" : "0",
+                            marginTop: openGroups[player] ? "12px" : "0"
+                          }}
+                        >
+                          <div class="pair-list">
+                            <div class="pair-header">
+                              <div>Rank</div>
+                              <div>Team</div>
+                              <div>Total</div>
+                            </div>
+
+                            ${list.map((t, idx) => html`
+                              <div class="pair-row">
+                                <div>${idx + 1}</div>
+                                <div class="font-medium">${t.name}</div>
+                                <div class="font-bold">${t.total}</div>
+                              </div>
+                            `)}
+                          </div>
+                        </div>
                       </div>
-                    </div>`;
-                })}
+                    `;
+                  })}
+                </div>
               </div>
             `}
           </div>
@@ -195,116 +656,4 @@
     render(h(App, {}), document.getElementById("root"));
   </script>
 </body>
-<style>
-  .hubbar{
-    position: sticky;
-    top: 0;
-    z-index: 9999;
-    padding: 10px 12px;
-    background: linear-gradient(180deg, rgba(5,17,11,.92), rgba(5,17,11,.70));
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255,255,255,.10);
-  }
-  .hubbarRow{
-    max-width: 980px;
-    margin: 0 auto;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-  }
-  .hubbarTitle{
-    color: #eaf5ef;
-    font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial;
-    font-weight: 950;
-    font-size: 14px;
-    letter-spacing:.2px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .hubBtns{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    justify-content:flex-end;
-  }
-  .hubBtn{
-    border:0;
-    border-radius: 12px;
-    padding: 9px 10px;
-    font-size: 13px;
-    font-weight: 950;
-    cursor:pointer;
-    user-select:none;
-  }
-  .hubBtnGhost{
-    background: rgba(255,255,255,.08);
-    color:#eaf5ef;
-    border: 1px solid rgba(255,255,255,.10);
-  }
-  .hubBtnDanger{
-    background: linear-gradient(135deg, #fb7185, #ef4444);
-    color:#08110c;
-  }
-</style>
-
-<div class="hubbar">
-  <div class="hubbarRow">
-    <div class="hubbarTitle" id="hubToolTitle">Golf Tool</div>
-    <div class="hubBtns">
-      <button class="hubBtn hubBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
-      <button class="hubBtn hubBtnGhost" type="button" id="hubResetThisBtn">Reset This Tool</button>
-      <button class="hubBtn hubBtnDanger" type="button" id="hubResetAllBtn">Reset Everything</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  // Set these per tool BEFORE this script runs:
-  // window.TOOL_NAME = "Wolf Game";
-  // window.TOOL_STORAGE_KEYS = ["wolf_dots_v4_4or5"];   // reset this tool
-  // window.HUB_INDEX = "index.html";                   // where back goes (optional)
-  (function(){
-    const TOOL_NAME = window.TOOL_NAME || document.title || "Golf Tool";
-    const TOOL_KEYS = Array.isArray(window.TOOL_STORAGE_KEYS) ? window.TOOL_STORAGE_KEYS : [];
-    const HUB_INDEX = window.HUB_INDEX || "index.html";
-
-    const $ = (id) => document.getElementById(id);
-    const titleEl = $("hubToolTitle");
-    const backBtn = $("hubBackBtn");
-    const resetThisBtn = $("hubResetThisBtn");
-    const resetAllBtn = $("hubResetAllBtn");
-
-    if(titleEl) titleEl.textContent = TOOL_NAME;
-
-    backBtn.onclick = () => { window.location.href = HUB_INDEX; };
-
-    resetThisBtn.onclick = () => {
-      if(!TOOL_KEYS.length){
-        alert("No reset keys set for this tool yet.");
-        return;
-      }
-      const ok = confirm(`Reset this tool?\n\nThis clears:\n- ${TOOL_KEYS.join("\n- ")}`);
-      if(!ok) return;
-      TOOL_KEYS.forEach(k => localStorage.removeItem(k));
-      alert("Tool reset. Reloading…");
-      window.location.reload();
-    };
-
-    resetAllBtn.onclick = () => {
-      const ok = confirm("Reset EVERYTHING for this site on this device?\n\nThis clears all local saved data.");
-      if(!ok) return;
-      localStorage.clear();
-      alert("Everything reset. Returning to hub…");
-      window.location.href = HUB_INDEX;
-    };
-  })();
-</script>
-<script>
-  window.TOOL_NAME = "Best Ball (All Teams)";
-  window.TOOL_STORAGE_KEYS = []; // add keys here later if you add local save
-  window.HUB_INDEX = "index.html";
-</script>
 </html>
