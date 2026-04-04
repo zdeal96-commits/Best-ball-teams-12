@@ -292,7 +292,7 @@
         }
       }
 
-      return out.sort((a, b) => a.total - b.total || a.name.localeCompare(b.name));
+      return out.sort((a, b) => a.name.localeCompare(b.name));
     };
 
     const safeFileName = (s) =>
@@ -341,7 +341,7 @@
       const totals = useMemo(() =>
         players
           .map(p => ({ name: p.name, total: p.strokes.reduce((a, b) => a + b, 0) }))
-          .sort((a, b) => a.total - b.total || a.name.localeCompare(b.name)),
+          .sort((a, b) => a.name.localeCompare(b.name)),
         [players]
       );
 
@@ -360,7 +360,7 @@
               const other = team.players.find(p => p !== player) || "";
               return { ...team, name: `${player} & ${other}` };
             })
-            .sort((a, b) => a.total - b.total || a.name.localeCompare(b.name));
+            .sort((a, b) => a.name.localeCompare(b.name));
         });
 
         return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
@@ -426,14 +426,16 @@
       };
 
       const downloadWholeSheetPdf = async () => {
-        const rows = teams.map((t, idx) => `
-          <tr>
-            <td>${idx + 1}</td>
-            <td>${t.players[0]}</td>
-            <td>${t.players[1]}</td>
-            <td>${t.total}</td>
-          </tr>
-        `).join("");
+        const rows = [...teams]
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((t, idx) => `
+            <tr>
+              <td>${idx + 1}</td>
+              <td>${t.players[0]}</td>
+              <td>${t.players[1]}</td>
+              <td>${t.total}</td>
+            </tr>
+          `).join("");
 
         const htmlContent = `
           <div class="pdf-title">Best Ball Teams</div>
@@ -459,17 +461,20 @@
 
       const downloadPlayerPdf = async (player, list) => {
         const total = totals.find(p => p.name === player)?.total ?? "";
-        const rows = list.map((t, idx) => {
-          const other = t.players.find(p => p !== player) || "";
-          return `
-            <tr>
-              <td>${idx + 1}</td>
-              <td>${player}</td>
-              <td>${other}</td>
-              <td>${t.total}</td>
-            </tr>
-          `;
-        }).join("");
+
+        const rows = [...list]
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((t, idx) => {
+            const other = t.players.find(p => p !== player) || "";
+            return `
+              <tr>
+                <td>${idx + 1}</td>
+                <td>${player}</td>
+                <td>${other}</td>
+                <td>${t.total}</td>
+              </tr>
+            `;
+          }).join("");
 
         const htmlContent = `
           <div class="pdf-title">${player} Best Ball Teams</div>
@@ -510,7 +515,7 @@
                   />
                   <p class="text-green-700 text-sm mt-3">${msg}</p>
                   <p class="small-note mt-2">
-                    This version shows every possible two player team, lets you search, and lets you download either one player's team list or the whole sheet as a PDF.
+                    This version shows every possible two player team, keeps teams alphabetical, lets you search, and lets you download either one player's team list or the whole sheet as a PDF.
                   </p>
                 </div>
 
@@ -569,7 +574,7 @@
 
                   <div class="card">
                     <h2 class="font-semibold text-lg mb-3 text-green-700">All teams</h2>
-                    <p class="small-note mb-3">Sorted from best team total to highest total.</p>
+                    <p class="small-note mb-3">Sorted alphabetically for easy bet lookup.</p>
 
                     <div class="max-h-[700px] overflow-y-auto pair-list">
                       <div class="pair-header top-sticky">
