@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-
 fit=cover" />
 <title>Best Ball Bet Sheet</title>
-<meta name="theme-color" content="#1e8449" />
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 body{
@@ -149,122 +148,106 @@ font-size:13px;
 color:#334155;
 white-space:pre-wrap;
 }
-html{ scroll-behavior:smooth; }
-.header-bar{
-position:sticky;
-top:0;
-z-index:40;
-}
-.quicknav-wrap{
-position:sticky;
-top:76px;
-z-index:35;
-background:rgba(255,255,255,.72);
+.sticky-nav{
+position: sticky;
+top: 0;
+z-index: 40;
+background: rgba(255,255,255,.92);
 backdrop-filter: blur(10px);
--webkit-backdrop-filter: blur(10px);
-border-bottom:1px solid rgba(255,255,255,.35);
+border-bottom: 1px solid rgba(0,0,0,.08);
 }
-.quicknav{
+.sticky-nav-inner{
+max-width: 1150px;
+margin: 0 auto;
+padding: 10px 16px;
+display: flex;
+gap: 10px;
+flex-wrap: wrap;
+align-items: center;
+justify-content: space-between;
+}
+.nav-links{
 display:flex;
-gap:10px;
-overflow-x:auto;
-padding:10px 0;
-scrollbar-width:none;
+gap:8px;
+flex-wrap:wrap;
 }
-.quicknav::-webkit-scrollbar{ display:none; }
-.quicklink{
-display:inline-flex;
-align-items:center;
-justify-content:center;
-white-space:nowrap;
+.nav-link{
+display:inline-block;
 text-decoration:none;
+padding:9px 12px;
 border-radius:999px;
-padding:10px 14px;
-background:#ffffff;
+background:#ecfdf5;
 color:#166534;
+font-size:13px;
+font-weight:700;
 border:1px solid #bbf7d0;
-box-shadow:0 3px 10px rgba(0,0,0,.06);
-font-size:14px;
-font-weight:800;
 }
-.quicklink:hover{ background:#f0fdf4; }
-.section-anchor{ scroll-margin-top:140px; }
-.card{
-border:1px solid rgba(255,255,255,.45);
-}
-.section-kicker{
-font-size:12px;
-font-weight:800;
-letter-spacing:.08em;
-text-transform:uppercase;
-color:#16a34a;
-margin-bottom:8px;
-}
-.top-summary{
+.summary-strip{
 display:grid;
 grid-template-columns:repeat(3,minmax(0,1fr));
-gap:10px;
-margin-bottom:16px;
+gap:12px;
+margin-bottom:1.25rem;
 }
-.summary-chip{
-background:rgba(255,255,255,.88);
-border:1px solid #bbf7d0;
-border-radius:16px;
-padding:12px 14px;
-box-shadow:0 3px 10px rgba(0,0,0,.05);
+.summary-box{
+background:#ffffff;
+border-radius:1rem;
+box-shadow:0 4px 12px rgba(0,0,0,.08);
+padding:14px 16px;
 }
 .summary-label{
 font-size:12px;
-color:#4b5563;
+color:#64748b;
+font-weight:700;
 text-transform:uppercase;
-letter-spacing:.06em;
-font-weight:800;
+letter-spacing:.04em;
 }
 .summary-value{
-margin-top:4px;
-font-size:22px;
-line-height:1;
-font-weight:900;
+margin-top:6px;
+font-size:24px;
+font-weight:800;
 color:#166534;
 }
-@media (max-width: 640px){
-.top-summary{ grid-template-columns:1fr; }
-.quicknav-wrap{ top:70px; }
+.section-anchor{
+scroll-margin-top: 90px;
+}
+@media (max-width: 800px){
+.summary-strip{ grid-template-columns:1fr; }
+.sticky-nav-inner{ align-items:flex-start; }
 }
 </style>
 </head>
 <body>
 <div class="header-bar">Best Ball Bet Sheet</div>
-<div class="quicknav-wrap">
-<div class="max-w-6xl mx-auto px-4 md:px-5">
-<div class="quicknav">
-<a class="quicklink" href="#names-section">Names</a>
-<a class="quicklink" href="#scores-section">Scores</a>
-<a class="quicklink" href="#pairings-section">Pairings</a>
-<a class="quicklink" href="#bets-section">Bets</a>
-<a class="quicklink" href="#saved-section">Saved Bets</a>
+<div class="sticky-nav">
+<div class="sticky-nav-inner">
+<div class="nav-links">
+<a class="nav-link" href="#section-names">Names</a>
+<a class="nav-link" href="#section-scores">Scores</a>
+<a class="nav-link" href="#section-pairings">Pairings</a>
+<a class="nav-link" href="#section-bets">Bets</a>
+<a class="nav-link" href="#section-saved">Saved Bets</a>
 </div>
+<div class="small-note">Use Names first, then Scores later</div>
 </div>
 </div>
 <div class="max-w-6xl mx-auto p-4 md:p-5">
-<div class="top-summary">
-<div class="summary-chip">
+<div class="summary-strip">
+<div class="summary-box">
 <div class="summary-label">Players Loaded</div>
-<div id="summaryPlayers" class="summary-value">0</div>
+<div class="summary-value" id="summaryPlayersLoaded">0</div>
 </div>
-<div class="summary-chip">
+<div class="summary-box">
 <div class="summary-label">Finished Scores</div>
-<div id="summaryScored" class="summary-value">0</div>
+<div class="summary-value" id="summaryPlayersScored">0</div>
 </div>
-<div class="summary-chip">
+<div class="summary-box">
 <div class="summary-label">Saved Bets</div>
-<div id="summaryBets" class="summary-value">0</div>
+<div class="summary-value" id="summarySavedBets">0</div>
 </div>
 </div>
-<div id="names-section" class="card section-anchor">
-<div class="section-kicker">Step 1</div>
-<h2 class="font-semibold text-xl mb-2 text-green-700">Load Names For Bets</
-h2>
+<div class="card section-anchor" id="section-names">
+<h2 class="font-semibold text-xl mb-2 text-green-700">Step 1: Load Names For
+Bets</h2>
 <div class="grid md:grid-cols-2 gap-4">
 <div>
 <label class="block text-sm font-semibold text-gray-700 mb-2">Pre round /
@@ -287,10 +270,9 @@ to load names for entering bets.</p>
 <div id="namesPills" class="mt-3"></div>
 <div id="namesDebug" class="debug-box" style="display:none"></div>
 </div>
-<div id="scores-section" class="card section-anchor">
-<div class="section-kicker">Step 2</div>
-<h2 class="font-semibold text-xl mb-2 text-green-700">Load Finished Scores</
-h2>
+<div class="card section-anchor" id="section-scores">
+<h2 class="font-semibold text-xl mb-2 text-green-700">Step 2: Load Finished
+Scores</h2>
 <div class="grid md:grid-cols-2 gap-4">
 <div>
 <label class="block text-sm font-semibold text-gray-700 mb-2">Completed / in
@@ -339,8 +321,7 @@ Current max payout: <span id="maxPayout" class="font-semibold text-
 green-700">$21</span>
 </div>
 </div>
-<div id="pairings-section" class="card section-anchor">
-<div class="section-kicker">Reference</div>
+<div class="card section-anchor" id="section-pairings">
 <h2 class="font-semibold text-lg text-green-700 mb-3">Player Pairings</h2>
 <label class="block text-sm font-semibold text-gray-700 mb-2">Choose
 player</label>
@@ -363,8 +344,7 @@ button>
 </div>
 </div>
 <div class="space-y-5">
-<div id="bets-section" class="card section-anchor">
-<div class="section-kicker">Live Entry</div>
+<div class="card section-anchor" id="section-bets">
 <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
 <h2 class="font-semibold text-lg text-green-700">Bet Entry</h2>
 <div class="small-note">Built for entering bets quickly before tee off</div>
@@ -404,8 +384,7 @@ Team 1</button>
 </div>
 <div id="currentBetBox"></div>
 </div>
-<div id="saved-section" class="card section-anchor">
-<div class="section-kicker">Results</div>
+<div class="card section-anchor" id="section-saved">
 <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
 <h2 class="font-semibold text-lg text-green-700">Saved Bets</h2>
 <div class="flex gap-2 flex-wrap">
@@ -423,17 +402,7 @@ button>
 <div id="savedBetsBox"></div>
 <script>
 const STORAGE
-KEY = "best
-ball
-bet
-sheet
-exact
 _
-_
-_
-_
-_
-_squabbit_v1";
 const state = {
 names: [],
 scoredPlayers: [],
@@ -444,6 +413,16 @@ maxShots: 7,
 savedBets: [],
 previousTeam1: "",
 previousTeam2: ""
+KEY = "best
+ball
+bet
+sheet
+exact
+_
+_
+_
+_
+_squabbit_v1";
 };
 const $ = (id) => document.getElementById(id);
 const normalizeSpace = (s) => (s || "").replace(/\s+/g, " ").trim();
@@ -599,9 +578,9 @@ while (used.has(finalAbbr)) {
 finalAbbr = clean(abbr + n);
 n++;
 }
+});
 used.add(finalAbbr);
 dict[finalAbbr] = name;
-});
 return dict;
 };
 const mergeAbbreviations = (oldMap, defaultMap) => {
@@ -869,9 +848,9 @@ class="pill">${p.name}</span>`).join("");
 const renderApp = () => {
 $("playersLoaded").textContent = String(namesSorted().length);
 $("playersScored").textContent = String((state.scoredPlayers || []).length);
-$("summaryPlayers").textContent = String(namesSorted().length);
-$("summaryScored").textContent = String((state.scoredPlayers || []).length);
-$("summaryBets").textContent = String((state.savedBets || []).length);
+$("summaryPlayersLoaded").textContent = String(namesSorted().length);
+$("summaryPlayersScored").textContent = String((state.scoredPlayers || []).length);
+$("summarySavedBets").textContent = String((state.savedBets || []).length);
 $("shotValue").value = state.shotValue;
 $("maxShots").value = state.maxShots;
 $("maxPayout").textContent = `$${(Number(state.shotValue) || 0) *
