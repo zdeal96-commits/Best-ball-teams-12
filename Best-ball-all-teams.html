@@ -8,6 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
     body{
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -167,7 +168,7 @@
     import htm from "https://esm.sh/htm@3.1.1";
     const html = htm.bind(h);
 
-    const STORAGE_KEY = "best_ball_bet_sheet_v2";
+    const STORAGE_KEY = "best_ball_bet_sheet_v3";
 
     const normalizeSpace = (s) => (s || "").replace(/\s+/g, " ").trim();
     const cleanKey = (s) => normalizeSpace(s).toLowerCase();
@@ -226,21 +227,21 @@
     };
 
     const parsePlayersFromAnyCSV = (txt) => {
-      const rows = parseCSVRows(txt);
+      const rows = txt.split(/\r?\n/).map(splitCSVLine);
       const names = new Set();
       const scoredPlayers = new Map();
 
       let holeIdx = null;
       let inPlayersSection = false;
-      let playerNameCol = null;
+      let playerNameCol = 0;
 
       for (const row of rows) {
-        const first = normalizeSpace(row[0]);
+        const first = normalizeSpace(row[0] || "");
         const firstLower = first.toLowerCase();
 
         if (firstLower === "players") {
           inPlayersSection = true;
-          playerNameCol = null;
+          playerNameCol = 0;
           continue;
         }
 
@@ -249,14 +250,19 @@
           continue;
         }
 
-        if (inPlayersSection && playerNameCol != null) {
-          if (!first && row.every(c => !normalizeSpace(c))) {
-            inPlayersSection = false;
-          } else if (firstLower === "skins" || firstLower === "strokeplay" || firstLower === "twos club" || firstLower === "best ball") {
+        if (inPlayersSection) {
+          if (
+            firstLower === "skins" ||
+            firstLower === "strokeplay" ||
+            firstLower === "twos club" ||
+            firstLower === "best ball"
+          ) {
             inPlayersSection = false;
           } else {
             const nm = titleCase(row[playerNameCol] || "");
-            if (nm) names.add(nm);
+            if (nm && nm.toLowerCase() !== "name") {
+              names.add(nm);
+            }
           }
         }
 
@@ -270,6 +276,7 @@
 
         const name = titleCase(row[0] || "");
         const strokes = [];
+
         for (let h = 1; h <= 18; h++) {
           const val = toInt(row[holeIdx[h]]);
           if (val == null) {
@@ -278,6 +285,7 @@
           }
           strokes.push(val);
         }
+
         if (name) names.add(name);
         if (name && strokes.length === 18) {
           scoredPlayers.set(name, { name, strokes });
@@ -285,7 +293,7 @@
       }
 
       return {
-        names: [...names].sort((a, b) => a.localeCompare(b)),
+        names: [...names].filter(Boolean).sort((a, b) => a.localeCompare(b)),
         scoredPlayers: [...scoredPlayers.values()]
       };
     };
@@ -313,12 +321,14 @@
       const used = new Set();
       const dict = {};
       const clean = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
       names.forEach(name => {
         const parts = name.split(" ").filter(Boolean);
         let abbr = "";
         if (parts.length >= 2) abbr = clean(parts[0][0] + parts[parts.length - 1][0]);
         else if (parts.length === 1) abbr = clean(parts[0].slice(0, 2));
         if (!abbr) return;
+
         let finalAbbr = abbr;
         let n = 2;
         while (used.has(finalAbbr)) {
@@ -328,6 +338,7 @@
         used.add(finalAbbr);
         dict[finalAbbr] = name;
       });
+
       return dict;
     };
 
@@ -611,24 +622,32 @@
           const text = await file.text();
           const parsed = parsePlayersFromAnyCSV(text);
 
-          const mergedNames = [...new Set([...namesSorted, ...parsed.names])].sort((a, b) => a.localeCompare(b));
+          const mergedNames = [...new Set([...(names || []), ...(parsed.names || [])])]
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b));
 
           const scoredMap = {};
-          scoredPlayers.forEach(p => { scoredMap[cleanKey(p.name)] = p; });
-          parsed.scoredPlayers.forEach(p => { scoredMap[cleanKey(p.name)] = p; });
-          const mergedScored = Object.values(scoredMap).sort((a, b) => a.name.localeCompare(b.name));
+          (scoredPlayers || []).forEach(p => {
+            scoredMap[cleanKey(p.name)] = p;
+          });
+          (parsed.scoredPlayers || []).forEach(p => {
+            scoredMap[cleanKey(p.name)] = p;
+          });
 
+          const mergedScored = Object.values(scoredMap).sort((a, b) => a.name.localeCompare(b.name));
           const mergedAbbr = mergeAbbreviations(abbrMap, makeDefaultAbbreviations(mergedNames));
 
           setNames(mergedNames);
           setScoredPlayers(mergedScored);
           setAbbrMap(mergedAbbr);
-          if (!selectedPlayer && mergedNames.length) setSelectedPlayer(mergedNames[0]);
 
-          const namesAdded = Math.max(0, mergedNames.length - namesSorted.length);
-          const scoresAdded = Math.max(0, mergedScored.length - scoredPlayers.length);
+          if (!selectedPlayer && mergedNames.length) {
+            setSelectedPlayer(mergedNames[0]);
+          }
 
-          setMsg(`Imported ${file.name}. Names loaded: ${mergedNames.length}. Players with finished scores: ${mergedScored.length}. Added ${namesAdded} names and ${scoresAdded} scored players from this import.`);
+          setMsg(
+            `Imported ${file.name}. Names loaded: ${mergedNames.length}. Players with finished scores: ${mergedScored.length}.`
+          );
         } catch (err) {
           console.error(err);
           setMsg("Could not read that CSV file.");
@@ -641,6 +660,112 @@
           evaluation: evaluateBet(bet.team1Names, bet.team2Names)
         }));
       }, [savedBets, scoredByName, maxShots, shotValue]);
+
+      const exportSavedBetsCSV = () => {
+        if (!evaluatedSavedBets.length) {
+          alert("No saved bets to export.");
+          return;
+        }
+
+        const escapeCSV = (value) => {
+          const str = String(value ?? "");
+          if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        };
+
+        const rows = [[
+          "Team 1 Player 1",
+          "Team 1 Player 2",
+          "Team 2 Player 1",
+          "Team 2 Player 2",
+          "Status",
+          "Team 1 Best Ball",
+          "Team 2 Best Ball",
+          "Winner",
+          "Winning Shots",
+          "Shots Counted",
+          "Dollars Per Shot",
+          "Max Shots",
+          "Payout",
+          "Waiting On"
+        ]];
+
+        evaluatedSavedBets.forEach((bet) => {
+          const ev = bet.evaluation;
+
+          if (ev.error) {
+            rows.push([
+              bet.team1Names[0] || "",
+              bet.team1Names[1] || "",
+              bet.team2Names[0] || "",
+              bet.team2Names[1] || "",
+              "Error",
+              "",
+              "",
+              ev.error,
+              "",
+              "",
+              shotValue,
+              maxShots,
+              "",
+              ""
+            ]);
+            return;
+          }
+
+          if (ev.pending) {
+            rows.push([
+              bet.team1Names[0] || "",
+              bet.team1Names[1] || "",
+              bet.team2Names[0] || "",
+              bet.team2Names[1] || "",
+              "Pending",
+              "",
+              "",
+              "",
+              "",
+              "",
+              shotValue,
+              maxShots,
+              "",
+              (ev.missing || []).join(" | ")
+            ]);
+            return;
+          }
+
+          rows.push([
+            bet.team1Names[0] || "",
+            bet.team1Names[1] || "",
+            bet.team2Names[0] || "",
+            bet.team2Names[1] || "",
+            "Ready",
+            ev.team1Total,
+            ev.team2Total,
+            ev.resultText,
+            ev.winningShots,
+            ev.cappedShots,
+            shotValue,
+            maxShots,
+            ev.payout,
+            ""
+          ]);
+        });
+
+        const csv = rows.map(row => row.map(escapeCSV).join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "best-ball-bet-sheet.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      };
 
       return html`
         <div class="pb-10">
@@ -953,9 +1078,14 @@
                   <div class="card">
                     <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
                       <h2 class="font-semibold text-lg text-green-700">Saved Bets</h2>
-                      <button class="action-btn btn-red" onClick=${() => setSavedBets([])}>
-                        Clear saved bets
-                      </button>
+                      <div class="flex gap-2 flex-wrap">
+                        <button class="action-btn btn-blue" onClick=${exportSavedBetsCSV}>
+                          Export saved bet sheet
+                        </button>
+                        <button class="action-btn btn-red" onClick=${() => setSavedBets([])}>
+                          Clear saved bets
+                        </button>
+                      </div>
                     </div>
 
                     ${evaluatedSavedBets.length === 0 ? html`
