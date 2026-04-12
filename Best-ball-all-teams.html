@@ -3,180 +3,159 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Best Ball Betting Tool</title>
+  <title>Best Ball Bet Sheet</title>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
-    body {
+    body{
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: linear-gradient(to bottom right, #2ecc71, #dff9fb);
       min-height: 100vh;
-      color: #1a202c;
-      margin: 0;
+      color:#1a202c;
+      margin:0;
     }
-
-    .card {
-      background: white;
-      border-radius: 1.25rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 1.25rem;
-      margin-bottom: 1.25rem;
+    .card{
+      background:#fff;
+      border-radius:1.25rem;
+      box-shadow:0 4px 12px rgba(0,0,0,.1);
+      padding:1.25rem;
+      margin-bottom:1.25rem;
     }
-
-    .header-bar {
+    .header-bar{
       background: linear-gradient(to right, #1e8449, #27ae60);
-      color: white;
-      font-weight: bold;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.75rem;
-      border-bottom: 4px solid #145a32;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      color:#fff;
+      font-weight:700;
+      padding:1rem;
+      text-align:center;
+      font-size:1.65rem;
+      border-bottom:4px solid #145a32;
+      box-shadow:0 4px 10px rgba(0,0,0,.2);
+    }
+    .action-btn{
+      border:0;
+      border-radius:.9rem;
+      padding:.72rem .95rem;
+      font-size:.95rem;
+      font-weight:800;
+      cursor:pointer;
+      transition:transform .1s ease;
+    }
+    .action-btn:hover{ transform:translateY(-1px); }
+    .btn-green{ background:linear-gradient(135deg,#1e8449,#27ae60); color:#fff; }
+    .btn-blue{ background:linear-gradient(135deg,#2563eb,#38bdf8); color:#fff; }
+    .btn-gray{ background:#edf2f7; color:#1f2937; }
+    .btn-red{ background:linear-gradient(135deg,#ef4444,#f97316); color:#fff; }
+    .btn-purple{ background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; }
+    .small-note{ font-size:.85rem; color:#4b5563; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    .pair-list{
+      border:1px solid #e5e7eb;
+      border-radius:.75rem;
+      overflow:hidden;
+    }
+    .pair-header,.pair-row{
+      display:grid;
+      grid-template-columns:80px 1fr 120px 110px;
+      gap:12px;
+      padding:10px 12px;
+      align-items:center;
+    }
+    .pair-header{
+      background:#f3f4f6;
+      font-size:12px;
+      font-weight:800;
+      color:#4b5563;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .pair-row{
+      border-top:1px solid #e5e7eb;
+      font-size:14px;
+    }
+    .pair-row:nth-child(even){ background:#f9fafb; }
+
+    .result-box{
+      border:1px solid #d1d5db;
+      border-radius:.85rem;
+      padding:12px;
+      background:#f8fafc;
+      margin-top:12px;
+    }
+    .result-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      padding:7px 0;
+      border-bottom:1px solid #e5e7eb;
+    }
+    .result-row:last-child{ border-bottom:0; }
+
+    .pill{
+      display:inline-block;
+      padding:4px 9px;
+      border-radius:999px;
+      background:#dcfce7;
+      color:#166534;
+      font-size:12px;
+      font-weight:700;
+      margin-right:6px;
+      margin-bottom:6px;
     }
 
-    .action-btn {
-      border: 0;
-      border-radius: 0.9rem;
-      padding: 0.7rem 0.9rem;
-      font-size: 0.95rem;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform .1s ease, opacity .2s ease;
+    .bet-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:16px;
+    }
+    @media (min-width: 900px){
+      .bet-grid{ grid-template-columns:1fr 1fr; }
     }
 
-    .action-btn:hover {
-      transform: translateY(-1px);
+    .team-box{
+      border:1px solid #d1d5db;
+      border-radius:14px;
+      padding:14px;
+      background:#fafafa;
+    }
+    .team-title{
+      font-weight:800;
+      color:#166534;
+      margin-bottom:10px;
     }
 
-    .btn-green {
-      background: linear-gradient(135deg, #1e8449, #27ae60);
-      color: white;
+    .autocomplete-wrap{ position:relative; }
+    .autocomplete-box{
+      position:absolute;
+      left:0; right:0; top:calc(100% + 6px);
+      z-index:30;
+      background:#fff;
+      border:1px solid #d1d5db;
+      border-radius:.85rem;
+      box-shadow:0 10px 25px rgba(0,0,0,.12);
+      max-height:220px;
+      overflow-y:auto;
     }
+    .autocomplete-item{
+      padding:10px 12px;
+      border-bottom:1px solid #eef2f7;
+      cursor:pointer;
+    }
+    .autocomplete-item:last-child{ border-bottom:0; }
+    .autocomplete-item:hover{ background:#f0fdf4; }
 
-    .btn-blue {
-      background: linear-gradient(135deg, #2563eb, #38bdf8);
-      color: white;
+    .saved-bet{
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      padding:12px;
+      background:#fff;
+      margin-bottom:10px;
     }
-
-    .btn-gray {
-      background: #edf2f7;
-      color: #1f2937;
-    }
-
-    .btn-red {
-      background: linear-gradient(135deg, #ef4444, #f97316);
-      color: white;
-    }
-
-    .small-note {
-      font-size: 0.85rem;
-      color: #4b5563;
-    }
-
-    .pair-list {
-      border: 1px solid #e5e7eb;
-      border-radius: 0.75rem;
-      overflow: hidden;
-    }
-
-    .pair-header,
-    .pair-row {
-      display: grid;
-      grid-template-columns: 80px 1fr 120px;
-      gap: 12px;
-      padding: 10px 12px;
-      align-items: center;
-    }
-
-    .pair-header {
-      background: #f3f4f6;
-      font-size: 12px;
-      font-weight: 800;
-      color: #4b5563;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-    }
-
-    .pair-row {
-      border-top: 1px solid #e5e7eb;
-      font-size: 14px;
-    }
-
-    .pair-row:nth-child(even) {
-      background: #f9fafb;
-    }
-
-    .result-box {
-      border: 1px solid #d1d5db;
-      border-radius: 0.85rem;
-      padding: 12px;
-      background: #f8fafc;
-      margin-top: 12px;
-    }
-
-    .result-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 12px;
-      padding: 7px 0;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .result-row:last-child {
-      border-bottom: 0;
-    }
-
-    .mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
-
-    .autocomplete-wrap {
-      position: relative;
-    }
-
-    .autocomplete-box {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: calc(100% + 6px);
-      z-index: 30;
-      background: white;
-      border: 1px solid #d1d5db;
-      border-radius: 0.85rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-      max-height: 220px;
-      overflow-y: auto;
-    }
-
-    .autocomplete-item {
-      padding: 10px 12px;
-      border-bottom: 1px solid #eef2f7;
-      cursor: pointer;
-    }
-
-    .autocomplete-item:last-child {
-      border-bottom: 0;
-    }
-
-    .autocomplete-item:hover {
-      background: #f0fdf4;
-    }
-
-    .pill {
-      display: inline-block;
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: #dcfce7;
-      color: #166534;
-      font-size: 12px;
-      font-weight: 700;
-      margin-right: 6px;
-      margin-bottom: 6px;
-    }
+    .status-pending{ color:#92400e; font-weight:700; }
+    .status-ready{ color:#166534; font-weight:700; }
+    .status-missing{ color:#b91c1c; font-weight:700; }
   </style>
 </head>
 <body>
@@ -188,13 +167,16 @@
     import htm from "https://esm.sh/htm@3.1.1";
     const html = htm.bind(h);
 
-    const SHOT_VALUE = 3;
+    const STORAGE_KEY = "best_ball_bet_sheet_v2";
+
+    const normalizeSpace = (s) => (s || "").replace(/\s+/g, " ").trim();
+    const cleanKey = (s) => normalizeSpace(s).toLowerCase();
+    const toInt = (v) => /^-?\d+$/.test((v || "").trim()) ? parseInt(v, 10) : null;
 
     const splitCSVLine = (line) => {
       const out = [];
       let cur = "";
       let inQ = false;
-
       for (let i = 0; i < line.length; i++) {
         const c = line[i];
         if (c === '"') {
@@ -211,14 +193,11 @@
           cur += c;
         }
       }
-
       out.push(cur);
       return out.map(s => (s || "").trim());
     };
 
-    const parseCSVRows = (text) => text.split(/\r?\n/).filter(Boolean).map(splitCSVLine);
-    const toInt = (v) => /^-?\d+$/.test((v || "").trim()) ? parseInt(v, 10) : null;
-    const normalizeSpace = (s) => (s || "").replace(/\s+/g, " ").trim();
+    const parseCSVRows = (text) => text.split(/\r?\n/).map(splitCSVLine);
 
     const titleCase = (n) =>
       normalizeSpace(n)
@@ -231,41 +210,66 @@
       row.forEach((c, i) => {
         const s = normalizeSpace(c).toLowerCase();
         for (let h = 1; h <= 18; h++) {
-          if (s === `hole ${h}` || s === `${h}` || s === `hole${h}`) {
-            idx[h] = i;
-          }
+          if (s === `hole ${h}` || s === `${h}` || s === `hole${h}`) idx[h] = i;
         }
       });
       return Object.keys(idx).length ? idx : null;
     };
 
-    const isPlayerRow = (row) => {
+    const isPlayerScoreRow = (row) => {
       const first = normalizeSpace(row[0]);
       if (!first) return false;
-
       const rowText = row.map(x => normalizeSpace(x).toLowerCase()).join(" | ");
       const hasTee = rowText.includes("tee");
       const hasScores = row.some(c => /^-?\d+$/.test((c || "").trim()));
-
       return hasTee && hasScores;
     };
 
-    const parsePlayers = (txt) => {
+    const parsePlayersFromAnyCSV = (txt) => {
       const rows = parseCSVRows(txt);
+      const names = new Set();
+      const scoredPlayers = new Map();
+
       let holeIdx = null;
-      const map = new Map();
+      let inPlayersSection = false;
+      let playerNameCol = null;
 
       for (const row of rows) {
+        const first = normalizeSpace(row[0]);
+        const firstLower = first.toLowerCase();
+
+        if (firstLower === "players") {
+          inPlayersSection = true;
+          playerNameCol = null;
+          continue;
+        }
+
+        if (inPlayersSection && row.some(c => normalizeSpace(c).toLowerCase() === "name")) {
+          playerNameCol = row.findIndex(c => normalizeSpace(c).toLowerCase() === "name");
+          continue;
+        }
+
+        if (inPlayersSection && playerNameCol != null) {
+          if (!first && row.every(c => !normalizeSpace(c))) {
+            inPlayersSection = false;
+          } else if (firstLower === "skins" || firstLower === "strokeplay" || firstLower === "twos club" || firstLower === "best ball") {
+            inPlayersSection = false;
+          } else {
+            const nm = titleCase(row[playerNameCol] || "");
+            if (nm) names.add(nm);
+          }
+        }
+
         if (row.some(c => /hole\s*1/i.test(c || ""))) {
           holeIdx = buildHoleIndex(row);
           continue;
         }
 
-        if (!holeIdx || !isPlayerRow(row)) continue;
+        if (!holeIdx) continue;
+        if (!isPlayerScoreRow(row)) continue;
 
         const name = titleCase(row[0] || "");
         const strokes = [];
-
         for (let h = 1; h <= 18; h++) {
           const val = toInt(row[holeIdx[h]]);
           if (val == null) {
@@ -274,26 +278,27 @@
           }
           strokes.push(val);
         }
-
+        if (name) names.add(name);
         if (name && strokes.length === 18) {
-          map.set(name, strokes);
+          scoredPlayers.set(name, { name, strokes });
         }
       }
 
-      return [...map].map(([name, strokes]) => ({ name, strokes }));
+      return {
+        names: [...names].sort((a, b) => a.localeCompare(b)),
+        scoredPlayers: [...scoredPlayers.values()]
+      };
     };
 
     const bestBall = (a, b) => a.reduce((t, _, i) => t + Math.min(a[i], b[i]), 0);
 
-    const buildTeams = (list) => {
+    const buildTeamsFromScoredPlayers = (players) => {
       const out = [];
-
-      for (let i = 0; i < list.length; i++) {
-        for (let j = i + 1; j < list.length; j++) {
-          const A = list[i];
-          const B = list[j];
+      for (let i = 0; i < players.length; i++) {
+        for (let j = i + 1; j < players.length; j++) {
+          const A = players[i];
+          const B = players[j];
           const parts = [A.name, B.name].sort((a, b) => a.localeCompare(b));
-
           out.push({
             name: `${parts[0]} & ${parts[1]}`,
             total: bestBall(A.strokes, B.strokes),
@@ -301,106 +306,83 @@
           });
         }
       }
-
       return out.sort((a, b) => a.name.localeCompare(b.name));
     };
 
-    const makeDefaultAbbreviations = (players) => {
+    const makeDefaultAbbreviations = (names) => {
       const used = new Set();
       const dict = {};
-
       const clean = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-
-      players.forEach(p => {
-        const parts = p.name.split(" ").filter(Boolean);
+      names.forEach(name => {
+        const parts = name.split(" ").filter(Boolean);
         let abbr = "";
-
-        if (parts.length >= 2) {
-          abbr = clean(parts[0][0] + parts[parts.length - 1][0]);
-        } else if (parts.length === 1) {
-          abbr = clean(parts[0].slice(0, 2));
-        }
-
+        if (parts.length >= 2) abbr = clean(parts[0][0] + parts[parts.length - 1][0]);
+        else if (parts.length === 1) abbr = clean(parts[0].slice(0, 2));
         if (!abbr) return;
-
         let finalAbbr = abbr;
         let n = 2;
         while (used.has(finalAbbr)) {
           finalAbbr = clean(abbr + n);
           n++;
         }
-
         used.add(finalAbbr);
-        dict[finalAbbr] = p.name;
+        dict[finalAbbr] = name;
       });
-
       return dict;
     };
 
-    const parseBetLine = (line) => {
-      const trimmed = normalizeSpace(line).toLowerCase();
-      if (!trimmed) return null;
-      const parts = trimmed.split(/\s+vs\s+/i);
-      if (parts.length !== 2) return { error: "Use format like: bd zd vs cl tw" };
-
-      const left = parts[0].trim().split(/\s+/).filter(Boolean);
-      const right = parts[1].trim().split(/\s+/).filter(Boolean);
-
-      if (left.length !== 2 || right.length !== 2) {
-        return { error: "Each side must have exactly 2 players" };
-      }
-
-      return { left, right };
+    const mergeAbbreviations = (oldMap, defaultMap) => {
+      const merged = { ...defaultMap };
+      Object.entries(oldMap || {}).forEach(([abbr, full]) => {
+        if (full) merged[abbr] = full;
+      });
+      return merged;
     };
 
     function App() {
-      const [players, setPlayers] = useState([]);
-      const [teams, setTeams] = useState([]);
-      const [msg, setMsg] = useState("Upload your Squabbit CSV to load players and pairings.");
+      const [names, setNames] = useState([]);
+      const [scoredPlayers, setScoredPlayers] = useState([]);
+      const [msg, setMsg] = useState("Upload a pre-round CSV to get names, then enter bets before tee off.");
       const [selectedPlayer, setSelectedPlayer] = useState("");
-      const [betInput, setBetInput] = useState("");
-      const [autoQuery, setAutoQuery] = useState("");
-      const [showSuggestions, setShowSuggestions] = useState(false);
+
       const [abbrMap, setAbbrMap] = useState({});
       const [abbrText, setAbbrText] = useState("");
 
-      const totals = useMemo(() =>
-        players
-          .map(p => ({ name: p.name, total: p.strokes.reduce((a, b) => a + b, 0) }))
-          .sort((a, b) => a.name.localeCompare(b.name)),
-        [players]
-      );
+      const [shotValue, setShotValue] = useState(3);
+      const [maxShots, setMaxShots] = useState(7);
 
-      const playersByName = useMemo(() => {
-        const map = {};
-        players.forEach(p => { map[p.name] = p; });
-        return map;
-      }, [players]);
+      const [team1Input, setTeam1Input] = useState("");
+      const [team2Input, setTeam2Input] = useState("");
 
-      const teamsByPlayer = useMemo(() => {
-        const map = {};
+      const [suggestTarget, setSuggestTarget] = useState("");
+      const [suggestQuery, setSuggestQuery] = useState("");
 
-        for (const t of teams) {
-          for (const player of t.players) {
-            (map[player] ??= []).push(t);
+      const [previousTeam1, setPreviousTeam1] = useState("");
+      const [previousTeam2, setPreviousTeam2] = useState("");
+
+      const [savedBets, setSavedBets] = useState([]);
+
+      useEffect(() => {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const saved = JSON.parse(raw);
+          setNames(saved.names || []);
+          setScoredPlayers(saved.scoredPlayers || []);
+          setSelectedPlayer(saved.selectedPlayer || "");
+          setAbbrMap(saved.abbrMap || {});
+          setShotValue(saved.shotValue ?? 3);
+          setMaxShots(saved.maxShots ?? 7);
+          setSavedBets(saved.savedBets || []);
+          setPreviousTeam1(saved.previousTeam1 || "");
+          setPreviousTeam2(saved.previousTeam2 || "");
+          if ((saved.names || []).length) {
+            setMsg("Loaded saved bet sheet from this device.");
           }
+        } catch (e) {
+          console.error(e);
         }
-
-        Object.keys(map).forEach(player => {
-          map[player] = map[player]
-            .map(team => {
-              const other = team.players.find(p => p !== player) || "";
-              return {
-                ...team,
-                partner: other,
-                name: `${player} & ${other}`
-              };
-            })
-            .sort((a, b) => a.partner.localeCompare(b.partner));
-        });
-
-        return map;
-      }, [teams]);
+      }, []);
 
       useEffect(() => {
         const txt = Object.entries(abbrMap)
@@ -410,124 +392,75 @@
         setAbbrText(txt);
       }, [abbrMap]);
 
+      useEffect(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            names,
+            scoredPlayers,
+            selectedPlayer,
+            abbrMap,
+            shotValue: Number(shotValue) || 0,
+            maxShots: Number(maxShots) || 0,
+            savedBets,
+            previousTeam1,
+            previousTeam2
+          }));
+        } catch (e) {
+          console.error(e);
+        }
+      }, [names, scoredPlayers, selectedPlayer, abbrMap, shotValue, maxShots, savedBets, previousTeam1, previousTeam2]);
+
+      const namesSorted = useMemo(() => [...names].sort((a, b) => a.localeCompare(b)), [names]);
+
+      const scoredByName = useMemo(() => {
+        const map = {};
+        scoredPlayers.forEach(p => { map[p.name] = p; });
+        return map;
+      }, [scoredPlayers]);
+
+      const teamsByPlayer = useMemo(() => {
+        const builtTeams = buildTeamsFromScoredPlayers(scoredPlayers);
+        const map = {};
+        for (const t of builtTeams) {
+          for (const player of t.players) {
+            (map[player] ??= []).push(t);
+          }
+        }
+        Object.keys(map).forEach(player => {
+          map[player] = map[player]
+            .map(team => {
+              const other = team.players.find(p => p !== player) || "";
+              return { ...team, partner: other, name: `${player} & ${other}` };
+            })
+            .sort((a, b) => a.partner.localeCompare(b.partner));
+        });
+        return map;
+      }, [scoredPlayers]);
+
       const selectedList = useMemo(() => {
         if (!selectedPlayer) return [];
         return teamsByPlayer[selectedPlayer] || [];
       }, [selectedPlayer, teamsByPlayer]);
 
-      const suggestionList = useMemo(() => {
-        const q = autoQuery.toLowerCase().trim();
+      const getSuggestions = (query) => {
+        const q = query.toLowerCase().trim();
         if (!q) return [];
-
-        const nameMatches = players
-          .filter(p => p.name.toLowerCase().includes(q))
-          .map(p => ({ label: p.name, value: p.name, type: "player" }));
-
+        const nameMatches = namesSorted
+          .filter(name => name.toLowerCase().includes(q))
+          .map(name => ({ label: name, value: name, type: "player" }));
         const abbrMatches = Object.entries(abbrMap)
-          .filter(([abbr, full]) =>
-            abbr.toLowerCase().includes(q) || full.toLowerCase().includes(q)
-          )
-          .map(([abbr, full]) => ({
-            label: `${abbr} → ${full}`,
-            value: abbr,
-            type: "abbr"
-          }));
-
+          .filter(([abbr, full]) => abbr.toLowerCase().includes(q) || full.toLowerCase().includes(q))
+          .map(([abbr, full]) => ({ label: `${abbr} → ${full}`, value: abbr, type: "abbr" }));
         const combined = [...abbrMatches, ...nameMatches];
         const seen = new Set();
         return combined.filter(item => {
-          const key = item.label;
-          if (seen.has(key)) return false;
-          seen.add(key);
+          if (seen.has(item.label)) return false;
+          seen.add(item.label);
           return true;
         }).slice(0, 8);
-      }, [autoQuery, players, abbrMap]);
-
-      const expandedBet = useMemo(() => {
-        if (!betInput.trim()) return null;
-
-        const parsed = parseBetLine(betInput);
-        if (!parsed) return null;
-        if (parsed.error) return { error: parsed.error };
-
-        const expandToken = (token) => {
-          const lower = token.toLowerCase();
-          if (abbrMap[lower]) return abbrMap[lower];
-
-          const exactName = players.find(p => p.name.toLowerCase() === lower);
-          if (exactName) return exactName.name;
-
-          const starts = players.filter(p => p.name.toLowerCase().startsWith(lower));
-          if (starts.length === 1) return starts[0].name;
-
-          return null;
-        };
-
-        const leftNames = parsed.left.map(expandToken);
-        const rightNames = parsed.right.map(expandToken);
-
-        if (leftNames.some(x => !x) || rightNames.some(x => !x)) {
-          return { error: "One or more abbreviations did not match a player" };
-        }
-
-        const all = [...leftNames, ...rightNames];
-        const unique = new Set(all);
-        if (unique.size !== 4) {
-          return { error: "Each bet must contain 4 different players" };
-        }
-
-        const missing = all.filter(name => !playersByName[name]);
-        if (missing.length) {
-          return { error: "One or more players are not loaded from the CSV" };
-        }
-
-        const leftTotal = bestBall(playersByName[leftNames[0]].strokes, playersByName[leftNames[1]].strokes);
-        const rightTotal = bestBall(playersByName[rightNames[0]].strokes, playersByName[rightNames[1]].strokes);
-        const diff = rightTotal - leftTotal;
-
-        let winnerText = "Push";
-        let payoutText = "$0";
-        if (diff > 0) {
-          winnerText = `${leftNames[0]} & ${leftNames[1]} win by ${diff}`;
-          payoutText = `$${diff * SHOT_VALUE}`;
-        } else if (diff < 0) {
-          winnerText = `${rightNames[0]} & ${rightNames[1]} win by ${Math.abs(diff)}`;
-          payoutText = `$${Math.abs(diff) * SHOT_VALUE}`;
-        }
-
-        return {
-          leftNames,
-          rightNames,
-          leftTotal,
-          rightTotal,
-          diff,
-          winnerText,
-          payoutText
-        };
-      }, [betInput, abbrMap, players, playersByName]);
-
-      const load = async (file) => {
-        try {
-          const text = await file.text();
-          const parsedPlayers = parsePlayers(text);
-          const builtTeams = buildTeams(parsedPlayers);
-          const defaults = makeDefaultAbbreviations(parsedPlayers);
-
-          setPlayers(parsedPlayers);
-          setTeams(builtTeams);
-          setAbbrMap(defaults);
-          setSelectedPlayer(parsedPlayers[0]?.name || "");
-
-          if (!parsedPlayers.length) {
-            setMsg("No players were found. Make sure you uploaded the raw Squabbit CSV with all 18 holes.");
-          } else {
-            setMsg(`Loaded ${parsedPlayers.length} players and ${builtTeams.length} pairings.`);
-          }
-        } catch (err) {
-          console.error(err);
-          setMsg("Could not read that CSV file.");
-        }
       };
+
+      const suggestionList = useMemo(() => getSuggestions(suggestQuery), [suggestQuery, namesSorted, abbrMap]);
 
       const applyAbbreviationText = () => {
         const lines = abbrText.split(/\r?\n/);
@@ -539,86 +472,243 @@
           if (parts.length !== 2) continue;
           const abbr = normalizeSpace(parts[0]).toLowerCase();
           const full = normalizeSpace(parts[1]);
-
           if (!abbr || !full) continue;
-          const match = players.find(p => p.name.toLowerCase() === full.toLowerCase());
-          if (match) next[abbr] = match.name;
+          const exists = namesSorted.find(n => n.toLowerCase() === full.toLowerCase());
+          if (exists) next[abbr] = exists;
         }
-
-        if (Object.keys(next).length) {
-          setAbbrMap(next);
-        }
+        if (Object.keys(next).length) setAbbrMap(next);
       };
 
-      const insertSuggestion = (value) => {
-        const current = betInput;
-        const trimmedRight = current.replace(/\s+$/, "");
-        const parts = trimmedRight ? trimmedRight.split(/\s+/) : [];
-        if (parts.length === 0) {
-          setBetInput(value + " ");
-        } else {
-          parts[parts.length - 1] = value;
-          setBetInput(parts.join(" ") + " ");
-        }
-        setAutoQuery("");
-        setShowSuggestions(false);
-      };
-
-      const handleBetInput = (value) => {
-        setBetInput(value);
+      const handleTeamInput = (which, value) => {
+        if (which === "team1") setTeam1Input(value);
+        if (which === "team2") setTeam2Input(value);
 
         const match = value.match(/([^\s]+)$/);
         const lastToken = match ? match[1] : "";
-        const lower = lastToken.toLowerCase();
-
-        if (!lastToken || lower === "vs") {
-          setAutoQuery("");
-          setShowSuggestions(false);
+        if (!lastToken) {
+          setSuggestTarget("");
+          setSuggestQuery("");
           return;
         }
-
-        setAutoQuery(lastToken);
-        setShowSuggestions(true);
+        setSuggestTarget(which);
+        setSuggestQuery(lastToken);
       };
 
-      const fillSelectedPlayerBet = () => {
-        if (!selectedPlayer) return;
-        const abbr = Object.entries(abbrMap).find(([, full]) => full === selectedPlayer)?.[0];
-        if (!abbr) return;
-        setBetInput(`${abbr} `);
-        setAutoQuery("");
-        setShowSuggestions(false);
+      const insertSuggestion = (value) => {
+        const current = suggestTarget === "team1" ? team1Input : team2Input;
+        const trimmedRight = current.replace(/\s+$/, "");
+        const parts = trimmedRight ? trimmedRight.split(/\s+/) : [];
+        const nextValue = parts.length === 0
+          ? value + " "
+          : [...parts.slice(0, -1), value].join(" ") + " ";
+        if (suggestTarget === "team1") setTeam1Input(nextValue);
+        if (suggestTarget === "team2") setTeam2Input(nextValue);
+        setSuggestTarget("");
+        setSuggestQuery("");
       };
+
+      const expandTeamInput = (text) => {
+        const parts = normalizeSpace(text).toLowerCase().split(/\s+/).filter(Boolean);
+        if (parts.length !== 2) return { error: "Each team must have exactly 2 players" };
+
+        const expandToken = (token) => {
+          if (abbrMap[token]) return abbrMap[token];
+          const exact = namesSorted.find(n => n.toLowerCase() === token);
+          if (exact) return exact;
+          const starts = namesSorted.filter(n => n.toLowerCase().startsWith(token));
+          if (starts.length === 1) return starts[0];
+          return null;
+        };
+
+        const namesOut = parts.map(expandToken);
+        if (namesOut.some(x => !x)) return { error: "One or more entries do not match a player" };
+        if (new Set(namesOut).size !== 2) return { error: "A team must have 2 different players" };
+        return { names: namesOut };
+      };
+
+      const evaluateBet = (team1Names, team2Names) => {
+        const all = [...team1Names, ...team2Names];
+        if (new Set(all).size !== 4) return { error: "Both teams together must have 4 different players" };
+
+        const missing = all.filter(name => !scoredByName[name]);
+        if (missing.length) {
+          return {
+            pending: true,
+            missing,
+            team1Names,
+            team2Names
+          };
+        }
+
+        const team1Total = bestBall(scoredByName[team1Names[0]].strokes, scoredByName[team1Names[1]].strokes);
+        const team2Total = bestBall(scoredByName[team2Names[0]].strokes, scoredByName[team2Names[1]].strokes);
+
+        const rawDiff = team2Total - team1Total;
+        const winningShots = Math.abs(rawDiff);
+        const cappedShots = Math.min(winningShots, Number(maxShots) || 0);
+        const payout = cappedShots * (Number(shotValue) || 0);
+
+        let resultText = "Push";
+        if (rawDiff > 0) resultText = `${team1Names[0]} & ${team1Names[1]} won by ${winningShots}`;
+        if (rawDiff < 0) resultText = `${team2Names[0]} & ${team2Names[1]} won by ${winningShots}`;
+
+        return {
+          pending: false,
+          team1Names,
+          team2Names,
+          team1Total,
+          team2Total,
+          rawDiff,
+          winningShots,
+          cappedShots,
+          payout,
+          resultText
+        };
+      };
+
+      const currentBet = useMemo(() => {
+        if (!team1Input.trim() || !team2Input.trim()) return null;
+        const team1 = expandTeamInput(team1Input);
+        if (team1.error) return { error: `Team 1: ${team1.error}` };
+        const team2 = expandTeamInput(team2Input);
+        if (team2.error) return { error: `Team 2: ${team2.error}` };
+        return evaluateBet(team1.names, team2.names);
+      }, [team1Input, team2Input, abbrMap, namesSorted, scoredByName, shotValue, maxShots]);
+
+      const saveCurrentBet = () => {
+        if (!currentBet || currentBet.error) return;
+        const entry = {
+          id: Date.now(),
+          team1Names: currentBet.team1Names,
+          team2Names: currentBet.team2Names
+        };
+        setSavedBets(prev => [entry, ...prev]);
+        setPreviousTeam1(team1Input.trim());
+        setPreviousTeam2(team2Input.trim());
+        setTeam1Input("");
+        setTeam2Input("");
+        setSuggestTarget("");
+        setSuggestQuery("");
+      };
+
+      const saveAnotherWithSameTeam1 = () => {
+        if (!currentBet || currentBet.error) return;
+        const entry = {
+          id: Date.now(),
+          team1Names: currentBet.team1Names,
+          team2Names: currentBet.team2Names
+        };
+        setSavedBets(prev => [entry, ...prev]);
+        setPreviousTeam1(team1Input.trim());
+        setPreviousTeam2(team2Input.trim());
+        setTeam2Input("");
+        setSuggestTarget("");
+        setSuggestQuery("");
+      };
+
+      const importCSV = async (file) => {
+        try {
+          const text = await file.text();
+          const parsed = parsePlayersFromAnyCSV(text);
+
+          const mergedNames = [...new Set([...namesSorted, ...parsed.names])].sort((a, b) => a.localeCompare(b));
+
+          const scoredMap = {};
+          scoredPlayers.forEach(p => { scoredMap[cleanKey(p.name)] = p; });
+          parsed.scoredPlayers.forEach(p => { scoredMap[cleanKey(p.name)] = p; });
+          const mergedScored = Object.values(scoredMap).sort((a, b) => a.name.localeCompare(b.name));
+
+          const mergedAbbr = mergeAbbreviations(abbrMap, makeDefaultAbbreviations(mergedNames));
+
+          setNames(mergedNames);
+          setScoredPlayers(mergedScored);
+          setAbbrMap(mergedAbbr);
+          if (!selectedPlayer && mergedNames.length) setSelectedPlayer(mergedNames[0]);
+
+          const namesAdded = Math.max(0, mergedNames.length - namesSorted.length);
+          const scoresAdded = Math.max(0, mergedScored.length - scoredPlayers.length);
+
+          setMsg(`Imported ${file.name}. Names loaded: ${mergedNames.length}. Players with finished scores: ${mergedScored.length}. Added ${namesAdded} names and ${scoresAdded} scored players from this import.`);
+        } catch (err) {
+          console.error(err);
+          setMsg("Could not read that CSV file.");
+        }
+      };
+
+      const evaluatedSavedBets = useMemo(() => {
+        return savedBets.map(bet => ({
+          ...bet,
+          evaluation: evaluateBet(bet.team1Names, bet.team2Names)
+        }));
+      }, [savedBets, scoredByName, maxShots, shotValue]);
 
       return html`
         <div class="pb-10">
-          <div class="header-bar">🏌️‍♂️ Best Ball Betting Tool</div>
+          <div class="header-bar">🏌️‍♂️ Best Ball Bet Sheet</div>
 
           <div class="max-w-6xl mx-auto p-4 md:p-5">
             <div class="card">
-              <div class="grid md:grid-cols-[1fr_auto] gap-4 items-end">
+              <h2 class="font-semibold text-xl mb-2 text-green-700">Import CSV</h2>
+              <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                  <h2 class="font-semibold text-xl mb-2 text-green-700">Upload your Squabbit CSV</h2>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Load names before tee off or import results later</label>
                   <input
                     type="file"
                     accept=".csv,text/csv"
                     class="block w-full text-sm text-gray-700"
-                    onChange=${e => e.target.files?.[0] && load(e.target.files[0])}
+                    onChange=${e => e.target.files?.[0] && importCSV(e.target.files[0])}
                   />
-                  <p class="text-green-700 text-sm mt-3">${msg}</p>
-                  <p class="small-note mt-2">
-                    Pick one player to see all of their pairings. Enter bets using abbreviations like bd zd vs cl tw.
-                  </p>
+                </div>
+                <div>
+                  <div class="small-note">
+                    You can import more than one CSV. This keeps your saved bets and merges in players who have finished.
+                  </div>
+                  <div class="small-note mt-2">
+                    Current players loaded: <span class="font-semibold text-green-700">${namesSorted.length}</span><br>
+                    Players with finished scores: <span class="font-semibold text-green-700">${scoredPlayers.length}</span>
+                  </div>
                 </div>
               </div>
+              <p class="text-green-700 text-sm mt-3">${msg}</p>
             </div>
 
-            ${players.length > 0 && html`
+            ${namesSorted.length > 0 && html`
               <div class="grid xl:grid-cols-[1.05fr_1.35fr] gap-5">
                 <div class="space-y-5">
                   <div class="card">
-                    <h2 class="font-semibold text-lg text-green-700 mb-3">Player Pairings</h2>
+                    <h2 class="font-semibold text-lg text-green-700 mb-3">Global Bet Settings</h2>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Dollars per shot</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value=${shotValue}
+                          onInput=${e => setShotValue(e.target.value)}
+                          class="w-full rounded-md px-3 py-2 border border-gray-300 bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Max shots</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value=${maxShots}
+                          onInput=${e => setMaxShots(e.target.value)}
+                          class="w-full rounded-md px-3 py-2 border border-gray-300 bg-white"
+                        />
+                      </div>
+                    </div>
+                    <div class="small-note mt-3">
+                      Current max payout:
+                      <span class="font-semibold text-green-700">$${(Number(shotValue) || 0) * (Number(maxShots) || 0)}</span>
+                    </div>
+                  </div>
 
+                  <div class="card">
+                    <h2 class="font-semibold text-lg text-green-700 mb-3">Player Pairings</h2>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Choose player</label>
                     <select
                       value=${selectedPlayer}
@@ -626,16 +716,14 @@
                       class="w-full rounded-md px-3 py-2 border border-gray-300 bg-white"
                     >
                       <option value="">Select a player</option>
-                      ${totals.map(p => html`<option value=${p.name}>${p.name}</option>`)}
+                      ${namesSorted.map(name => html`<option value=${name}>${name}</option>`)}
                     </select>
 
                     ${selectedPlayer && html`
-                      <div class="mt-4 text-sm">
-                        <div class="font-semibold text-green-700 mb-1">${selectedPlayer}</div>
-                        <div class="small-note">
-                          Stroke total:
-                          ${totals.find(p => p.name === selectedPlayer)?.total ?? "-"}
-                        </div>
+                      <div class="mt-4 small-note">
+                        ${scoredByName[selectedPlayer]
+                          ? `Finished and scored`
+                          : `Name loaded. Waiting on final scores`}
                       </div>
                     `}
 
@@ -645,15 +733,26 @@
                           <div>Rank</div>
                           <div>Team</div>
                           <div>Total</div>
+                          <div>Status</div>
                         </div>
 
-                        ${selectedList.map((t, idx) => html`
-                          <div class="pair-row">
-                            <div>${idx + 1}</div>
-                            <div class="font-medium">${t.name}</div>
-                            <div class="font-bold">${t.total}</div>
-                          </div>
-                        `)}
+                        ${(teamsByPlayer[selectedPlayer] || []).length > 0
+                          ? (teamsByPlayer[selectedPlayer] || []).map((t, idx) => html`
+                              <div class="pair-row">
+                                <div>${idx + 1}</div>
+                                <div class="font-medium">${t.name}</div>
+                                <div class="font-bold">${t.total}</div>
+                                <div class="status-ready">Ready</div>
+                              </div>
+                            `)
+                          : html`
+                              <div class="pair-row">
+                                <div>-</div>
+                                <div class="font-medium">No final pairings yet</div>
+                                <div>-</div>
+                                <div class="status-pending">Pending scores</div>
+                              </div>
+                            `}
                       </div>
                     `}
                   </div>
@@ -661,7 +760,7 @@
                   <div class="card">
                     <h2 class="font-semibold text-lg text-green-700 mb-3">Abbreviations</h2>
                     <div class="small-note mb-3">
-                      Edit these if your group wants custom shortcuts like zd = Zack Deal and bd = Brad Deal.
+                      Edit these once for your group. Example: zd = Zack Deal and bd = Brad Deal.
                     </div>
 
                     <div class="mb-3">
@@ -689,80 +788,162 @@
                   <div class="card">
                     <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
                       <h2 class="font-semibold text-lg text-green-700">Bet Entry</h2>
-                      <button class="action-btn btn-gray" onClick=${fillSelectedPlayerBet}>
-                        Add selected player
-                      </button>
+                      <div class="small-note">Built for entering bets quickly before tee off</div>
                     </div>
 
-                    <div class="small-note mb-3">
-                      Type bets like: <span class="mono">bd zd vs cl tw</span>
-                    </div>
-
-                    <div class="autocomplete-wrap">
-                      <input
-                        type="text"
-                        value=${betInput}
-                        onInput=${e => handleBetInput(e.target.value)}
-                        onFocus=${() => autoQuery && setShowSuggestions(true)}
-                        placeholder="Example: bd zd vs cl tw"
-                        class="w-full rounded-md px-3 py-3 border border-gray-300 bg-white mono text-base"
-                      />
-
-                      ${showSuggestions && suggestionList.length > 0 && html`
-                        <div class="autocomplete-box">
-                          ${suggestionList.map(item => html`
-                            <div
-                              class="autocomplete-item"
-                              onMouseDown=${e => {
-                                e.preventDefault();
-                                insertSuggestion(item.value);
-                              }}
-                            >
-                              ${item.label}
+                    <div class="bet-grid">
+                      <div class="team-box">
+                        <div class="team-title">Team 1</div>
+                        <div class="autocomplete-wrap">
+                          <input
+                            type="text"
+                            value=${team1Input}
+                            onInput=${e => handleTeamInput("team1", e.target.value)}
+                            onFocus=${e => {
+                              const match = e.target.value.match(/([^\s]+)$/);
+                              if (match) {
+                                setSuggestTarget("team1");
+                                setSuggestQuery(match[1]);
+                              }
+                            }}
+                            placeholder="Example: bd zd"
+                            class="w-full rounded-md px-3 py-3 border border-gray-300 bg-white mono text-base"
+                          />
+                          ${suggestTarget === "team1" && suggestionList.length > 0 && html`
+                            <div class="autocomplete-box">
+                              ${suggestionList.map(item => html`
+                                <div
+                                  class="autocomplete-item"
+                                  onMouseDown=${e => {
+                                    e.preventDefault();
+                                    insertSuggestion(item.value);
+                                  }}
+                                >
+                                  ${item.label}
+                                </div>
+                              `)}
                             </div>
-                          `)}
+                          `}
                         </div>
-                      `}
+
+                        <div class="flex gap-2 mt-3 flex-wrap">
+                          <button class="action-btn btn-gray" onClick=${() => previousTeam1 && setTeam1Input(previousTeam1)}>
+                            Copy Team 1 from previous
+                          </button>
+                          <button class="action-btn btn-gray" onClick=${() => previousTeam2 && setTeam1Input(previousTeam2)}>
+                            Copy Team 2 from previous
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="team-box">
+                        <div class="team-title">Team 2</div>
+                        <div class="autocomplete-wrap">
+                          <input
+                            type="text"
+                            value=${team2Input}
+                            onInput=${e => handleTeamInput("team2", e.target.value)}
+                            onFocus=${e => {
+                              const match = e.target.value.match(/([^\s]+)$/);
+                              if (match) {
+                                setSuggestTarget("team2");
+                                setSuggestQuery(match[1]);
+                              }
+                            }}
+                            placeholder="Example: cl tw"
+                            class="w-full rounded-md px-3 py-3 border border-gray-300 bg-white mono text-base"
+                          />
+                          ${suggestTarget === "team2" && suggestionList.length > 0 && html`
+                            <div class="autocomplete-box">
+                              ${suggestionList.map(item => html`
+                                <div
+                                  class="autocomplete-item"
+                                  onMouseDown=${e => {
+                                    e.preventDefault();
+                                    insertSuggestion(item.value);
+                                  }}
+                                >
+                                  ${item.label}
+                                </div>
+                              `)}
+                            </div>
+                          `}
+                        </div>
+
+                        <div class="flex gap-2 mt-3 flex-wrap">
+                          <button class="action-btn btn-gray" onClick=${() => previousTeam1 && setTeam2Input(previousTeam1)}>
+                            Copy Team 1 from previous
+                          </button>
+                          <button class="action-btn btn-gray" onClick=${() => previousTeam2 && setTeam2Input(previousTeam2)}>
+                            Copy Team 2 from previous
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
-                    <div class="flex gap-2 mt-3 flex-wrap">
+                    <div class="flex gap-2 mt-4 flex-wrap">
+                      <button class="action-btn btn-green" onClick=${saveCurrentBet}>
+                        Save this bet
+                      </button>
+                      <button class="action-btn btn-purple" onClick=${saveAnotherWithSameTeam1}>
+                        Save and keep Team 1
+                      </button>
                       <button class="action-btn btn-red" onClick=${() => {
-                        setBetInput("");
-                        setAutoQuery("");
-                        setShowSuggestions(false);
+                        setTeam1Input("");
+                        setTeam2Input("");
+                        setSuggestTarget("");
+                        setSuggestQuery("");
                       }}>
-                        Clear bet
+                        Clear
                       </button>
                     </div>
 
-                    ${expandedBet && html`
+                    ${currentBet && html`
                       <div class="result-box">
-                        ${expandedBet.error ? html`
-                          <div class="text-red-600 font-semibold">${expandedBet.error}</div>
-                        ` : html`
+                        ${currentBet.error ? html`
+                          <div class="text-red-600 font-semibold">${currentBet.error}</div>
+                        ` : currentBet.pending ? html`
                           <div class="result-row">
                             <div>Team 1</div>
-                            <div class="font-semibold">${expandedBet.leftNames[0]} & ${expandedBet.leftNames[1]}</div>
-                          </div>
-                          <div class="result-row">
-                            <div>Team 1 Total</div>
-                            <div class="font-semibold">${expandedBet.leftTotal}</div>
+                            <div class="font-semibold">${currentBet.team1Names[0]} & ${currentBet.team1Names[1]}</div>
                           </div>
                           <div class="result-row">
                             <div>Team 2</div>
-                            <div class="font-semibold">${expandedBet.rightNames[0]} & ${expandedBet.rightNames[1]}</div>
+                            <div class="font-semibold">${currentBet.team2Names[0]} & ${currentBet.team2Names[1]}</div>
                           </div>
                           <div class="result-row">
-                            <div>Team 2 Total</div>
-                            <div class="font-semibold">${expandedBet.rightTotal}</div>
+                            <div>Status</div>
+                            <div class="status-pending">Pending scores</div>
                           </div>
                           <div class="result-row">
-                            <div>Result</div>
-                            <div class="font-semibold">${expandedBet.winnerText}</div>
+                            <div>Waiting on</div>
+                            <div class="font-semibold">${currentBet.missing.join(", ")}</div>
+                          </div>
+                        ` : html`
+                          <div class="result-row">
+                            <div>Team 1 Best Ball</div>
+                            <div class="font-semibold">${currentBet.team1Total}</div>
                           </div>
                           <div class="result-row">
-                            <div>At $${SHOT_VALUE} a shot</div>
-                            <div class="font-bold text-green-700">${expandedBet.payoutText}</div>
+                            <div>Team 2 Best Ball</div>
+                            <div class="font-semibold">${currentBet.team2Total}</div>
+                          </div>
+                          <div class="result-row">
+                            <div>Winner</div>
+                            <div class="font-semibold">${currentBet.resultText}</div>
+                          </div>
+                          <div class="result-row">
+                            <div>Shots counted</div>
+                            <div class="font-semibold">
+                              ${currentBet.cappedShots}
+                              ${currentBet.winningShots !== currentBet.cappedShots
+                                ? html`<span class="small-note">(capped from ${currentBet.winningShots})</span>`
+                                : ""}
+                            </div>
+                          </div>
+                          <div class="result-row">
+                            <div>Payout</div>
+                            <div class="font-bold text-green-700">$${currentBet.payout}</div>
                           </div>
                         `}
                       </div>
@@ -770,15 +951,41 @@
                   </div>
 
                   <div class="card">
-                    <h2 class="font-semibold text-lg text-green-700 mb-3">Loaded Players</h2>
-                    <div class="grid sm:grid-cols-2 gap-2">
-                      ${totals.map(p => html`
-                        <div class="border rounded-lg px-3 py-2 bg-gray-50">
-                          <div class="font-semibold">${p.name}</div>
-                          <div class="small-note">Total: ${p.total}</div>
+                    <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+                      <h2 class="font-semibold text-lg text-green-700">Saved Bets</h2>
+                      <button class="action-btn btn-red" onClick=${() => setSavedBets([])}>
+                        Clear saved bets
+                      </button>
+                    </div>
+
+                    ${evaluatedSavedBets.length === 0 ? html`
+                      <div class="small-note">No bets saved yet.</div>
+                    ` : html`
+                      ${evaluatedSavedBets.map(bet => html`
+                        <div class="saved-bet">
+                          <div class="font-semibold mb-1">
+                            ${bet.team1Names[0]} & ${bet.team1Names[1]}
+                            vs
+                            ${bet.team2Names[0]} & ${bet.team2Names[1]}
+                          </div>
+
+                          ${bet.evaluation.error ? html`
+                            <div class="status-missing">${bet.evaluation.error}</div>
+                          ` : bet.evaluation.pending ? html`
+                            <div class="status-pending">Pending scores</div>
+                            <div class="small-note">Waiting on: ${bet.evaluation.missing.join(", ")}</div>
+                          ` : html`
+                            <div class="small-note">Team 1: ${bet.evaluation.team1Total} | Team 2: ${bet.evaluation.team2Total}</div>
+                            <div class="small-note">${bet.evaluation.resultText}</div>
+                            <div class="small-note">
+                              Shots counted: ${bet.evaluation.cappedShots}
+                              ${bet.evaluation.winningShots !== bet.evaluation.cappedShots ? `(capped from ${bet.evaluation.winningShots})` : ""}
+                            </div>
+                            <div class="status-ready mt-1">$${bet.evaluation.payout}</div>
+                          `}
                         </div>
                       `)}
-                    </div>
+                    `}
                   </div>
                 </div>
               </div>
