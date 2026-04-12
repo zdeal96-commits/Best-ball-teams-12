@@ -194,6 +194,38 @@
     .section-anchor{
       scroll-margin-top: 90px;
     }
+
+    .saved-bet-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .mini-btn{
+      border:0;
+      border-radius:10px;
+      padding:9px 12px;
+      font-size:14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .mini-btn-edit{
+      background:#e0f2fe;
+      color:#0c4a6e;
+    }
+    .mini-btn-delete{
+      background:#fee2e2;
+      color:#991b1b;
+    }
+    .edit-banner{
+      margin-top:12px;
+      padding:12px 14px;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+      font-weight:700;
+    }
     @media (min-width: 1100px){
       .two-col{ grid-template-columns:1.05fr 1.35fr; }
     }
@@ -349,6 +381,7 @@
             <div class="flex gap-2 mt-4 flex-wrap">
               <button id="saveBetBtn" class="action-btn btn-green">Save this bet</button>
               <button id="saveKeepT1Btn" class="action-btn btn-purple">Save and keep Team 1</button>
+              <button id="cancelEditBtn" class="action-btn btn-gray" style="display:none">Cancel edit</button>
               <button id="clearEntryBtn" class="action-btn btn-red">Clear</button>
             </div>
 
@@ -382,7 +415,8 @@
       maxShots: 7,
       savedBets: [],
       previousTeam1: "",
-      previousTeam2: ""
+      previousTeam2: "",
+      editingBetId: null
     };
 
     const $ = (id) => document.getElementById(id);
@@ -550,6 +584,48 @@
       return merged;
     };
 
+    const sortedNames = (arr) => [...(arr || [])].sort((a, b) => a.localeCompare(b));
+
+    const canonicalizeBetEntry = (entry) => {
+      const t1 = sortedNames(entry.team1Names);
+      const t2 = sortedNames(entry.team2Names);
+      const teams = [
+        { names: t1, label: t1.join(" & ") },
+        { names: t2, label: t2.join(" & ") }
+      ].sort((a, b) => a.label.localeCompare(b.label));
+
+      return {
+        ...entry,
+        team1Names: teams[0].names,
+        team2Names: teams[1].names
+      };
+    };
+
+    const betKeyFromEntry = (entry) => {
+      const c = canonicalizeBetEntry(entry);
+      return `${c.team1Names.join("|")}__VS__${c.team2Names.join("|")}`;
+    };
+
+    const dedupeSavedBets = (bets) => {
+      const seen = new Set();
+      const out = [];
+      (bets || []).forEach((entry) => {
+        const c = canonicalizeBetEntry(entry);
+        const key = betKeyFromEntry(c);
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push(c);
+        }
+      });
+      return out;
+    };
+
+    const preferredTokenForName = (name) => {
+      const found = Object.entries(state.abbrMap || {}).find(([, full]) => full === name);
+      if (found) return found[0];
+      return name;
+    };
+
     const saveState = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
     const loadState = () => {
@@ -676,15 +752,21 @@
       const box = $("currentBetBox");
       const bet = currentBet();
 
-      if (!bet) { box.innerHTML = ""; return; }
+      if (!bet) {
+        box.innerHTML = state.editingBetId != null
+          ? `<div class="edit-banner">Editing a saved bet. Change the teams and press Save this bet to update it.</div>`
+          : "";
+        return;
+      }
 
       if (bet.error) {
-        box.innerHTML = `<div class="result-box"><div class="text-red-600 font-semibold">${bet.error}</div></div>`;
+        box.innerHTML = `${state.editingBetId != null ? `<div class="edit-banner">Editing a saved bet. Change the teams and press Save this bet to update it.</div>` : ""}<div class="result-box"><div class="text-red-600 font-semibold">${bet.error}</div></div>`;
         return;
       }
 
       if (bet.pending) {
         box.innerHTML = `
+          ${state.editingBetId != null ? `<div class="edit-banner">Editing a saved bet. Change the teams and press Save this bet to update it.</div>` : ""}
           <div class="result-box">
             <div class="result-row"><div>Team 1</div><div class="font-semibold">${bet.team1Names[0]} & ${bet.team1Names[1]}</div></div>
             <div class="result-row"><div>Team 2</div><div class="font-semibold">${bet.team2Names[0]} & ${bet.team2Names[1]}</div></div>
@@ -747,21 +829,61 @@
     const renderSavedBets = () => {
       const box = $("savedBetsBox");
 
-      if (!state.savedBets.length) { box.innerHTML = `<div class="small-note">No bets saved yet.</div>`; return; }
+      if (!state.savedBets.length) {
+        box.innerHTML = `<div class="small-note">No bets saved yet.</div>`;
+        return;
+      }
 
       box.innerHTML = state.savedBets.map(bet => {
         const ev = evaluateBet(bet.team1Names, bet.team2Names);
+        const title = `${sortedNames(bet.team1Names).join(" & ")} vs ${sortedNames(bet.team2Names).join(" & ")}`;
 
+        let body = "";
         if (ev.error) {
-          return `<div class="saved-bet"><div class="font-semibold mb-1">${bet.team1Names[0]} & ${bet.team1Names[1]} vs ${bet.team2Names[0]} & ${bet.team2Names[1]}</div><div class="status-missing">${ev.error}</div></div>`;
+          body = `<div class="status-missing">${ev.error}</div>`;
+        } else if (ev.pending) {
+          body = `<div class="status-pending">Pending scores</div><div class="small-note">Waiting on: ${ev.missing.join(", ")}</div>`;
+        } else {
+          body = `<div class="small-note">Team 1: ${ev.team1Total} | Team 2: ${ev.team2Total}</div><div class="small-note">${ev.resultText}</div><div class="small-note">Shots counted: ${ev.cappedShots}${ev.winningShots !== ev.cappedShots ? ` (capped from ${ev.winningShots})` : ""}</div><div class="status-ready mt-1">$${ev.payout}</div>`;
         }
 
-        if (ev.pending) {
-          return `<div class="saved-bet"><div class="font-semibold mb-1">${bet.team1Names[0]} & ${bet.team1Names[1]} vs ${bet.team2Names[0]} & ${bet.team2Names[1]}</div><div class="status-pending">Pending scores</div><div class="small-note">Waiting on: ${ev.missing.join(", ")}</div></div>`;
-        }
-
-        return `<div class="saved-bet"><div class="font-semibold mb-1">${bet.team1Names[0]} & ${bet.team1Names[1]} vs ${bet.team2Names[0]} & ${bet.team2Names[1]}</div><div class="small-note">Team 1: ${ev.team1Total} | Team 2: ${ev.team2Total}</div><div class="small-note">${ev.resultText}</div><div class="small-note">Shots counted: ${ev.cappedShots}${ev.winningShots !== ev.cappedShots ? ` (capped from ${ev.winningShots})` : ""}</div><div class="status-ready mt-1">$${ev.payout}</div></div>`;
+        return `
+          <div class="saved-bet">
+            <div class="font-semibold mb-1">${title}</div>
+            ${body}
+            <div class="saved-bet-actions">
+              <button class="mini-btn mini-btn-edit" type="button" data-edit-id="${bet.id}">Edit</button>
+              <button class="mini-btn mini-btn-delete" type="button" data-delete-id="${bet.id}">Delete</button>
+            </div>
+          </div>
+        `;
       }).join("");
+
+      box.querySelectorAll("[data-edit-id]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = Number(btn.getAttribute("data-edit-id"));
+          const bet = state.savedBets.find(b => b.id === id);
+          if (!bet) return;
+
+          $("team1Input").value = bet.team1Names.map(preferredTokenForName).join(" ");
+          $("team2Input").value = bet.team2Names.map(preferredTokenForName).join(" ");
+          state.editingBetId = id;
+          renderCurrentBet();
+          renderApp();
+          document.getElementById("section-bets").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+
+      box.querySelectorAll("[data-delete-id]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = Number(btn.getAttribute("data-delete-id"));
+          state.savedBets = state.savedBets.filter(b => b.id !== id);
+          if (state.editingBetId === id) {
+            state.editingBetId = null;
+          }
+          renderApp();
+        });
+      });
     };
 
     const renderNamesPills = () => {
@@ -773,6 +895,11 @@
     };
 
     const renderApp = () => {
+      state.savedBets = dedupeSavedBets(state.savedBets || []);
+      if (state.editingBetId != null && !state.savedBets.some(b => b.id === state.editingBetId)) {
+        state.editingBetId = null;
+      }
+
       $("playersLoaded").textContent = String(namesSorted().length);
       $("playersScored").textContent = String((state.scoredPlayers || []).length);
       $("summaryPlayersLoaded").textContent = String(namesSorted().length);
@@ -782,6 +909,7 @@
       $("maxShots").value = state.maxShots;
       $("maxPayout").textContent = `$${(Number(state.shotValue) || 0) * (Number(state.maxShots) || 0)}`;
       $("appArea").style.display = namesSorted().length ? "block" : "none";
+      $("cancelEditBtn").style.display = state.editingBetId != null ? "inline-block" : "none";
       updateSuggestionList();
       updateAbbrText();
       renderNamesPills();
@@ -832,6 +960,7 @@
       state.scoredPlayers = [];
       state.selectedPlayer = "";
       state.abbrMap = {};
+      state.editingBetId = null;
       $("msgNames").textContent = "Upload a pre round CSV to load names for entering bets.";
       $("msgScores").textContent = "Upload a completed round CSV later to calculate best ball teams and bet results.";
       renderApp();
@@ -847,6 +976,7 @@
       state.savedBets = [];
       state.previousTeam1 = "";
       state.previousTeam2 = "";
+      state.editingBetId = null;
       localStorage.removeItem(STORAGE_KEY);
       $("team1Input").value = "";
       $("team2Input").value = "";
@@ -960,9 +1090,29 @@
     $("saveBetBtn").addEventListener("click", () => {
       const bet = currentBet();
       if (!bet || bet.error) return;
-      state.savedBets.unshift({ id: Date.now(), team1Names: bet.team1Names, team2Names: bet.team2Names });
+
+      const normalized = canonicalizeBetEntry({
+        id: state.editingBetId || Date.now(),
+        team1Names: bet.team1Names,
+        team2Names: bet.team2Names
+      });
+      const newKey = betKeyFromEntry(normalized);
+      const duplicate = state.savedBets.find(b => betKeyFromEntry(b) === newKey && b.id !== normalized.id);
+
+      if (duplicate) {
+        alert("That same matchup is already saved.");
+        return;
+      }
+
+      if (state.editingBetId != null) {
+        state.savedBets = state.savedBets.map(b => b.id === state.editingBetId ? normalized : b);
+      } else {
+        state.savedBets.unshift(normalized);
+      }
+
       state.previousTeam1 = $("team1Input").value.trim();
       state.previousTeam2 = $("team2Input").value.trim();
+      state.editingBetId = null;
       $("team1Input").value = "";
       $("team2Input").value = "";
       renderApp();
@@ -971,9 +1121,36 @@
     $("saveKeepT1Btn").addEventListener("click", () => {
       const bet = currentBet();
       if (!bet || bet.error) return;
-      state.savedBets.unshift({ id: Date.now(), team1Names: bet.team1Names, team2Names: bet.team2Names });
+
+      const normalized = canonicalizeBetEntry({
+        id: state.editingBetId || Date.now(),
+        team1Names: bet.team1Names,
+        team2Names: bet.team2Names
+      });
+      const newKey = betKeyFromEntry(normalized);
+      const duplicate = state.savedBets.find(b => betKeyFromEntry(b) === newKey && b.id !== normalized.id);
+
+      if (duplicate) {
+        alert("That same matchup is already saved.");
+        return;
+      }
+
+      if (state.editingBetId != null) {
+        state.savedBets = state.savedBets.map(b => b.id === state.editingBetId ? normalized : b);
+      } else {
+        state.savedBets.unshift(normalized);
+      }
+
       state.previousTeam1 = $("team1Input").value.trim();
       state.previousTeam2 = $("team2Input").value.trim();
+      state.editingBetId = null;
+      $("team2Input").value = "";
+      renderApp();
+    });
+
+    $("cancelEditBtn").addEventListener("click", () => {
+      state.editingBetId = null;
+      $("team1Input").value = "";
       $("team2Input").value = "";
       renderApp();
     });
@@ -981,6 +1158,7 @@
     $("exportBtn").addEventListener("click", exportSavedBetsCSV);
     $("clearSavedBtn").addEventListener("click", () => {
       state.savedBets = [];
+      state.editingBetId = null;
       renderApp();
     });
 
