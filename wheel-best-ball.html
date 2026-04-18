@@ -434,6 +434,22 @@
       </div>
     </div>
 
+
+    <section class="section card" id="section-debug">
+      <h2 class="sectionTitle">Debug</h2>
+      <div class="sectionSub">This shows what the CSV reader is doing for the first upload. It helps track where the parser is getting stuck.</div>
+      <div class="btnRow" style="margin-bottom:12px;">
+        <button id="toggleDebugBtn" class="btn btnBlue" type="button">Show Debug</button>
+        <button id="clearDebugBtn" class="btn btnGreen" type="button">Clear Debug</button>
+      </div>
+      <div id="debugWrap" style="display:none;">
+        <div class="field">
+          <label>Parser Debug Output</label>
+          <textarea id="debugBox" class="input" style="min-height:260px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; white-space:pre-wrap;"></textarea>
+        </div>
+      </div>
+    </section>
+
     <section class="section card" id="section-setup">
       <h2 class="sectionTitle">1) Round Setup</h2>
       <div class="sectionSub">Upload a pre round Squabbit roster before tee off, pick the wheel team, and exclude anyone who opts out.</div>
@@ -613,13 +629,38 @@
       excluded: [],
       shotValue: 3,
       maxShots: 7,
-      matchups: []
+      matchups: [],
+      debugLog: "",
+      debugOpen: false
     };
 
     const $ = (id) => document.getElementById(id);
     const normalizeSpace = (s) => (s || "").replace(/\s+/g, " ").trim();
     const titleCase = (n) => normalizeSpace(n).split(" ").map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : "").join(" ");
     const toInt = (v) => /^-?\d+$/.test((v || "").trim()) ? parseInt(v, 10) : null;
+
+    function setDebug(text){
+      state.debugLog = text || "";
+      const box = $("debugBox");
+      if(box) box.value = state.debugLog;
+      saveState();
+    }
+
+    function appendDebug(line){
+      state.debugLog = (state.debugLog || "") + (state.debugLog ? "\n" : "") + line;
+      const box = $("debugBox");
+      if(box) box.value = state.debugLog;
+      saveState();
+    }
+
+    function renderDebug(){
+      const wrap = $("debugWrap");
+      const box = $("debugBox");
+      const btn = $("toggleDebugBtn");
+      if(wrap) wrap.style.display = state.debugOpen ? "block" : "none";
+      if(box) box.value = state.debugLog || "";
+      if(btn) btn.textContent = state.debugOpen ? "Hide Debug" : "Show Debug";
+    }
 
     function saveState(){
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -669,39 +710,50 @@
     function parseNamesOnlyCSV(txt){
       const cleanText = (txt || "").replace(/^\uFEFF/, "");
       const rows = cleanText.split(/\r?\n/).map(splitCSVLine);
+      const debug = [];
 
       function uniqSorted(arr){
         return [...new Set((arr || []).filter(Boolean).map(titleCase))].sort((a,b) => a.localeCompare(b));
       }
 
       const sectionStops = new Set(["skins","strokeplay","twos club","best ball","games","round 1","round 2","round 3"]);
+      debug.push(`rows_total=${rows.length}`);
 
-      // First try the Players section
       const playersSectionNames = [];
       const playersRow = rows.findIndex(row => normalizeSpace(row[0] || "").toLowerCase() === "players");
+      debug.push(`players_row_index=${playersRow}`);
       if(playersRow >= 0){
         const headerRow = rows[playersRow + 1] || [];
         const nameCol = headerRow.findIndex(c => normalizeSpace(c).toLowerCase() === "name");
+        debug.push(`players_header=${JSON.stringify(headerRow)}`);
+        debug.push(`players_name_col=${nameCol}`);
         if(nameCol >= 0){
           for(let i = playersRow + 2; i < rows.length; i++){
             const row = rows[i];
             const first = normalizeSpace(row[0] || "");
             const firstLower = first.toLowerCase();
-            if(!row.length || row.every(c => !normalizeSpace(c))) break;
-            if(sectionStops.has(firstLower)) break;
+            if(!row.length || row.every(c => !normalizeSpace(c))){
+              debug.push(`players_break_blank_row=${i}`);
+              break;
+            }
+            if(sectionStops.has(firstLower)){
+              debug.push(`players_break_section_stop=${i}:${firstLower}`);
+              break;
+            }
             const nm = titleCase(row[nameCol] || row[0] || "");
             if(nm && nm.toLowerCase() !== "name" && !/^team\s*\d+/i.test(nm)){
               playersSectionNames.push(nm);
+              debug.push(`players_push=${i}:${nm}`);
             }
           }
         }
       }
       const playersSection = uniqSorted(playersSectionNames);
+      debug.push(`players_section_count=${playersSection.length}`);
       if(playersSection.length){
-        return { names: playersSection, source: "Players section" };
+        return { names: playersSection, source: "Players section", debug };
       }
 
-      // Fallback: any row where the second column contains tee
       const scoreRowNames = [];
       for(let i = 0; i < rows.length; i++){
         const row = rows[i];
@@ -710,35 +762,46 @@
         if(!first) continue;
         if(second.includes("tee") && !["Par","S.i."].includes(first)){
           scoreRowNames.push(first);
+          debug.push(`score_row_push=${i}:${first}:${second}`);
         }
       }
       const scoreRows = uniqSorted(scoreRowNames);
+      debug.push(`score_row_count=${scoreRows.length}`);
       if(scoreRows.length){
-        return { names: scoreRows, source: "score rows / players in progress" };
+        return { names: scoreRows, source: "score rows / players in progress", debug };
       }
 
-      // Last fallback: raw text lines after the Players header
       const rawLines = cleanText.split(/\r?\n/);
       const rawNames = [];
       const playersLineIndex = rawLines.findIndex(line => normalizeSpace(splitCSVLine(line)[0] || "").toLowerCase() === "players");
+      debug.push(`raw_players_line_index=${playersLineIndex}`);
       if(playersLineIndex >= 0){
         for(let i = playersLineIndex + 2; i < rawLines.length; i++){
           const cells = splitCSVLine(rawLines[i]);
           const first = normalizeSpace(cells[0] || "");
           const firstLower = first.toLowerCase();
-          if(!first) break;
-          if(sectionStops.has(firstLower)) break;
+          if(!first){
+            debug.push(`raw_break_blank_line=${i}`);
+            break;
+          }
+          if(sectionStops.has(firstLower)){
+            debug.push(`raw_break_section_stop=${i}:${firstLower}`);
+            break;
+          }
           if(first && firstLower !== "name" && !/^team\s*\d+/i.test(first)){
             rawNames.push(titleCase(first));
+            debug.push(`raw_push=${i}:${titleCase(first)}`);
           }
         }
       }
       const rawPlayers = uniqSorted(rawNames);
+      debug.push(`raw_players_count=${rawPlayers.length}`);
       if(rawPlayers.length){
-        return { names: rawPlayers, source: "raw Players lines" };
+        return { names: rawPlayers, source: "raw Players lines", debug };
       }
 
-      return { names: [], source: "no names found" };
+      debug.push("no_names_found=true");
+      return { names: [], source: "no names found", debug };
     }
           }
           const clean = [...new Set(names)].sort((a,b) => a.localeCompare(b));
@@ -1135,6 +1198,7 @@
       renderResultsTable();
       renderPlayerCards();
       renderSummary();
+      renderDebug();
       saveState();
     }
 
@@ -1269,19 +1333,34 @@
       const file = e.target.files && e.target.files[0];
       if(!file) return;
 
-      const text = await file.text();
-      const parsed = parseNamesOnlyCSV(text);
-      const names = parsed.names || [];
+      try{
+        setDebug("");
+        appendDebug(`file_name=${file.name}`);
+        appendDebug(`file_size_bytes=${file.size}`);
+        const text = await file.text();
+        appendDebug(`text_length=${text.length}`);
+        const parsed = parseNamesOnlyCSV(text);
+        (parsed.debug || []).forEach(line => appendDebug(line));
+        const names = parsed.names || [];
 
-      state.names = names;
-      state.scores = {};
-      state.excluded = [];
-      state.matchups = [];
-      state.wheel = ["",""];
+        state.names = names;
+        state.scores = {};
+        state.excluded = [];
+        state.matchups = [];
+        state.wheel = ["",""];
 
-      $("namesMsg").textContent = names.length
-        ? `Imported ${file.name}. Players loaded: ${names.length}. Source: ${parsed.source}.`
-        : `Imported ${file.name}, but no names were found. Source checked: ${parsed.source}.`;
+        $("namesMsg").textContent = names.length
+          ? `Imported ${file.name}. Players loaded: ${names.length}. Source: ${parsed.source}.`
+          : `Imported ${file.name}, but no names were found. Source checked: ${parsed.source}.`;
+
+        appendDebug(`final_source=${parsed.source}`);
+        appendDebug(`final_names=${JSON.stringify(names)}`);
+      }catch(err){
+        console.error(err);
+        $("namesMsg").textContent = `Import error: ${err.message}`;
+        appendDebug(`error_message=${err.message}`);
+        if(err && err.stack) appendDebug(`stack=${err.stack}`);
+      }
 
       $("scoresMsg").textContent = "Upload a completed Squabbit CSV later to calculate scores and payouts.";
       render();
@@ -1333,6 +1412,19 @@
     $("rebuildWheelBtn").addEventListener("click", rebuildWheel);
     $("exportAllPdfBtn").addEventListener("click", exportAllPdf);
     $("exportAllCsvBtn").addEventListener("click", exportAllCsv);
+
+
+    $("toggleDebugBtn").addEventListener("click", () => {
+      state.debugOpen = !state.debugOpen;
+      renderDebug();
+      saveState();
+    });
+
+    $("clearDebugBtn").addEventListener("click", () => {
+      state.debugLog = "";
+      renderDebug();
+      saveState();
+    });
 
     loadState();
     render();
