@@ -1792,6 +1792,2533 @@ function render() {
   saveState();
 }
 
+
+function isIosDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+const PDF_THEME = {
+  greenDark: [20, 83, 45],
+  greenMid: [34, 110, 67],
+  greenLight: [236, 253, 245],
+  slateText: [17, 24, 39],
+  mutedText: [100, 116, 139],
+  border: [203, 213, 225],
+  cardFill: [248, 250, 252],
+  white: [255, 255, 255],
+  redText: [185, 28, 28],
+  redFill: [254, 242, 242]
+};
+
+function getJsPdfConstructor() {
+  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  if (window.jsPDF) return window.jsPDF;
+  return null;
+}
+
+function createPdfDoc(orientation, title) {
+  const JsPDF = getJsPdfConstructor();
+  if (!JsPDF) {
+    throw new Error("The PDF library did not load.");
+  }
+
+  const doc = new JsPDF({
+    unit: "pt",
+    format: "letter",
+    orientation: orientation || "portrait",
+    compress: true
+  });
+
+  if (title && doc.setProperties) {
+    doc.setProperties({
+      title,
+      subject: "Wheel Best Ball Report",
+      creator: "Wheel Best Ball"
+    });
+  }
+
+  return doc;
+}
+
+function pdfGetPage(doc) {
+  return {
+    width: doc.internal.pageSize.getWidth(),
+    height: doc.internal.pageSize.getHeight()
+  };
+}
+
+function pdfSetTextColor(doc, rgb) {
+  doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+}
+
+function pdfSetFillColor(doc, rgb) {
+  doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+}
+
+function pdfSetDrawColor(doc, rgb) {
+  doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+}
+
+function pdfEnsureSpace(doc, y, needed, margin, title) {
+  const page = pdfGetPage(doc);
+  if (y + needed <= page.height - margin) return y;
+  doc.addPage();
+  return pdfDrawPageHeader(doc, title || "Wheel Best Ball", null);
+}
+
+function pdfDrawRoundedCard(doc, x, y, w, h, fillRgb, drawRgb, radius) {
+  pdfSetFillColor(doc, fillRgb || PDF_THEME.white);
+  pdfSetDrawColor(doc, drawRgb || PDF_THEME.border);
+  doc.roundedRect(x, y, w, h, radius || 10, radius || 10, "FD");
+}
+
+function pdfDrawPageHeader(doc, title, subtitle) {
+  const page = pdfGetPage(doc);
+  const x = 28;
+  const y = 24;
+  const w = page.width - 56;
+  const h = subtitle ? 74 : 60;
+
+  pdfSetFillColor(doc, PDF_THEME.greenDark);
+  doc.roundedRect(x, y, w, h, 16, 16, "F");
+
+  pdfSetTextColor(doc, PDF_THEME.white);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.text(title, x + 18, y + 28);
+
+  if (subtitle) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(subtitle, x + 18, y + 47);
+  }
+
+  return y + h + 18;
+}
+
+function pdfWriteWrapped(doc, text, x, y, maxWidth, options) {
+  const opts = options || {};
+  const margin = opts.margin == null ? 32 : opts.margin;
+  const fontSize = opts.fontSize == null ? 11 : opts.fontSize;
+  const lineHeight = opts.lineHeight == null ? Math.ceil(fontSize * 1.4) : opts.lineHeight;
+  const fontStyle = opts.fontStyle || "normal";
+  const color = opts.color || PDF_THEME.slateText;
+  const lines = doc.splitTextToSize(String(text ?? ""), maxWidth);
+
+  doc.setFont("helvetica", fontStyle);
+  doc.setFontSize(fontSize);
+  pdfSetTextColor(doc, color);
+
+  lines.forEach((line) => {
+    y = pdfEnsureSpace(doc, y, lineHeight + 2, margin, opts.pageTitle);
+    doc.text(line, x, y);
+    y += lineHeight;
+  });
+
+  return y;
+}
+
+function pdfMeasureWrappedHeight(doc, text, maxWidth, options) {
+  const opts = options || {};
+  const fontSize = opts.fontSize == null ? 11 : opts.fontSize;
+  const lineHeight = opts.lineHeight == null ? Math.ceil(fontSize * 1.4) : opts.lineHeight;
+  doc.setFont("helvetica", opts.fontStyle || "normal");
+  doc.setFontSize(fontSize);
+  const lines = doc.splitTextToSize(String(text ?? ""), maxWidth);
+  return Math.max(lineHeight, lines.length * lineHeight);
+}
+
+function pdfDrawSectionTitle(doc, y, text, margin, pageTitle) {
+  y = pdfEnsureSpace(doc, y, 34, margin, pageTitle);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  pdfSetTextColor(doc, PDF_THEME.greenDark);
+  doc.text(text, margin, y);
+  pdfSetDrawColor(doc, PDF_THEME.border);
+  doc.line(margin, y + 8, pdfGetPage(doc).width - margin, y + 8);
+  return y + 22;
+}
+
+function pdfDrawStatCards(doc, y, cards, margin, columns, pageTitle) {
+  const page = pdfGetPage(doc);
+  const gap = 10;
+  const count = columns || cards.length || 1;
+  const cardWidth = (page.width - (margin * 2) - (gap * (count - 1))) / count;
+  const cardHeight = 58;
+
+  y = pdfEnsureSpace(doc, y, cardHeight + 6, margin, pageTitle);
+
+  cards.forEach((card, index) => {
+    const x = margin + (index * (cardWidth + gap));
+    const fill = card.tone === "gain" ? PDF_THEME.greenLight : card.tone === "loss" ? PDF_THEME.redFill : PDF_THEME.cardFill;
+    const valueColor = card.tone === "loss" ? PDF_THEME.redText : PDF_THEME.greenDark;
+
+    pdfDrawRoundedCard(doc, x, y, cardWidth, cardHeight, fill, PDF_THEME.border, 12);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    pdfSetTextColor(doc, PDF_THEME.mutedText);
+    doc.text(card.label, x + 12, y + 18);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    pdfSetTextColor(doc, valueColor);
+    doc.text(String(card.value), x + 12, y + 40);
+  });
+
+  return y + cardHeight + 12;
+}
+
+function pdfDrawInfoBox(doc, y, items, margin, pageTitle) {
+  const page = pdfGetPage(doc);
+  const width = page.width - (margin * 2);
+  let contentHeight = 16;
+
+  items.forEach((item) => {
+    contentHeight += pdfMeasureWrappedHeight(doc, `${item.label}: ${item.value}`, width - 24, {
+      fontSize: 11,
+      lineHeight: 14,
+      fontStyle: "normal"
+    }) + 6;
+  });
+
+  const boxHeight = Math.max(56, contentHeight);
+  y = pdfEnsureSpace(doc, y, boxHeight + 8, margin, pageTitle);
+  pdfDrawRoundedCard(doc, margin, y, width, boxHeight, PDF_THEME.cardFill, PDF_THEME.border, 12);
+
+  let textY = y + 20;
+  items.forEach((item) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    pdfSetTextColor(doc, PDF_THEME.mutedText);
+    doc.text(item.label.toUpperCase(), margin + 12, textY);
+
+    textY = pdfWriteWrapped(doc, item.value, margin + 12, textY + 14, width - 24, {
+      margin,
+      fontSize: 11,
+      lineHeight: 14,
+      fontStyle: "normal",
+      color: PDF_THEME.slateText,
+      pageTitle
+    }) + 4;
+  });
+
+  return y + boxHeight + 12;
+}
+
+function pdfDrawNumberedNoteCard(doc, y, index, text, margin, pageTitle) {
+  const page = pdfGetPage(doc);
+  const width = page.width - (margin * 2);
+  const badgeSize = 22;
+  const textX = margin + 16 + badgeSize + 10;
+  const textWidth = width - (textX - margin) - 14;
+  const textHeight = pdfMeasureWrappedHeight(doc, text, textWidth, {
+    fontSize: 11,
+    lineHeight: 15,
+    fontStyle: "normal"
+  });
+  const boxHeight = Math.max(42, textHeight + 18);
+
+  y = pdfEnsureSpace(doc, y, boxHeight + 8, margin, pageTitle);
+  pdfDrawRoundedCard(doc, margin, y, width, boxHeight, PDF_THEME.white, PDF_THEME.border, 12);
+
+  pdfSetFillColor(doc, PDF_THEME.greenLight);
+  pdfSetDrawColor(doc, PDF_THEME.border);
+  doc.circle(margin + 16 + (badgeSize / 2), y + 15 + (badgeSize / 2), badgeSize / 2, "FD");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  pdfSetTextColor(doc, PDF_THEME.greenDark);
+  const idxText = String(index);
+  const idxWidth = doc.getTextWidth(idxText);
+  doc.text(idxText, margin + 16 + (badgeSize / 2) - (idxWidth / 2), y + 29);
+
+  pdfWriteWrapped(doc, text, textX, y + 22, textWidth, {
+    margin,
+    fontSize: 11,
+    lineHeight: 15,
+    fontStyle: "normal",
+    color: PDF_THEME.slateText,
+    pageTitle
+  });
+
+  return y + boxHeight + 8;
+}
+
+function pdfDrawMatchupCard(doc, y, index, item, margin, pageTitle) {
+  const page = pdfGetPage(doc);
+  const width = page.width - (margin * 2);
+  const result = item.result;
+  const lineWidth = width - 24;
+
+  const topLine = `Matchup ${index + 1}`;
+  const middleLine = `${item.wheelTeam.join(" & ")} vs ${item.oppTeam.join(" & ")}`;
+
+  let detailA = "";
+  let detailB = "";
+
+  if (result.status !== "ready") {
+    detailA = "Status: Pending";
+    detailB = `Missing scores: ${(result.missing || []).join(", ")}`;
+  } else {
+    detailA = `Winner: ${result.winner}    Wheel BB: ${result.wheelBB}    Opp BB: ${result.oppBB}    Margin: ${result.margin}    Shots Counted: ${result.shotsCounted}`;
+    detailB = `Per Person: $${result.perPerson}    Team Transfer: $${result.teamTransfer}    ${result.detail}`;
+  }
+
+  const contentHeight =
+    18 +
+    pdfMeasureWrappedHeight(doc, middleLine, lineWidth, { fontSize: 12, lineHeight: 16, fontStyle: "bold" }) +
+    pdfMeasureWrappedHeight(doc, detailA, lineWidth, { fontSize: 10, lineHeight: 14, fontStyle: "normal" }) +
+    pdfMeasureWrappedHeight(doc, detailB, lineWidth, { fontSize: 10, lineHeight: 14, fontStyle: "normal" }) +
+    26;
+
+  const boxHeight = Math.max(72, contentHeight);
+  y = pdfEnsureSpace(doc, y, boxHeight + 8, margin, pageTitle);
+  pdfDrawRoundedCard(doc, margin, y, width, boxHeight, PDF_THEME.white, PDF_THEME.border, 12);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  pdfSetTextColor(doc, PDF_THEME.greenDark);
+  doc.text(topLine, margin + 12, y + 18);
+
+  let textY = y + 38;
+  textY = pdfWriteWrapped(doc, middleLine, margin + 12, textY, lineWidth, {
+    margin,
+    fontSize: 12,
+    lineHeight: 16,
+    fontStyle: "bold",
+    color: PDF_THEME.slateText,
+    pageTitle
+  });
+
+  textY = pdfWriteWrapped(doc, detailA, margin + 12, textY + 2, lineWidth, {
+    margin,
+    fontSize: 10,
+    lineHeight: 14,
+    fontStyle: "normal",
+    color: PDF_THEME.mutedText,
+    pageTitle
+  });
+
+  pdfWriteWrapped(doc, detailB, margin + 12, textY + 2, lineWidth, {
+    margin,
+    fontSize: 10,
+    lineHeight: 14,
+    fontStyle: "normal",
+    color: PDF_THEME.slateText,
+    pageTitle
+  });
+
+  return y + boxHeight + 8;
+}
+
+function pdfDrawPlayerSummaryCard(doc, y, player, margin, pageTitle) {
+  const page = pdfGetPage(doc);
+  const width = page.width - (margin * 2);
+  const gross = playerGrossScore(player.name);
+  const detail = `Score: ${gross == null ? "Not loaded" : `Shot ${gross}`}    Net: ${player.net >= 0 ? "+" : "-"}$${Math.abs(player.net)}    Line Items: ${player.lines.length}`;
+  const detailHeight = pdfMeasureWrappedHeight(doc, detail, width - 24, {
+    fontSize: 10,
+    lineHeight: 14,
+    fontStyle: "normal"
+  });
+  const boxHeight = Math.max(56, detailHeight + 32);
+
+  y = pdfEnsureSpace(doc, y, boxHeight + 8, margin, pageTitle);
+  pdfDrawRoundedCard(doc, margin, y, width, boxHeight, PDF_THEME.cardFill, PDF_THEME.border, 12);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  pdfSetTextColor(doc, PDF_THEME.slateText);
+  doc.text(player.name, margin + 12, y + 22);
+
+  pdfWriteWrapped(doc, detail, margin + 12, y + 40, width - 24, {
+    margin,
+    fontSize: 10,
+    lineHeight: 14,
+    fontStyle: "normal",
+    color: PDF_THEME.mutedText,
+    pageTitle
+  });
+
+  return y + boxHeight + 8;
+}
+
+function showTemporaryToast(message) {
+  const toast = document.createElement("div");
+  toast.style.position = "fixed";
+  toast.style.left = "12px";
+  toast.style.right = "12px";
+  toast.style.bottom = "12px";
+  toast.style.zIndex = "9999";
+  toast.style.background = "#14532d";
+  toast.style.color = "#ffffff";
+  toast.style.padding = "12px 14px";
+  toast.style.borderRadius = "14px";
+  toast.style.fontSize = "14px";
+  toast.style.fontWeight = "700";
+  toast.style.boxShadow = "0 10px 25px rgba(0,0,0,.25)";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    if (toast.parentNode) toast.parentNode.removeChild(toast);
+  }, 5000);
+}
+
+function savePdfDoc(doc, filename) {
+  if (isIosDevice()) {
+    const blob = doc.output("blob");
+    const blobUrl = URL.createObjectURL(blob);
+    const win = window.open(blobUrl, "_blank");
+
+    if (!win) {
+      window.location.href = blobUrl;
+    }
+
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+    }, 60000);
+
+    showTemporaryToast("Your PDF was opened in a new tab. On iPhone, use Share then Save to Files.");
+    return;
+  }
+
+  doc.save(filename);
+}
+
+function exportPlayerPdf(playerName) {
+  try {
+    const player = playerLedger().find((entry) => entry.name === playerName);
+    if (!player) return;
+
+    const gross = playerGrossScore(playerName);
+    const title = `${playerName} Settlement Summary`;
+    const doc = createPdfDoc("portrait", title);
+    const margin = 32;
+
+    let y = pdfDrawPageHeader(doc, title, "Wheel Best Ball player report");
+    y = pdfDrawStatCards(doc, y, [
+      { label: "Score", value: gross == null ? "Not loaded" : `Shot ${gross}`, tone: "neutral" },
+      { label: "Net", value: `${player.net >= 0 ? "+" : "-"}$${Math.abs(player.net)}`, tone: player.net < 0 ? "loss" : "gain" },
+      { label: "Line Items", value: String(player.lines.length), tone: "neutral" }
+    ], margin, 3, title);
+
+    y = pdfDrawInfoBox(doc, y, [
+      { label: "Player", value: player.name },
+      { label: "Summary", value: player.lines.length ? "Below is the full settlement breakdown for this player." : "This player has no settled lines yet." }
+    ], margin, title);
+
+    y = pdfDrawSectionTitle(doc, y + 2, "Settlement Breakdown", margin, title);
+
+    if (player.lines.length) {
+      player.lines.forEach((line, index) => {
+        y = pdfDrawNumberedNoteCard(doc, y, index + 1, line, margin, title);
+      });
+    } else {
+      y = pdfDrawNumberedNoteCard(doc, y, 1, "No settled lines yet.", margin, title);
+    }
+
+    savePdfDoc(doc, `${playerName.replace(/\s+/g, "_")}_wheel_breakdown.pdf`);
+  } catch (error) {
+    console.error(error);
+    alert(`Could not create player PDF: ${error.message}`);
+  }
+}
+
+function exportAllPdf() {
+  try {
+    const wheelNames = state.wheel.filter(Boolean).join(" & ") || "Not set";
+    const results = allResults();
+    const ledger = playerLedger();
+    const title = "Wheel Best Ball Results";
+    const doc = createPdfDoc("landscape", title);
+    const margin = 28;
+
+    let y = pdfDrawPageHeader(doc, title, "Clean shareable summary report");
+    y = pdfDrawStatCards(doc, y, [
+      { label: "Wheel Team", value: wheelNames, tone: "neutral" },
+      { label: "Matchups", value: String(results.length), tone: "neutral" },
+      { label: "Dollars Per Shot", value: `$${Number(state.shotValue) || 0}`, tone: "neutral" },
+      { label: "Wheel Total", value: `${wheelTeamNet() >= 0 ? "+" : "-"}$${Math.abs(wheelTeamNet())}`, tone: wheelTeamNet() < 0 ? "loss" : "gain" }
+    ], margin, 4, title);
+
+    y = pdfDrawInfoBox(doc, y, [
+      { label: "Wheel Team", value: wheelNames },
+      { label: "Rule", value: `Each losing player pays one winning player the per person amount. Max shots: ${Number(state.maxShots) || 0}.` }
+    ], margin, title);
+
+    y = pdfDrawSectionTitle(doc, y + 2, "Matchup Results", margin, title);
+
+    if (!results.length) {
+      y = pdfDrawNumberedNoteCard(doc, y, 1, "No matchups have been built yet.", margin, title);
+    } else {
+      results.forEach((item, index) => {
+        y = pdfDrawMatchupCard(doc, y, index, item, margin, title);
+      });
+    }
+
+    y = pdfDrawSectionTitle(doc, y + 4, "Player Summary", margin, title);
+
+    if (!ledger.length) {
+      y = pdfDrawNumberedNoteCard(doc, y, 1, "No player summary is available yet.", margin, title);
+    } else {
+      ledger.forEach((player) => {
+        y = pdfDrawPlayerSummaryCard(doc, y, player, margin, title);
+      });
+    }
+
+    savePdfDoc(doc, "wheel_best_ball_all_results.pdf");
+  } catch (error) {
+    console.error(error);
+    alert(`Could not create results PDF: ${error.message}`);
+  }
+}
+
+function exportAllCsv() {
+  const rows = [];
+  rows.push(["Wheel Team", state.wheel.join(" & ")]);
+  rows.push(["Dollars Per Shot", state.shotValue]);
+  rows.push(["Max Shots", state.maxShots]);
+  rows.push(["Wheel Net", wheelTeamNet()]);
+  rows.push([]);
+  rows.push(["Matchup #", "Wheel Team", "Opponent Team", "Status", "Wheel BB", "Opp BB", "Winner", "Margin", "Shots Counted", "Per Person", "Team Transfer", "Details"]);
+
+  allResults().forEach((item, index) => {
+    const result = item.result;
+    if (result.status !== "ready") {
+      rows.push([index + 1, item.wheelTeam.join(" & "), item.oppTeam.join(" & "), "Pending", "", "", "", "", "", "", "", (result.missing || []).join(" | ")]);
+    } else {
+      rows.push([index + 1, item.wheelTeam.join(" & "), item.oppTeam.join(" & "), "Ready", result.wheelBB, result.oppBB, result.winner, result.margin, result.shotsCounted, result.perPerson, result.teamTransfer, result.detail]);
+    }
+  });
+
+  rows.push([]);
+  rows.push(["Player", "Score", "Net", "Line Items"]);
+  playerLedger().forEach((player) => rows.push([player.name, playerGrossScore(player.name) == null ? "" : playerGrossScore(player.name), player.net, player.lines.length]));
+
+  const escapeCsv = (value) => {
+    const text = String(value ?? "");
+    return (text.includes(",") || text.includes('"') || text.includes("\n")) ? `"${text.replace(/"/g, '""')}"` : text;
+  };
+
+  const csv = rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "wheel_best_ball_results.csv";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function handleRosterUpload(file) {
+  if (!file) return;
+
+  setDebug("");
+  appendDebug(`roster_file_name=${file.name}`);
+  appendDebug(`roster_file_size_bytes=${file.size}`);
+
+  const validation = validateCsvFile(file);
+  (validation.warnings || []).forEach((warning) => appendDebug(`warning=${warning}`));
+
+  try {
+    setStatusPanel("names", "info", "Checking file", ["Validating file type and reading data."]);
+    const { text, encoding } = await readFileSmart(file, "names");
+    appendDebug(`roster_encoding=${encoding}`);
+
+    const analysis = analyzeRosterCSV(text);
+    (analysis.debug || []).forEach((line) => appendDebug(line));
+
+    state.names = analysis.names || [];
+    state.scores = {};
+    state.excluded = [];
+    state.matchups = [];
+    state.wheel = ["", ""];
+
+    setUploadUi("names", {
+      stageLabel: state.names.length ? "Loaded" : "No names found",
+      stageClass: state.names.length ? "okState" : "errorState",
+      fileName: file.name,
+      fileSize: formatBytes(file.size),
+      percent: 100,
+      step: state.names.length ? `Loaded ${state.names.length} players` : "Parser finished with 0 names",
+      delimiter: friendlyDelimiter(analysis.delimiter),
+      encoding
+    });
+
+    setPreview("names", previewText(text));
+    setParserSummary("names", [
+      `Source: ${analysis.source}`,
+      `Rows parsed: ${analysis.rows.length}`,
+      `Names found: ${state.names.length}`,
+      `Warnings: ${analysis.warnings.length}`,
+      `Reasons: ${analysis.reasons.length}`
+    ].join("\n"));
+
+    if (state.names.length) {
+      $("namesMsg").textContent = `Imported ${file.name}. Players loaded: ${state.names.length}. Source: ${analysis.source}.`;
+      setStatusPanel(
+        "names",
+        analysis.warnings.length ? "warn" : "ok",
+        analysis.warnings.length ? "Loaded with warnings" : "Roster loaded",
+        [`Loaded ${state.names.length} player name(s) from ${analysis.source}.`].concat(analysis.warnings || [])
+      );
+    } else {
+      $("namesMsg").textContent = `Imported ${file.name}, but no names were found.`;
+      setStatusPanel(
+        "names",
+        "error",
+        "No names loaded",
+        [].concat(analysis.reasons || ["The parser finished but could not identify any usable player names."], analysis.warnings || [])
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    appendDebug(`roster_error=${error.message}`);
+    if (error && error.stack) appendDebug(`roster_stack=${error.stack}`);
+
+    $("namesMsg").textContent = `Import error: ${error.message}`;
+    setUploadUi("names", {
+      stageLabel: "Error",
+      stageClass: "errorState",
+      fileName: file.name,
+      fileSize: formatBytes(file.size),
+      percent: 100,
+      step: error.message || "Import failed"
+    });
+    setStatusPanel("names", "error", "Upload failed", [error.message || "Unknown import error."]);
+  }
+
+  $("scoresMsg").textContent = "Upload a completed Squabbit CSV later to calculate scores and payouts.";
+  render();
+}
+
+async function handleScoresUpload(file) {
+  if (!file) return;
+
+  try {
+    setStatusPanel("scores", "info", "Checking file", ["Validating file type and reading data."]);
+    const { text, encoding } = await readFileSmart(file, "scores");
+    const analysis = analyzeScoresCSV(text);
+    const scoreNames = Object.keys(analysis.scores).sort((a, b) => a.localeCompare(b));
+
+    state.scores = analysis.scores;
+    state.names = uniqueSortedNames([...(state.names || []), ...scoreNames]);
+
+    setUploadUi("scores", {
+      stageLabel: scoreNames.length ? "Loaded" : "No score rows found",
+      stageClass: scoreNames.length ? "okState" : "errorState",
+      fileName: file.name,
+      fileSize: formatBytes(file.size),
+      percent: 100,
+      step: scoreNames.length ? `Loaded ${scoreNames.length} score rows` : "Parser finished with 0 completed rows",
+      delimiter: friendlyDelimiter(analysis.delimiter),
+      encoding
+    });
+
+    setPreview("scores", previewText(text));
+    setParserSummary("scores", [
+      `Rows parsed: ${analysis.rows.length}`,
+      `Completed player rows: ${scoreNames.length}`,
+      `Partial player rows: ${analysis.partialRows || 0}`,
+      `Warnings: ${analysis.warnings.length}`,
+      `Reasons: ${analysis.reasons.length}`
+    ].join("\n"));
+
+    if (scoreNames.length) {
+      $("scoresMsg").textContent = `Imported ${file.name}. Players with finished scores: ${scoreNames.length}.`;
+      setStatusPanel(
+        "scores",
+        analysis.warnings.length ? "warn" : "ok",
+        analysis.warnings.length ? "Scores loaded with warnings" : "Scores loaded",
+        [`Loaded ${scoreNames.length} player score row(s).`].concat(analysis.warnings || [])
+      );
+    } else {
+      const detailLines = []
+        .concat(analysis.reasons || ["The parser could not find any completed player score rows."])
+        .concat(analysis.partialExamples && analysis.partialExamples.length ? ["Examples: " + analysis.partialExamples.join(" | ")] : [])
+        .concat(analysis.warnings || []);
+
+      $("scoresMsg").textContent = analysis.partialRows
+        ? `Imported ${file.name}. This file has ${analysis.partialRows} partial player row(s), but nobody has all 18 holes yet.`
+        : `Imported ${file.name}, but no completed 18 hole score rows were found.`;
+
+      setStatusPanel(
+        "scores",
+        "error",
+        analysis.partialRows ? "Round is not finished yet" : "No finished scores loaded",
+        detailLines
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    $("scoresMsg").textContent = `Score import error: ${error.message}`;
+    setUploadUi("scores", {
+      stageLabel: "Error",
+      stageClass: "errorState",
+      fileName: file.name,
+      fileSize: formatBytes(file.size),
+      percent: 100,
+      step: error.message || "Import failed"
+    });
+    setStatusPanel("scores", "error", "Upload failed", [error.message || "Unknown import error."]);
+  }
+
+  render();
+}
+
+$("wheelP1").addEventListener("change", (event) => {
+  state.wheel[0] = event.target.value;
+  if (state.wheel[0] && state.wheel[0] === state.wheel[1]) state.wheel[1] = "";
+  updateSelectOptions();
+  renderExcludes();
+  rebuildWheel();
+});
+
+$("wheelP2").addEventListener("change", (event) => {
+  state.wheel[1] = event.target.value;
+  if (state.wheel[1] && state.wheel[1] === state.wheel[0]) state.wheel[0] = "";
+  updateSelectOptions();
+  renderExcludes();
+  rebuildWheel();
+});
+
+$("shotValue").addEventListener("input", (event) => {
+  state.shotValue = Number(event.target.value) || 0;
+  render();
+});
+
+$("maxShots").addEventListener("input", (event) => {
+  state.maxShots = Number(event.target.value) || 0;
+  render();
+});
+
+$("rebuildWheelBtn").addEventListener("click", rebuildWheel);
+$("exportAllPdfBtn").addEventListener("click", exportAllPdf);
+$("exportAllCsvBtn").addEventListener("click", exportAllCsv);
+
+$("toggleDebugBtn").addEventListener("click", () => {
+  state.debugOpen = !state.debugOpen;
+  renderDebug();
+  saveState();
+});
+
+$("clearDebugBtn").addEventListener("click", () => {
+  state.debugLog = "";
+  renderDebug();
+  saveState();
+});
+
+bindDesktopDrop("names");
+bindDesktopDrop("scores");
+bindNativePicker("names", handleRosterUpload);
+bindNativePicker("scores", handleScoresUpload);
+resetUploadUi("names");
+resetUploadUi("scores");
+loadState();
+$("shotValue").value = state.shotValue;
+$("maxShots").value = state.maxShots;
+render();
+</script>
+</body>
+</html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Wheel Best Ball</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg0:#0a1b13;
+  --bg1:#113021;
+  --card:#ffffff;
+  --line:#e5e7eb;
+  --text:#111827;
+  --muted:#64748b;
+  --green1:#14532d;
+  --green2:#166534;
+  --green3:#22c55e;
+  --blue1:#2563eb;
+  --blue2:#38bdf8;
+  --warn:#92400e;
+  --warnBg:#fffbeb;
+  --warnBorder:#fde68a;
+  --bad:#991b1b;
+  --badBg:#fef2f2;
+  --badBorder:#fecaca;
+  --ok:#166534;
+  --okBg:#f0fdf4;
+  --okBorder:#bbf7d0;
+  --info:#1d4ed8;
+  --infoBg:#eff6ff;
+  --infoBorder:#bfdbfe;
+  --shadow:0 14px 45px rgba(0,0,0,.20);
+}
+*{ box-sizing:border-box; }
+html,body{ max-width:100%; overflow-x:hidden; }
+body{
+  margin:0;
+  min-height:100vh;
+  color:var(--text);
+  font-family:-apple-system, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+  background:
+    radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
+    radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
+    linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #08140e);
+}
+.hubbar{
+  position:sticky;
+  top:0;
+  z-index:50;
+  padding:10px 12px;
+  background:linear-gradient(180deg, rgba(5,17,11,.92), rgba(5,17,11,.74));
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(255,255,255,.10);
+}
+.hubbarRow{
+  max-width:1100px;
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.hubbarTitle{ color:#eaf5ef; font-weight:950; font-size:15px; letter-spacing:.2px; }
+.hubBtns{ display:flex; gap:8px; flex-wrap:wrap; }
+.hubBtn{
+  border:0;
+  border-radius:12px;
+  padding:9px 10px;
+  font-size:13px;
+  font-weight:950;
+  cursor:pointer;
+}
+.hubBtnGhost{ background:rgba(255,255,255,.08); color:#eaf5ef; border:1px solid rgba(255,255,255,.10); }
+.hubBtnDanger{ background:linear-gradient(135deg,#fb7185,#ef4444); color:#08110c; }
+.wrap{ width:100%; max-width:1100px; margin:0 auto; padding:16px; }
+.hero{
+  background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.10));
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:24px;
+  padding:18px;
+  box-shadow:var(--shadow);
+  margin-bottom:16px;
+  backdrop-filter:blur(10px);
+  color:#eaf5ef;
+}
+.heroTitle{ margin:0 0 8px; font-size:30px; font-weight:950; }
+.heroSub{ color:#d9f5e4; line-height:1.45; font-size:14px; max-width:800px; }
+.stickyNav{
+  position:sticky;
+  top:62px;
+  z-index:40;
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  padding:10px;
+  margin-bottom:16px;
+  box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+.navLinks{ display:flex; gap:8px; flex-wrap:wrap; }
+.navLink{
+  text-decoration:none;
+  padding:9px 12px;
+  border-radius:999px;
+  background:#ecfdf5;
+  color:#166534;
+  font-weight:800;
+  font-size:13px;
+  border:1px solid #bbf7d0;
+}
+.summaryGrid,.grid2,.grid4,.playersChecklist{ display:grid; grid-template-columns:1fr; gap:12px; }
+.summaryCard,.card{
+  background:#fff;
+  border:1px solid rgba(0,0,0,.06);
+  border-radius:20px;
+  box-shadow:0 10px 28px rgba(0,0,0,.08);
+}
+.summaryCard{ padding:16px; }
+.card{ padding:18px; margin-bottom:16px; }
+.summaryLabel{
+  font-size:12px;
+  color:var(--muted);
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.summaryValue{ margin-top:6px; font-size:28px; font-weight:950; color:var(--green2); }
+.section{ scroll-margin-top:120px; }
+.sectionTitle{ margin:0 0 6px; font-size:22px; font-weight:950; color:var(--green1); }
+.sectionSub{ color:var(--muted); font-size:14px; line-height:1.45; margin-bottom:14px; }
+.field label{ display:block; font-size:13px; font-weight:800; color:#374151; margin-bottom:6px; }
+.input,.select{
+  width:100%;
+  border:1px solid #d1d5db;
+  border-radius:14px;
+  padding:12px;
+  background:#fff;
+  font-size:16px;
+}
+.btnRow{ display:flex; gap:10px; flex-wrap:wrap; }
+.btn{
+  border:0;
+  border-radius:14px;
+  padding:12px 14px;
+  font-size:14px;
+  font-weight:950;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.btnGreen{ background:linear-gradient(135deg, var(--green2), var(--green3)); color:#fff; }
+.btnBlue{ background:linear-gradient(135deg, var(--blue1), var(--blue2)); color:#fff; }
+.btnGray{ background:linear-gradient(135deg,#6b7280,#9ca3af); color:#fff; }
+.pillWrap{ display:flex; gap:8px; flex-wrap:wrap; }
+.pill{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#dcfce7;
+  color:#166534;
+  font-size:12px;
+  font-weight:800;
+  border:1px solid #bbf7d0;
+}
+.pillMuted{ background:#f3f4f6; color:#4b5563; border:1px solid #e5e7eb; }
+.note{ margin-top:10px; color:#166534; font-size:14px; font-weight:700; }
+.warn{
+  color:var(--warn);
+  background:var(--warnBg);
+  border:1px solid var(--warnBorder);
+  border-radius:14px;
+  padding:12px 14px;
+  margin-top:14px;
+  line-height:1.45;
+}
+.uploadCard{
+  border:1px dashed #86efac;
+  background:linear-gradient(180deg,#f0fdf4,#ffffff);
+  border-radius:18px;
+  padding:16px;
+}
+.uploadTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.uploadTitle{ font-size:18px; font-weight:950; color:#14532d; margin:0; }
+.uploadSub{ color:var(--muted); font-size:13px; line-height:1.45; margin-top:6px; }
+.uploadStatusPill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:var(--infoBg);
+  color:var(--info);
+  border:1px solid var(--infoBorder);
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.uploadStatusPill.okState{ background:var(--okBg); color:var(--ok); border-color:var(--okBorder); }
+.uploadStatusPill.warnState{ background:var(--warnBg); color:var(--warn); border-color:var(--warnBorder); }
+.uploadStatusPill.errorState{ background:var(--badBg); color:var(--bad); border-color:var(--badBorder); }
+.uploadStatusPill.infoState{ background:var(--infoBg); color:var(--info); border-color:var(--infoBorder); }
+.uploadDot{ width:10px; height:10px; border-radius:50%; background:currentColor; opacity:.9; }
+.dropZone{
+  display:block;
+  width:100%;
+  border:2px dashed #bbf7d0;
+  border-radius:18px;
+  background:#ffffff;
+  padding:18px;
+  transition:transform .08s ease, border-color .15s ease, background .15s ease;
+}
+.dropZone.dragging{ border-color:#22c55e; background:#f0fdf4; }
+.dropZoneTitle{ font-size:18px; font-weight:900; color:#14532d; margin:0 0 6px; }
+.dropZoneText{ color:var(--muted); font-size:14px; line-height:1.45; margin:0; }
+.nativeFileInput{
+  width:100%;
+  border:1px solid #d1d5db;
+  border-radius:14px;
+  padding:10px 12px;
+  background:#fff;
+  font-size:15px;
+}
+.fileMeta{ margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+.metaPill{
+  color:#374151;
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#f3f4f6;
+  font-size:12px;
+  font-weight:800;
+  border:1px solid #e5e7eb;
+}
+.progressWrap{ margin-top:12px; }
+.progressTrack{
+  width:100%;
+  height:12px;
+  border-radius:999px;
+  background:#e5e7eb;
+  overflow:hidden;
+  border:1px solid #d1d5db;
+}
+.progressBar{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#16a34a,#4ade80);
+  transition:width .15s ease;
+}
+.progressText{
+  margin-top:8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  font-size:13px;
+  color:#4b5563;
+  font-weight:700;
+}
+.statusPanel{
+  margin-top:12px;
+  border-radius:16px;
+  padding:12px 14px;
+  border:1px solid #d1d5db;
+  background:#f8fafc;
+}
+.statusPanel.ok{ background:var(--okBg); border-color:var(--okBorder); }
+.statusPanel.warn{ background:var(--warnBg); border-color:var(--warnBorder); }
+.statusPanel.error{ background:var(--badBg); border-color:var(--badBorder); }
+.statusPanel.info{ background:var(--infoBg); border-color:var(--infoBorder); }
+.statusTitle{ font-weight:900; margin-bottom:6px; }
+.statusList{ margin:0; padding-left:18px; color:#374151; line-height:1.45; }
+.statusList li + li{ margin-top:4px; }
+.miniGrid{ display:grid; grid-template-columns:1fr; gap:12px; margin-top:12px; }
+.previewBox{
+  border:1px solid #e5e7eb;
+  background:#fff;
+  border-radius:14px;
+  padding:12px;
+}
+.previewLabel{
+  font-size:12px;
+  font-weight:900;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  margin-bottom:6px;
+}
+.previewText{
+  font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space:pre-wrap;
+  font-size:12px;
+  color:#111827;
+  max-height:180px;
+  overflow:auto;
+}
+.playersChecklist{ gap:10px; }
+.checkItem{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:10px 12px;
+  font-size:14px;
+  font-weight:700;
+}
+.tableWrap{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid #e5e7eb;
+  border-radius:18px;
+  background:#fff;
+}
+table{ width:100%; min-width:720px; border-collapse:collapse; background:#fff; }
+th,td{
+  padding:11px 12px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+  font-size:14px;
+  vertical-align:top;
+  white-space:normal;
+}
+th{
+  background:#f8fafc;
+  color:#475569;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  font-weight:900;
+  position:sticky;
+  top:0;
+  z-index:1;
+}
+tr:nth-child(even) td{ background:#fcfcfd; }
+.playerCard{
+  margin-bottom:12px;
+  border:1px solid #e5e7eb;
+  border-radius:18px;
+  padding:14px;
+  background:#fff;
+}
+.playerHead{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.playerName{ font-size:20px; font-weight:950; color:#14532d; margin:0; }
+.playerNet{ font-size:20px; font-weight:950; }
+.playerMetaRow{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+.scoreBadge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#ecfdf5;
+  color:#166534;
+  border:1px solid #bbf7d0;
+  font-size:12px;
+  font-weight:900;
+}
+.gain{ color:#166534; }
+.loss{ color:#b91c1c; }
+.breakdownList{
+  border:1px solid #e5e7eb;
+  border-radius:18px;
+  background:#fff;
+  overflow:hidden;
+}
+.breakdownItem{
+  display:grid;
+  grid-template-columns:52px 1fr;
+  gap:12px;
+  padding:14px 12px;
+  border-bottom:1px solid #e5e7eb;
+  align-items:start;
+}
+.breakdownItem:last-child{ border-bottom:0; }
+.breakdownIndex{ font-size:13px; font-weight:900; color:#475569; }
+.breakdownText{ font-size:15px; line-height:1.45; color:#111827; word-break:break-word; }
+.report{ font-family:Arial, sans-serif; color:#111827; padding:24px; }
+.report h1,.report h2{ margin:0 0 10px; color:#14532d; }
+.report table{ min-width:0; width:100%; border-collapse:collapse; margin-top:12px; }
+.report th,.report td{ border:1px solid #d1d5db; padding:8px 10px; font-size:12px; text-align:left; background:#fff; }
+.report th{ background:#f0fdf4; }
+@media (min-width:700px){
+  .playersChecklist{ grid-template-columns:1fr 1fr; }
+  .miniGrid{ grid-template-columns:1fr 1fr; }
+}
+@media (min-width:900px){
+  .summaryGrid{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .grid2{ grid-template-columns:1fr 1fr; }
+  .grid4{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+@media (min-width:1050px){
+  .playersChecklist{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="hubbar">
+  <div class="hubbarRow">
+    <div class="hubbarTitle" id="hubToolTitle">Wheel Best Ball</div>
+    <div class="hubBtns">
+      <button class="hubBtn hubBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
+      <button class="hubBtn hubBtnGhost" type="button" id="hubResetThisBtn">Reset This Tool</button>
+      <button class="hubBtn hubBtnDanger" type="button" id="hubResetAllBtn">Reset Everything</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <h1 class="heroTitle">Wheel Best Ball</h1>
+    <div class="heroSub">
+      Upload a Squabbit pre round roster CSV to load players, choose the wheel team, then upload the completed round CSV to calculate best ball and payouts.
+    </div>
+  </div>
+
+  <div class="stickyNav">
+    <div class="navLinks">
+      <a class="navLink" href="#section-setup">Setup</a>
+      <a class="navLink" href="#section-wheel">Wheel Matchups</a>
+      <a class="navLink" href="#section-scores">Scores</a>
+      <a class="navLink" href="#section-results">Results</a>
+      <a class="navLink" href="#section-players">Player Breakdowns</a>
+      <a class="navLink" href="#section-exports">Exports</a>
+    </div>
+  </div>
+
+  <div class="summaryGrid">
+    <div class="summaryCard">
+      <div class="summaryLabel">Players Loaded</div>
+      <div class="summaryValue" id="summaryPlayers">0</div>
+    </div>
+    <div class="summaryCard">
+      <div class="summaryLabel">Wheel Matchups</div>
+      <div class="summaryValue" id="summaryMatchups">0</div>
+    </div>
+    <div class="summaryCard">
+      <div class="summaryLabel">Wheel Net</div>
+      <div class="summaryValue" id="summaryWheelNet">$0</div>
+    </div>
+    <div class="summaryCard">
+      <div class="summaryLabel">Opponents Net</div>
+      <div class="summaryValue" id="summaryOppNet">$0</div>
+    </div>
+  </div>
+
+  <section class="section card" id="section-debug">
+    <h2 class="sectionTitle">Debug</h2>
+    <div class="sectionSub">This shows what the CSV reader is doing so you can see why a file loaded or failed.</div>
+    <div class="btnRow" style="margin-bottom:12px;">
+      <button id="toggleDebugBtn" class="btn btnBlue" type="button">Show Debug</button>
+      <button id="clearDebugBtn" class="btn btnGreen" type="button">Clear Debug</button>
+    </div>
+    <div id="debugWrap" style="display:none;">
+      <div class="field">
+        <label for="debugBox">Parser Debug Output</label>
+        <textarea id="debugBox" class="input" style="min-height:260px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; white-space:pre-wrap;"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="section card" id="section-setup">
+    <h2 class="sectionTitle">1) Round Setup</h2>
+    <div class="sectionSub">Upload a pre round Squabbit roster before tee off, pick the wheel team, and exclude anyone who opts out.</div>
+
+    <div class="uploadCard">
+      <div class="uploadTop">
+        <div>
+          <h3 class="uploadTitle">Pre round / roster CSV</h3>
+          <div class="uploadSub">On iPhone, use Choose Roster File. It opens the real native picker and loads automatically when you select the file.</div>
+        </div>
+        <div id="namesStagePill" class="uploadStatusPill infoState">
+          <span class="uploadDot"></span><span id="namesStageLabel">Waiting for file</span>
+        </div>
+      </div>
+
+      <div class="dropZone" id="namesDropZone">
+        <div class="dropZoneTitle">Drop roster CSV here on desktop</div>
+        <div class="dropZoneText">On iPhone or iPad, use the buttons below.</div>
+      </div>
+
+      <div class="field" style="margin-top:12px;">
+        <label for="namesCsvInput">Roster file</label>
+        <input id="namesCsvInput" class="nativeFileInput" type="file" accept=".csv,text/csv,text/plain" />
+      </div>
+
+      <div class="btnRow" style="margin-top:12px;">
+        <button id="namesChooseBtn" class="btn btnGreen" type="button">Choose Roster File</button>
+        <button id="namesLoadBtn" class="btn btnBlue" type="button">Load Selected Roster</button>
+        <button id="namesClearBtn" class="btn btnGray" type="button">Clear Roster Upload</button>
+      </div>
+
+      <div class="fileMeta">
+        <span class="metaPill" id="namesFileName">No file selected</span>
+        <span class="metaPill" id="namesFileSize">0 KB</span>
+        <span class="metaPill" id="namesDetectedDelimiter">Delimiter: not checked</span>
+        <span class="metaPill" id="namesDetectedEncoding">Encoding: not checked</span>
+      </div>
+
+      <div class="progressWrap">
+        <div class="progressTrack"><div class="progressBar" id="namesProgressBar"></div></div>
+        <div class="progressText">
+          <span id="namesProgressStep">Idle</span>
+          <span id="namesProgressText">0%</span>
+        </div>
+      </div>
+
+      <div id="namesStatusPanel" class="statusPanel info">
+        <div class="statusTitle">Status</div>
+        <ul class="statusList" id="namesStatusList">
+          <li>Upload a roster CSV to begin.</li>
+        </ul>
+      </div>
+
+      <div class="miniGrid">
+        <div class="previewBox">
+          <div class="previewLabel">File preview</div>
+          <div class="previewText" id="namesPreview">No preview yet.</div>
+        </div>
+        <div class="previewBox">
+          <div class="previewLabel">Parser summary</div>
+          <div class="previewText" id="namesParserSummary">No parser run yet.</div>
+        </div>
+      </div>
+
+      <div class="note" id="namesMsg">Upload a pre round Squabbit CSV to load names.</div>
+    </div>
+
+    <div class="field" style="margin-top:14px;">
+      <label>Loaded players</label>
+      <div id="loadedPlayerPills" class="pillWrap"></div>
+    </div>
+
+    <div class="grid4" style="margin-top:14px;">
+      <div class="field">
+        <label for="wheelP1">Wheel player 1</label>
+        <select id="wheelP1" class="select"></select>
+      </div>
+      <div class="field">
+        <label for="wheelP2">Wheel player 2</label>
+        <select id="wheelP2" class="select"></select>
+      </div>
+      <div class="field">
+        <label for="shotValue">Dollars per shot</label>
+        <input id="shotValue" class="input" type="number" min="0" step="1" value="3" />
+      </div>
+      <div class="field">
+        <label for="maxShots">Max shots</label>
+        <input id="maxShots" class="input" type="number" min="0" step="1" value="7" />
+      </div>
+    </div>
+
+    <div class="warn">
+      If a team loses by 2 at $3 a shot, each losing player pays one winning player $6. With a 7 shot cap, the max per person payment is $21.
+    </div>
+
+    <div class="field" style="margin-top:14px;">
+      <label>Exclude players from the wheel</label>
+      <div id="excludeList" class="playersChecklist"></div>
+    </div>
+
+    <div class="btnRow" style="margin-top:14px;">
+      <button id="rebuildWheelBtn" class="btn btnGreen" type="button">Build Wheel</button>
+    </div>
+  </section>
+
+  <section class="section card" id="section-wheel">
+    <h2 class="sectionTitle">2) Wheel Matchups</h2>
+    <div class="sectionSub">The wheel team takes on every two player combination from the remaining eligible players.</div>
+    <div class="tableWrap">
+      <table id="wheelTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Wheel Team</th>
+            <th>Opponent Team</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section card" id="section-scores">
+    <h2 class="sectionTitle">3) Import Scores</h2>
+    <div class="sectionSub">Upload the completed Squabbit round CSV after the round. Best ball totals will populate automatically.</div>
+
+    <div class="uploadCard">
+      <div class="uploadTop">
+        <div>
+          <h3 class="uploadTitle">Completed round CSV</h3>
+          <div class="uploadSub">The score parser looks for Hole 1 through Hole 18 and only counts players with all 18 hole values filled in.</div>
+        </div>
+        <div id="scoresStagePill" class="uploadStatusPill infoState">
+          <span class="uploadDot"></span><span id="scoresStageLabel">Waiting for file</span>
+        </div>
+      </div>
+
+      <div class="dropZone" id="scoresDropZone">
+        <div class="dropZoneTitle">Drop completed round CSV here on desktop</div>
+        <div class="dropZoneText">On iPhone or iPad, use the buttons below.</div>
+      </div>
+
+      <div class="field" style="margin-top:12px;">
+        <label for="scoresCsvInput">Scores file</label>
+        <input id="scoresCsvInput" class="nativeFileInput" type="file" accept=".csv,text/csv,text/plain" />
+      </div>
+
+      <div class="btnRow" style="margin-top:12px;">
+        <button id="scoresChooseBtn" class="btn btnGreen" type="button">Choose Scores File</button>
+        <button id="scoresLoadBtn" class="btn btnBlue" type="button">Load Selected Scores</button>
+        <button id="scoresClearBtn" class="btn btnGray" type="button">Clear Scores Upload</button>
+      </div>
+
+      <div class="fileMeta">
+        <span class="metaPill" id="scoresFileName">No file selected</span>
+        <span class="metaPill" id="scoresFileSize">0 KB</span>
+        <span class="metaPill" id="scoresDetectedDelimiter">Delimiter: not checked</span>
+        <span class="metaPill" id="scoresDetectedEncoding">Encoding: not checked</span>
+      </div>
+
+      <div class="progressWrap">
+        <div class="progressTrack"><div class="progressBar" id="scoresProgressBar"></div></div>
+        <div class="progressText">
+          <span id="scoresProgressStep">Idle</span>
+          <span id="scoresProgressText">0%</span>
+        </div>
+      </div>
+
+      <div id="scoresStatusPanel" class="statusPanel info">
+        <div class="statusTitle">Status</div>
+        <ul class="statusList" id="scoresStatusList">
+          <li>Upload a completed round CSV to begin.</li>
+        </ul>
+      </div>
+
+      <div class="miniGrid">
+        <div class="previewBox">
+          <div class="previewLabel">File preview</div>
+          <div class="previewText" id="scoresPreview">No preview yet.</div>
+        </div>
+        <div class="previewBox">
+          <div class="previewLabel">Parser summary</div>
+          <div class="previewText" id="scoresParserSummary">No parser run yet.</div>
+        </div>
+      </div>
+
+      <div class="note" id="scoresMsg">Upload a completed Squabbit CSV later to calculate scores and payouts.</div>
+    </div>
+
+    <div class="field" style="margin-top:14px;">
+      <label>Players with finished scores</label>
+      <div id="scoredPlayerPills" class="pillWrap"></div>
+    </div>
+  </section>
+
+  <section class="section card" id="section-results">
+    <h2 class="sectionTitle">4) Results and Payout Table</h2>
+    <div class="sectionSub">This table shows every wheel matchup, best ball totals, capped stroke amount, and who owes what.</div>
+    <div class="tableWrap">
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Wheel Team</th>
+            <th>Opponent Team</th>
+            <th>Wheel BB</th>
+            <th>Opp BB</th>
+            <th>Winner</th>
+            <th>Margin</th>
+            <th>Shots Counted</th>
+            <th>Per Person</th>
+            <th>Team Transfer</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="grid2" style="margin-top:14px;">
+      <div class="summaryCard">
+        <div class="summaryLabel">Wheel Team Total</div>
+        <div class="summaryValue" id="wheelTeamTotalBox">$0</div>
+        <div class="sectionSub" id="wheelTeamNamesBox" style="margin:8px 0 0;">Pick the wheel team first.</div>
+      </div>
+      <div class="summaryCard">
+        <div class="summaryLabel">Everyone Playing Against The Wheel</div>
+        <div class="summaryValue" id="oppTeamTotalBox">$0</div>
+        <div class="sectionSub" style="margin:8px 0 0;">This is the opposite side of the wheel total.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section card" id="section-players">
+    <h2 class="sectionTitle">5) Player Breakdown</h2>
+    <div class="sectionSub">Each player gets a net total and a detailed line by line breakdown. You can export any player as a PDF.</div>
+    <div id="playerBreakdownList"></div>
+  </section>
+
+  <section class="section card" id="section-exports">
+    <h2 class="sectionTitle">6) Exports</h2>
+    <div class="sectionSub">Export the whole wheel result as a PDF or CSV.</div>
+    <div class="btnRow">
+      <button id="exportAllPdfBtn" class="btn btnBlue" type="button">Download All Results PDF</button>
+      <button id="exportAllCsvBtn" class="btn btnGreen" type="button">Download All Results CSV</button>
+    </div>
+  </section>
+</div>
+
+<script>
+window.TOOL_NAME = "Wheel Best Ball";
+window.TOOL_STORAGE_KEYS = ["wheel_best_ball_v17"];
+window.HUB_INDEX = "index.html";
+
+(function(){
+  const toolName = window.TOOL_NAME || document.title || "Golf Tool";
+  const storageKeys = Array.isArray(window.TOOL_STORAGE_KEYS) ? window.TOOL_STORAGE_KEYS : [];
+  const hubIndex = window.HUB_INDEX || "index.html";
+
+  const titleEl = document.getElementById("hubToolTitle");
+  const backBtn = document.getElementById("hubBackBtn");
+  const resetThisBtn = document.getElementById("hubResetThisBtn");
+  const resetAllBtn = document.getElementById("hubResetAllBtn");
+
+  if (titleEl) titleEl.textContent = toolName;
+  if (backBtn) backBtn.onclick = () => { window.location.href = hubIndex; };
+  if (resetThisBtn) {
+    resetThisBtn.onclick = () => {
+      if (!confirm("Reset this tool and clear the saved wheel setup on this device?")) return;
+      storageKeys.forEach((key) => localStorage.removeItem(key));
+      window.location.reload();
+    };
+  }
+  if (resetAllBtn) {
+    resetAllBtn.onclick = () => {
+      if (!confirm("Reset EVERYTHING for this site on this device?")) return;
+      localStorage.clear();
+      window.location.href = hubIndex;
+    };
+  }
+})();
+
+const STORAGE_KEY = "wheel_best_ball_v17";
+
+const state = {
+  names: [],
+  scores: {},
+  wheel: ["", ""],
+  excluded: [],
+  shotValue: 3,
+  maxShots: 7,
+  matchups: [],
+  debugLog: "",
+  debugOpen: false
+};
+
+const $ = (id) => document.getElementById(id);
+
+function normalizeSpace(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function smartTitleCase(name) {
+  return normalizeSpace(name)
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.split("-").map((piece) => {
+      if (!piece) return "";
+      if (/^[A-Z]{2,}$/.test(piece)) return piece;
+      if (piece.length === 1) return piece.toUpperCase();
+      return piece.charAt(0).toUpperCase() + piece.slice(1).toLowerCase();
+    }).join("-"))
+    .join(" ");
+}
+
+function normalizeName(name) {
+  return smartTitleCase(name)
+    .replace(/\s+\(.*?\)\s*$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function toInt(value) {
+  const text = normalizeSpace(value);
+  return /^-?\d+$/.test(text) ? parseInt(text, 10) : null;
+}
+
+function friendlyDelimiter(delimiter) {
+  if (delimiter === ",") return "comma";
+  if (delimiter === ";") return "semicolon";
+  if (delimiter === "\t") return "tab";
+  if (delimiter === "|") return "pipe";
+  return "unknown";
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    Object.assign(state, parsed || {});
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function setDebug(text) {
+  state.debugLog = text || "";
+  const box = $("debugBox");
+  if (box) box.value = state.debugLog;
+  saveState();
+}
+
+function appendDebug(line) {
+  state.debugLog = state.debugLog ? `${state.debugLog}\n${line}` : String(line);
+  const box = $("debugBox");
+  if (box) box.value = state.debugLog;
+  saveState();
+}
+
+function renderDebug() {
+  const wrap = $("debugWrap");
+  const box = $("debugBox");
+  const btn = $("toggleDebugBtn");
+  if (wrap) wrap.style.display = state.debugOpen ? "block" : "none";
+  if (box) box.value = state.debugLog || "";
+  if (btn) btn.textContent = state.debugOpen ? "Hide Debug" : "Show Debug";
+}
+
+function formatBytes(bytes) {
+  const num = Number(bytes) || 0;
+  if (num >= 1024 * 1024) return `${(num / (1024 * 1024)).toFixed(2)} MB`;
+  if (num >= 1024) return `${(num / 1024).toFixed(1)} KB`;
+  return `${num} B`;
+}
+
+function setUploadUi(prefix, data) {
+  const stageLabel = $(`${prefix}StageLabel`);
+  const stagePill = $(`${prefix}StagePill`);
+  const fileName = $(`${prefix}FileName`);
+  const fileSize = $(`${prefix}FileSize`);
+  const progressBar = $(`${prefix}ProgressBar`);
+  const progressText = $(`${prefix}ProgressText`);
+  const progressStep = $(`${prefix}ProgressStep`);
+  const delimiter = $(`${prefix}DetectedDelimiter`);
+  const encoding = $(`${prefix}DetectedEncoding`);
+
+  if (stageLabel && data.stageLabel != null) stageLabel.textContent = data.stageLabel;
+  if (stagePill && data.stageClass != null) stagePill.className = `uploadStatusPill ${data.stageClass}`.trim();
+  if (fileName && data.fileName != null) fileName.textContent = data.fileName;
+  if (fileSize && data.fileSize != null) fileSize.textContent = data.fileSize;
+  if (progressBar && data.percent != null) progressBar.style.width = `${Math.max(0, Math.min(100, data.percent))}%`;
+  if (progressText && data.percent != null) progressText.textContent = `${Math.round(data.percent)}%`;
+  if (progressStep && data.step != null) progressStep.textContent = data.step;
+  if (delimiter && data.delimiter != null) delimiter.textContent = `Delimiter: ${data.delimiter}`;
+  if (encoding && data.encoding != null) encoding.textContent = `Encoding: ${data.encoding}`;
+}
+
+function setStatusPanel(prefix, tone, title, lines) {
+  const panel = $(`${prefix}StatusPanel`);
+  const list = $(`${prefix}StatusList`);
+  if (!panel || !list) return;
+
+  panel.className = `statusPanel ${tone}`;
+  const titleEl = panel.querySelector(".statusTitle");
+  if (titleEl) titleEl.textContent = title;
+
+  list.innerHTML = (lines && lines.length ? lines : ["No details."])
+    .map((line) => `<li>${escapeHtml(line)}</li>`)
+    .join("");
+}
+
+function setPreview(prefix, text) {
+  const el = $(`${prefix}Preview`);
+  if (el) el.textContent = text || "No preview yet.";
+}
+
+function setParserSummary(prefix, text) {
+  const el = $(`${prefix}ParserSummary`);
+  if (el) el.textContent = text || "No parser run yet.";
+}
+
+function resetUploadUi(prefix) {
+  setUploadUi(prefix, {
+    stageLabel: "Waiting for file",
+    stageClass: "infoState",
+    fileName: "No file selected",
+    fileSize: "0 KB",
+    percent: 0,
+    step: "Idle",
+    delimiter: "not checked",
+    encoding: "not checked"
+  });
+  setStatusPanel(prefix, "info", "Status", [
+    prefix === "names" ? "Upload a roster CSV to begin." : "Upload a completed round CSV to begin."
+  ]);
+  setPreview(prefix, "No preview yet.");
+  setParserSummary(prefix, "No parser run yet.");
+}
+
+function previewText(text) {
+  return String(text || "").split(/\r?\n/).slice(0, 10).join("\n") || "File was blank.";
+}
+
+function bindDesktopDrop(prefix) {
+  const zone = $(`${prefix}DropZone`);
+  const input = $(`${prefix}CsvInput`);
+  if (!zone || !input) return;
+
+  ["dragenter", "dragover"].forEach((evt) => {
+    zone.addEventListener(evt, (event) => {
+      event.preventDefault();
+      zone.classList.add("dragging");
+    });
+  });
+
+  ["dragleave", "drop"].forEach((evt) => {
+    zone.addEventListener(evt, (event) => {
+      event.preventDefault();
+      zone.classList.remove("dragging");
+    });
+  });
+
+  zone.addEventListener("drop", (event) => {
+    const files = event.dataTransfer && event.dataTransfer.files;
+    if (!files || !files.length) return;
+    try {
+      const dt = new DataTransfer();
+      dt.items.add(files[0]);
+      input.files = dt.files;
+    } catch (_error) {
+      return;
+    }
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+}
+
+function bindNativePicker(prefix, onFile) {
+  const input = $(`${prefix}CsvInput`);
+  const chooseBtn = $(`${prefix}ChooseBtn`);
+  const loadBtn = $(`${prefix}LoadBtn`);
+  const clearBtn = $(`${prefix}ClearBtn`);
+
+  if (!input) return;
+
+  const updateSelectedMeta = () => {
+    const file = input.files && input.files[0];
+    if (!file) {
+      setUploadUi(prefix, {
+        fileName: "No file selected",
+        fileSize: "0 KB"
+      });
+      return null;
+    }
+    setUploadUi(prefix, {
+      fileName: file.name,
+      fileSize: formatBytes(file.size),
+      stageLabel: "File selected",
+      stageClass: "infoState",
+      percent: 0,
+      step: "Ready to load"
+    });
+    return file;
+  };
+
+  const runSelectedFile = () => {
+    const file = input.files && input.files[0];
+    if (!file) {
+      setStatusPanel(prefix, "error", "No file selected", ["Choose a CSV file first."]);
+      return;
+    }
+    onFile(file);
+  };
+
+  input.addEventListener("change", () => {
+    const file = updateSelectedMeta();
+    if (file) runSelectedFile();
+  });
+
+  if (chooseBtn) {
+    chooseBtn.addEventListener("click", () => {
+      input.click();
+    });
+  }
+
+  if (loadBtn) {
+    loadBtn.addEventListener("click", () => {
+      updateSelectedMeta();
+      runSelectedFile();
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      try { input.value = ""; } catch (_error) {}
+      resetUploadUi(prefix);
+
+      if (prefix === "names") {
+        state.names = [];
+        state.scores = {};
+        state.wheel = ["", ""];
+        state.excluded = [];
+        state.matchups = [];
+        $("namesMsg").textContent = "Roster upload cleared.";
+        $("scoresMsg").textContent = "Upload a completed Squabbit CSV later to calculate scores and payouts.";
+      } else {
+        state.scores = {};
+        $("scoresMsg").textContent = "Scores upload cleared.";
+      }
+
+      render();
+    });
+  }
+}
+
+function validateCsvFile(file) {
+  const problems = [];
+  const warnings = [];
+
+  if (!file) problems.push("No file was selected.");
+  if (file && file.size === 0) problems.push("The file is empty.");
+  if (file && !/\.csv$/i.test(file.name)) warnings.push("The file does not end with .csv. I will still try to read it as text.");
+  if (file && file.size > 8 * 1024 * 1024) warnings.push("This file is large. Parsing may take a little longer.");
+
+  return { ok: problems.length === 0, problems, warnings };
+}
+
+function readFileSmart(file, prefix) {
+  return new Promise((resolve, reject) => {
+    const validation = validateCsvFile(file);
+    if (!validation.ok) {
+      reject(new Error(validation.problems.join(" ")));
+      return;
+    }
+
+    const reader = new FileReader();
+
+    setUploadUi(prefix, {
+      stageLabel: "Reading file",
+      stageClass: "infoState",
+      fileName: file.name,
+      fileSize: formatBytes(file.size),
+      percent: 0,
+      step: "Opening file"
+    });
+
+    reader.onloadstart = () => {
+      setUploadUi(prefix, {
+        stageLabel: "Reading file",
+        stageClass: "infoState",
+        fileName: file.name,
+        fileSize: formatBytes(file.size),
+        percent: 0,
+        step: "Starting read"
+      });
+    };
+
+    reader.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      const pct = Math.max(1, Math.round((event.loaded / event.total) * 60));
+      setUploadUi(prefix, {
+        stageLabel: "Reading file",
+        stageClass: "infoState",
+        percent: pct,
+        step: `Reading ${formatBytes(event.loaded)} of ${formatBytes(event.total)}`
+      });
+    };
+
+    reader.onerror = () => reject(reader.error || new Error("Could not read file."));
+
+    reader.onload = () => {
+      try {
+        const buffer = reader.result;
+        let text = "";
+        let encoding = "UTF-8";
+
+        try {
+          text = new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+        } catch (_error) {
+          text = new TextDecoder("windows-1252").decode(buffer);
+          encoding = "Windows-1252 fallback";
+        }
+
+        setUploadUi(prefix, {
+          stageLabel: "Parsing",
+          stageClass: "infoState",
+          percent: 70,
+          step: "Read complete, detecting CSV format",
+          encoding
+        });
+
+        resolve({ text, encoding });
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function sniffDelimiter(text) {
+  const sample = String(text || "").split(/\r?\n/).slice(0, 20).join("\n");
+  const candidates = [",", ";", "\t", "|"];
+  let best = ",";
+  let bestScore = -1;
+
+  candidates.forEach((delimiter) => {
+    const score = sample.split(/\r?\n/).reduce((sum, line) => {
+      if (delimiter === "\t") return sum + ((line.match(/\t/g) || []).length);
+      const re = new RegExp(`\\${delimiter}`, "g");
+      return sum + ((line.match(re) || []).length);
+    }, 0);
+
+    if (score > bestScore) {
+      best = delimiter;
+      bestScore = score;
+    }
+  });
+
+  return best;
+}
+
+function parseCSV(text, delimiter) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+  const src = String(text || "").replace(/^\uFEFF/, "");
+
+  for (let i = 0; i < src.length; i++) {
+    const char = src[i];
+    const next = src[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        cell += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      row.push(cell.trim());
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") i++;
+      row.push(cell.trim());
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+
+  if (cell.length || row.length) {
+    row.push(cell.trim());
+    rows.push(row);
+  }
+
+  return rows.filter((currentRow) => currentRow.some((cellValue) => normalizeSpace(cellValue)));
+}
+
+function firstNonEmptyCell(row) {
+  return (row || []).find((cell) => normalizeSpace(cell)) || "";
+}
+
+function uniqueSortedNames(names) {
+  return [...new Set((names || []).map(normalizeName).filter(Boolean))]
+    .filter((name) => {
+      const lower = name.toLowerCase();
+      if (!/[a-z]/i.test(name)) return false;
+      if (["name", "players", "player", "par", "s.i.", "si", "tee", "score", "total", "totals", "summary"].includes(lower)) return false;
+      if (/^hole\s*\d+$/i.test(lower)) return false;
+      if (/^team\s*\d+$/i.test(lower)) return false;
+      if (/^(skins|twos club|best ball|games|round \d+)$/i.test(lower)) return false;
+      return true;
+    })
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function isSectionStop(text) {
+  return /^(skins|strokeplay|stroke play|twos club|best ball|games|summary|totals|round \d+)$/i.test(normalizeSpace(text));
+}
+
+function rowLooksLikeHoleHeader(row) {
+  return (row || []).some((cell) => /hole\s*1/i.test(cell || ""));
+}
+
+function rowLooksLikePlayerScoreRow(row) {
+  const cleanRow = (row || []).map(normalizeSpace);
+  const lowerRow = cleanRow.map((cell) => cell.toLowerCase());
+  const name = normalizeName(cleanRow[0] || "");
+  if (!name || ["par", "s.i.", "si", "name"].includes(name.toLowerCase())) return false;
+  const hasTee = lowerRow.some((cell) => cell.includes("tee"));
+  const numericCount = cleanRow.filter((cell) => /^-?\d+$/.test(cell)).length;
+  return hasTee || numericCount >= 9;
+}
+
+function analyzeRosterCSV(text) {
+  const delimiter = sniffDelimiter(text);
+  const rows = parseCSV(text, delimiter);
+  const debug = [];
+  const reasons = [];
+  const warnings = [];
+  const candidates = [];
+
+  debug.push(`delimiter=${friendlyDelimiter(delimiter)}`);
+  debug.push(`rows_total=${rows.length}`);
+
+  if (!rows.length) {
+    reasons.push("The file had no readable rows after parsing.");
+    return { names: [], source: "empty file", delimiter, rows, reasons, warnings, debug };
+  }
+
+  let playersSectionRow = -1;
+  for (let i = 0; i < rows.length; i++) {
+    if ((rows[i] || []).some((cell) => normalizeSpace(cell).toLowerCase() === "players")) {
+      playersSectionRow = i;
+      break;
+    }
+  }
+
+  debug.push(`players_section_row=${playersSectionRow}`);
+
+  if (playersSectionRow >= 0) {
+    const headerRow = rows[playersSectionRow + 1] || [];
+    let nameCol = headerRow.findIndex((cell) => normalizeSpace(cell).toLowerCase() === "name");
+    if (nameCol < 0) {
+      nameCol = headerRow.findIndex((cell) => normalizeSpace(cell));
+      if (nameCol < 0) nameCol = 0;
+    }
+
+    debug.push(`players_section_name_col=${nameCol}`);
+
+    for (let i = playersSectionRow + 2; i < rows.length; i++) {
+      const row = rows[i] || [];
+      const firstCell = normalizeSpace(firstNonEmptyCell(row));
+      if (!firstCell) break;
+      if (isSectionStop(firstCell) || rowLooksLikeHoleHeader(row)) break;
+
+      const rawName = row[nameCol] || row[0] || "";
+      const name = normalizeName(rawName);
+
+      if (name) {
+        candidates.push(name);
+        debug.push(`players_section_name=${name}`);
+      }
+    }
+  } else {
+    reasons.push("I could not find a Players section, so I used fallback checks.");
+  }
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i] || [];
+    if (!rowLooksLikePlayerScoreRow(row)) continue;
+    const name = normalizeName(row[0] || "");
+    if (!name) continue;
+    candidates.push(name);
+    debug.push(`score_row_name=${name}`);
+  }
+
+  for (let i = 0; i < Math.min(rows.length, 20); i++) {
+    const row = rows[i] || [];
+    const nameCol = row.findIndex((cell) => normalizeSpace(cell).toLowerCase() === "name");
+    if (nameCol < 0) continue;
+
+    debug.push(`name_header_row=${i}`);
+    for (let j = i + 1; j < rows.length; j++) {
+      const nextRow = rows[j] || [];
+      const first = normalizeSpace(firstNonEmptyCell(nextRow));
+      if (!first) break;
+      if (isSectionStop(first) || rowLooksLikeHoleHeader(nextRow)) break;
+
+      const name = normalizeName(nextRow[nameCol] || "");
+      if (name) {
+        candidates.push(name);
+        debug.push(`fallback_name=${name}`);
+      }
+    }
+    break;
+  }
+
+  const clean = uniqueSortedNames(candidates);
+
+  if (clean.length) {
+    const source = playersSectionRow >= 0 ? "Players section and fallback checks" : "fallback checks";
+    if (playersSectionRow < 0) warnings.push("No Players section was found. Names were pulled from fallback rows.");
+    return { names: clean, source, delimiter, rows, reasons, warnings, debug };
+  }
+
+  reasons.push("The parser could not find usable player names in the Squabbit roster file.");
+  return { names: [], source: "no names found", delimiter, rows, reasons, warnings, debug };
+}
+
+function buildHoleIndex(row) {
+  const index = {};
+  (row || []).forEach((cell, i) => {
+    const text = normalizeSpace(cell).toLowerCase();
+    for (let hole = 1; hole <= 18; hole++) {
+      if (text === `hole ${hole}` || text === `hole${hole}` || text === `${hole}`) {
+        index[hole] = i;
+      }
+    }
+  });
+  return Object.keys(index).length ? index : null;
+}
+
+function analyzeScoresCSV(text) {
+  const delimiter = sniffDelimiter(text);
+  const rows = parseCSV(text, delimiter);
+  const debug = [];
+  const reasons = [];
+  const warnings = [];
+  const scoredPlayers = {};
+
+  debug.push(`delimiter=${friendlyDelimiter(delimiter)}`);
+  debug.push(`rows_total=${rows.length}`);
+
+  if (!rows.length) {
+    reasons.push("The file had no readable rows after parsing.");
+    return { scores: {}, delimiter, rows, reasons, warnings, debug, partialRows: 0, partialExamples: [] };
+  }
+
+  let headerIndex = -1;
+  let holeIndex = null;
+
+  for (let i = 0; i < rows.length; i++) {
+    if ((rows[i] || []).some((cell) => /hole\s*1/i.test(cell || ""))) {
+      headerIndex = i;
+      holeIndex = buildHoleIndex(rows[i]);
+      break;
+    }
+  }
+
+  debug.push(`header_index=${headerIndex}`);
+
+  if (headerIndex < 0 || !holeIndex) {
+    reasons.push("I could not find a hole header row like Hole 1 through Hole 18.");
+    return { scores: {}, delimiter, rows, reasons, warnings, debug, partialRows: 0, partialExamples: [] };
+  }
+
+  let partialRows = 0;
+  const partialExamples = [];
+
+  for (let i = headerIndex + 1; i < rows.length; i++) {
+    const row = rows[i] || [];
+    const name = normalizeName(row[0] || "");
+    const rowText = row.map((cell) => normalizeSpace(cell).toLowerCase());
+    if (!name) continue;
+    if (["par", "s.i.", "si", "name"].includes(name.toLowerCase())) continue;
+    if (!rowText.some((cell) => cell.includes("tee")) && row.filter((cell) => /^-?\d+$/.test(normalizeSpace(cell))).length < 9) continue;
+
+    const strokes = [];
+    let missingHole = null;
+
+    for (let hole = 1; hole <= 18; hole++) {
+      const value = toInt(row[holeIndex[hole]]);
+      if (value == null) {
+        missingHole = hole;
+        strokes.length = 0;
+        break;
+      }
+      strokes.push(value);
+    }
+
+    if (strokes.length === 18) {
+      scoredPlayers[name] = strokes;
+      debug.push(`score_player=${name}`);
+    } else {
+      partialRows++;
+      const example = `${name} stopped before hole ${missingHole}`;
+      if (partialExamples.length < 5) partialExamples.push(example);
+      debug.push(`partial_row=${example}`);
+    }
+  }
+
+  if (!Object.keys(scoredPlayers).length) {
+    reasons.push("I found the score table, but no player had all 18 hole values filled in.");
+    if (partialRows) {
+      warnings.push(`${partialRows} player row(s) looked close but were missing at least one hole value.`);
+      reasons.push("This looks like an in progress Squabbit round export, not a finished completed round export.");
+    }
+  }
+
+  return { scores: scoredPlayers, delimiter, rows, reasons, warnings, debug, partialRows, partialExamples };
+}
+
+function bestBall(a, b) {
+  return a.reduce((total, _value, index) => total + Math.min(a[index], b[index]), 0);
+}
+
+function combinations(arr, size) {
+  const output = [];
+
+  function walk(start, combo) {
+    if (combo.length === size) {
+      output.push(combo.slice());
+      return;
+    }
+
+    for (let i = start; i < arr.length; i++) {
+      combo.push(arr[i]);
+      walk(i + 1, combo);
+      combo.pop();
+    }
+  }
+
+  walk(0, []);
+  return output;
+}
+
+function syncExcludedFromDom() {
+  const checked = [...document.querySelectorAll("#excludeList [data-exclude]:checked")]
+    .map((el) => normalizeSpace(el.getAttribute("data-exclude") || ""))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+
+  state.excluded = checked;
+  return checked;
+}
+
+function getActivePlayers() {
+  const set = new Set();
+
+  (state.matchups || []).forEach((matchup) => {
+    (matchup.wheelTeam || []).forEach((name) => set.add(name));
+    (matchup.oppTeam || []).forEach((name) => set.add(name));
+  });
+
+  if (!set.size) {
+    (state.wheel || []).filter(Boolean).forEach((name) => set.add(name));
+  }
+
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+function rebuildWheel() {
+  const p1 = state.wheel[0];
+  const p2 = state.wheel[1];
+
+  syncExcludedFromDom();
+
+  if (!p1 || !p2 || p1 === p2) {
+    state.matchups = [];
+    render();
+    return;
+  }
+
+  const excludedSet = new Set((state.excluded || []).filter((name) => name !== p1 && name !== p2));
+  const eligible = state.names.filter((name) => name !== p1 && name !== p2 && !excludedSet.has(name));
+  const combos = combinations(eligible, 2);
+
+  state.matchups = combos.map((team, index) => ({
+    id: index + 1,
+    wheelTeam: [p1, p2].slice().sort((a, b) => a.localeCompare(b)),
+    oppTeam: team.slice().sort((a, b) => a.localeCompare(b))
+  }));
+
+  const namesMsg = $("namesMsg");
+  if (namesMsg) {
+    namesMsg.textContent = combos.length
+      ? `Built ${combos.length} wheel matchup(s). Excluded players: ${excludedSet.size ? [...excludedSet].join(", ") : "none"}.`
+      : "No wheel matchups were built. You may need at least two eligible opponents after exclusions.";
+  }
+
+  render();
+}
+
+function matchupResult(matchup) {
+  const scores = state.scores || {};
+  const [w1, w2] = matchup.wheelTeam;
+  const [o1, o2] = matchup.oppTeam;
+
+  if (!scores[w1] || !scores[w2] || !scores[o1] || !scores[o2]) {
+    return { status: "pending", missing: [w1, w2, o1, o2].filter((name) => !scores[name]) };
+  }
+
+  const wheelBB = bestBall(scores[w1], scores[w2]);
+  const oppBB = bestBall(scores[o1], scores[o2]);
+
+  if (wheelBB === oppBB) {
+    return {
+      status: "ready",
+      wheelBB,
+      oppBB,
+      winner: "Push",
+      margin: 0,
+      shotsCounted: 0,
+      perPerson: 0,
+      teamTransfer: 0,
+      detail: "Push"
+    };
+  }
+
+  const wheelWins = wheelBB < oppBB;
+  const margin = Math.abs(oppBB - wheelBB);
+  const shotsCounted = Math.min(margin, Number(state.maxShots) || 0);
+  const perPerson = shotsCounted * (Number(state.shotValue) || 0);
+  const teamTransfer = perPerson * 2;
+  const winner = wheelWins ? `${w1} & ${w2}` : `${o1} & ${o2}`;
+  const detail = wheelWins
+    ? `${o1} pays ${w1} $${perPerson}. ${o2} pays ${w2} $${perPerson}.`
+    : `${w1} pays ${o1} $${perPerson}. ${w2} pays ${o2} $${perPerson}.`;
+
+  return { status: "ready", wheelBB, oppBB, winner, wheelWins, margin, shotsCounted, perPerson, teamTransfer, detail };
+}
+
+function allResults() {
+  return (state.matchups || []).map((matchup) => ({ ...matchup, result: matchupResult(matchup) }));
+}
+
+function playerLedger() {
+  const activePlayers = getActivePlayers();
+  const map = {};
+
+  activePlayers.forEach((name) => {
+    map[name] = { name, net: 0, lines: [] };
+  });
+
+  allResults().forEach((item) => {
+    const result = item.result;
+    if (result.status !== "ready" || result.margin === 0) return;
+
+    const [w1, w2] = item.wheelTeam;
+    const [o1, o2] = item.oppTeam;
+    const amount = result.perPerson;
+
+    if (result.wheelWins) {
+      map[w1].net += amount;
+      map[w2].net += amount;
+      map[o1].net -= amount;
+      map[o2].net -= amount;
+
+      map[w1].lines.push(`${w1} with ${w2} beat ${o1} & ${o2} by ${result.margin}. Collected $${amount} from ${o1}. Net +$${amount}`);
+      map[w2].lines.push(`${w1} with ${w2} beat ${o1} & ${o2} by ${result.margin}. Collected $${amount} from ${o2}. Net +$${amount}`);
+      map[o1].lines.push(`${o1} with ${o2} lost to ${w1} & ${w2} by ${result.margin}. Paid $${amount} to ${w1}. Net -$${amount}`);
+      map[o2].lines.push(`${o1} with ${o2} lost to ${w1} & ${w2} by ${result.margin}. Paid $${amount} to ${w2}. Net -$${amount}`);
+    } else {
+      map[w1].net -= amount;
+      map[w2].net -= amount;
+      map[o1].net += amount;
+      map[o2].net += amount;
+
+      map[w1].lines.push(`${w1} with ${w2} lost to ${o1} & ${o2} by ${result.margin}. Paid $${amount} to ${o1}. Net -$${amount}`);
+      map[w2].lines.push(`${w1} with ${w2} lost to ${o1} & ${o2} by ${result.margin}. Paid $${amount} to ${o2}. Net -$${amount}`);
+      map[o1].lines.push(`${o1} with ${o2} beat ${w1} & ${w2} by ${result.margin}. Collected $${amount} from ${w1}. Net +$${amount}`);
+      map[o2].lines.push(`${o1} with ${o2} beat ${w1} & ${w2} by ${result.margin}. Collected $${amount} from ${w2}. Net +$${amount}`);
+    }
+  });
+
+  return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function wheelTeamNet() {
+  const [p1, p2] = state.wheel;
+  if (!p1 || !p2) return 0;
+
+  const ledger = playerLedger();
+  return (ledger.find((entry) => entry.name === p1)?.net || 0) + (ledger.find((entry) => entry.name === p2)?.net || 0);
+}
+
+function playerGrossScore(name) {
+  const strokes = state.scores && state.scores[name];
+  if (!Array.isArray(strokes) || strokes.length !== 18) return null;
+  return strokes.reduce((sum, value) => sum + (Number(value) || 0), 0);
+}
+
+function updateSelectOptions() {
+  const names = state.names || [];
+  const options = ['<option value="">Select player</option>']
+    .concat(names.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`))
+    .join("");
+
+  $("wheelP1").innerHTML = options;
+  $("wheelP2").innerHTML = options;
+  $("wheelP1").value = state.wheel[0] || "";
+  $("wheelP2").value = state.wheel[1] || "";
+}
+
+function renderExcludes() {
+  const p1 = state.wheel[0];
+  const p2 = state.wheel[1];
+  const excluded = new Set(state.excluded || []);
+  const wrap = $("excludeList");
+  const list = state.names.filter((name) => name !== p1 && name !== p2);
+
+  if (!list.length) {
+    wrap.innerHTML = `<div class="pill pillMuted">Load names first</div>`;
+    return;
+  }
+
+  wrap.innerHTML = list.map((name) => `
+    <label class="checkItem">
+      <input type="checkbox" data-exclude="${escapeHtml(name)}" ${excluded.has(name) ? "checked" : ""}>
+      <span>${escapeHtml(name)}</span>
+    </label>
+  `).join("");
+
+  wrap.querySelectorAll("[data-exclude]").forEach((el) => {
+    el.addEventListener("change", () => {
+      const name = el.getAttribute("data-exclude");
+      const set = new Set(state.excluded || []);
+      if (el.checked) set.add(name);
+      else set.delete(name);
+      state.excluded = [...set].sort((a, b) => a.localeCompare(b));
+      rebuildWheel();
+    });
+  });
+}
+
+function renderLoadedPills() {
+  $("loadedPlayerPills").innerHTML = state.names.length
+    ? state.names.map((name) => `<span class="pill">${escapeHtml(name)}</span>`).join("")
+    : `<span class="pill pillMuted">No players loaded</span>`;
+
+  const scoredNames = Object.keys(state.scores || {}).sort((a, b) => a.localeCompare(b));
+  $("scoredPlayerPills").innerHTML = scoredNames.length
+    ? scoredNames.map((name) => `<span class="pill">${escapeHtml(name)}</span>`).join("")
+    : `<span class="pill pillMuted">No finished scores loaded</span>`;
+}
+
+function renderWheelTable() {
+  const tbody = document.querySelector("#wheelTable tbody");
+  if (!(state.matchups || []).length) {
+    tbody.innerHTML = `<tr><td colspan="4">Build the wheel after selecting the wheel team.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = state.matchups.map((matchup, index) => `
+    <tr>
+      <td>${index + 1}</td>
+      <td>${escapeHtml(matchup.wheelTeam.join(" & "))}</td>
+      <td>${escapeHtml(matchup.oppTeam.join(" & "))}</td>
+      <td>${Object.keys(state.scores || {}).length ? "Check results below" : "Pending scores"}</td>
+    </tr>
+  `).join("");
+}
+
+function renderResultsTable() {
+  const tbody = document.querySelector("#resultsTable tbody");
+  const rows = allResults();
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="11">Build the wheel first.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map((item, index) => {
+    const result = item.result;
+
+    if (result.status !== "ready") {
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${escapeHtml(item.wheelTeam.join(" & "))}</td>
+          <td>${escapeHtml(item.oppTeam.join(" & "))}</td>
+          <td>-</td>
+          <td>-</td>
+          <td>Pending</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>Missing: ${escapeHtml((result.missing || []).join(", "))}</td>
+        </tr>
+      `;
+    }
+
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${escapeHtml(item.wheelTeam.join(" & "))}</td>
+        <td>${escapeHtml(item.oppTeam.join(" & "))}</td>
+        <td>${result.wheelBB}</td>
+        <td>${result.oppBB}</td>
+        <td>${escapeHtml(result.winner)}</td>
+        <td>${result.margin}</td>
+        <td>${result.shotsCounted}</td>
+        <td>$${result.perPerson}</td>
+        <td>$${result.teamTransfer}</td>
+        <td>${escapeHtml(result.detail)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderPlayerCards() {
+  const wrap = $("playerBreakdownList");
+  const players = playerLedger();
+
+  if (!players.length) {
+    wrap.innerHTML = `<div class="pill pillMuted">Build the wheel to show only active players</div>`;
+    return;
+  }
+
+  wrap.innerHTML = players.map((player) => {
+    const gross = playerGrossScore(player.name);
+    const scoreHtml = gross == null
+      ? `<span class="scoreBadge">Score not loaded</span>`
+      : `<span class="scoreBadge">Shot ${gross}</span>`;
+
+    return `
+      <div class="playerCard">
+        <div class="playerHead">
+          <div>
+            <h3 class="playerName">${escapeHtml(player.name)}</h3>
+            <div class="playerMetaRow">${scoreHtml}</div>
+            <div class="sectionSub" style="margin:6px 0 0;">${player.lines.length} line item(s)</div>
+          </div>
+          <div class="playerNet ${player.net >= 0 ? "gain" : "loss"}">${player.net >= 0 ? "+" : "-"}$${Math.abs(player.net)}</div>
+        </div>
+
+        <div class="btnRow" style="margin-bottom:10px;">
+          <button class="btn btnBlue" type="button" data-player-pdf="${escapeHtml(player.name)}">Download ${escapeHtml(player.name)} PDF</button>
+        </div>
+
+        <div class="breakdownList">
+          ${player.lines.length
+            ? player.lines.map((line, i) => `<div class="breakdownItem"><div class="breakdownIndex">${i + 1}</div><div class="breakdownText">${escapeHtml(line)}</div></div>`).join("")
+            : `<div class="breakdownItem"><div class="breakdownIndex">1</div><div class="breakdownText">No settled lines yet.</div></div>`
+          }
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  wrap.querySelectorAll("[data-player-pdf]").forEach((btn) => {
+    btn.addEventListener("click", () => exportPlayerPdf(btn.getAttribute("data-player-pdf")));
+  });
+}
+
+function renderSummary() {
+  const wheelNet = wheelTeamNet();
+
+  $("summaryPlayers").textContent = String(state.names.length || 0);
+  $("summaryMatchups").textContent = String((state.matchups || []).length);
+  $("summaryWheelNet").textContent = `${wheelNet >= 0 ? "+" : "-"}$${Math.abs(wheelNet)}`;
+  $("summaryOppNet").textContent = `${-wheelNet >= 0 ? "+" : "-"}$${Math.abs(-wheelNet)}`;
+  $("wheelTeamTotalBox").textContent = `${wheelNet >= 0 ? "+" : "-"}$${Math.abs(wheelNet)}`;
+  $("oppTeamTotalBox").textContent = `${-wheelNet >= 0 ? "+" : "-"}$${Math.abs(-wheelNet)}`;
+  $("wheelTeamNamesBox").textContent = state.wheel[0] && state.wheel[1]
+    ? `${state.wheel[0]} & ${state.wheel[1]}`
+    : "Pick the wheel team first.";
+}
+
+function render() {
+  state.names = uniqueSortedNames(state.names);
+  state.excluded = (state.excluded || []).filter((name) => state.names.includes(name));
+  updateSelectOptions();
+  renderExcludes();
+  renderLoadedPills();
+  renderWheelTable();
+  renderResultsTable();
+  renderPlayerCards();
+  renderSummary();
+  renderDebug();
+  saveState();
+}
+
 function isIosDevice() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
