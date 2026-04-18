@@ -684,6 +684,38 @@
           grid-template-columns: repeat(3, minmax(0, 1fr));
         }
       }
+
+      .sectionHeadRow {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .sectionToggleBtn {
+        border: 1px solid #d1d5db;
+        background: #f8fafc;
+        color: #374151;
+        border-radius: 12px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 900;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .sectionToggleBtn.active {
+        background: #ecfdf5;
+        color: #166534;
+        border-color: #bbf7d0;
+      }
+      .sectionBodyCollapsed {
+        display: none;
+      }
+      .quickJumpSelect {
+        min-width: 180px;
+        max-width: 100%;
+      }
+
     </style>
   </head>
   <body>
@@ -1121,7 +1153,7 @@
 
     <script>
       window.TOOL_NAME = "Wheel Best Ball";
-      window.TOOL_STORAGE_KEYS = ["wheel_best_ball_v7"];
+      window.TOOL_STORAGE_KEYS = ["wheel_best_ball_v8"];
       window.HUB_INDEX = "index.html";
 
       (function () {
@@ -1156,7 +1188,7 @@
         };
       })();
 
-      const STORAGE_KEY = "wheel_best_ball_v7";
+      const STORAGE_KEY = "wheel_best_ball_v8";
       const state = {
         names: [],
         scores: {},
@@ -1788,15 +1820,37 @@
         return out;
       }
 
+      function syncExcludedFromDom() {
+        const checked = [...document.querySelectorAll("#excludeList [data-exclude]:checked")]
+          .map((el) => normalizeSpace(el.getAttribute("data-exclude") || ""))
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b));
+        state.excluded = checked;
+        return checked;
+      }
+
+      function getActivePlayers() {
+        const set = new Set();
+        (state.matchups || []).forEach((m) => {
+          (m.wheelTeam || []).forEach((n) => set.add(n));
+          (m.oppTeam || []).forEach((n) => set.add(n));
+        });
+        if (!set.size) {
+          (state.wheel || []).filter(Boolean).forEach((n) => set.add(n));
+        }
+        return [...set].sort((a, b) => a.localeCompare(b));
+      }
+
       function rebuildWheel() {
         const p1 = state.wheel[0];
         const p2 = state.wheel[1];
+        syncExcludedFromDom();
         if (!p1 || !p2 || p1 === p2) {
           state.matchups = [];
           render();
           return;
         }
-        const excludedSet = new Set(state.excluded || []);
+        const excludedSet = new Set((state.excluded || []).filter((n) => n !== p1 && n !== p2));
         const eligible = state.names.filter(
           (n) => n !== p1 && n !== p2 && !excludedSet.has(n),
         );
@@ -1806,6 +1860,12 @@
           wheelTeam: [p1, p2].slice().sort((a, b) => a.localeCompare(b)),
           oppTeam: team.slice().sort((a, b) => a.localeCompare(b)),
         }));
+        const namesMsg = $("namesMsg");
+        if (namesMsg) {
+          namesMsg.textContent = combos.length
+            ? `Built ${combos.length} wheel matchup(s). Excluded players: ${excludedSet.size ? [...excludedSet].join(", ") : "none"}.`
+            : `No wheel matchups were built. You may need at least two eligible opponents after exclusions.`;
+        }
         render();
       }
 
@@ -1862,8 +1922,9 @@
       }
 
       function playerLedger() {
+        const activePlayers = getActivePlayers();
         const map = {};
-        state.names.forEach((n) => {
+        activePlayers.forEach((n) => {
           map[n] = { name: n, net: 0, lines: [] };
         });
         allResults().forEach((item) => {
@@ -2016,7 +2077,7 @@
         const wrap = $("playerBreakdownList");
         const players = playerLedger();
         if (!players.length) {
-          wrap.innerHTML = `<div class="pill pillMuted">Load names first</div>`;
+          wrap.innerHTML = `<div class="pill pillMuted">Build the wheel to show only active players</div>`;
           return;
         }
         wrap.innerHTML = players
@@ -2070,6 +2131,81 @@
         renderSummary();
         renderDebug();
         saveState();
+      }
+
+      function initSectionToggles() {
+        const config = [
+          { id: "section-debug", open: false },
+          { id: "section-wheel", open: true },
+          { id: "section-scores", open: true },
+          { id: "section-results", open: true },
+          { id: "section-players", open: false },
+          { id: "section-exports", open: false },
+        ];
+        config.forEach(({ id, open }) => {
+          const section = $(id);
+          if (!section || section.dataset.toggleReady === "1") return;
+          const title = section.querySelector(".sectionTitle");
+          if (!title) return;
+          const firstBlock = title.parentElement;
+          const sub = section.querySelector(".sectionSub");
+          const row = document.createElement("div");
+          row.className = "sectionHeadRow";
+          title.parentNode.insertBefore(row, title);
+          row.appendChild(title);
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "sectionToggleBtn";
+          row.appendChild(btn);
+
+          const body = document.createElement("div");
+          body.className = "sectionBody";
+          let node = row.nextSibling;
+          while (node) {
+            const next = node.nextSibling;
+            body.appendChild(node);
+            node = next;
+          }
+          section.appendChild(body);
+
+          const key = `${STORAGE_KEY}_${id}_open`;
+          const stored = localStorage.getItem(key);
+          let isOpen = stored == null ? open : stored === "1";
+
+          const apply = () => {
+            body.classList.toggle("sectionBodyCollapsed", !isOpen);
+            btn.classList.toggle("active", isOpen);
+            btn.textContent = isOpen ? "Hide" : "Show";
+            localStorage.setItem(key, isOpen ? "1" : "0");
+          };
+
+          btn.addEventListener("click", () => {
+            isOpen = !isOpen;
+            apply();
+          });
+
+          apply();
+          section.dataset.toggleReady = "1";
+        });
+
+        const quickJump = $("quickJumpSelect");
+        if (quickJump && !quickJump.dataset.wired) {
+          quickJump.addEventListener("change", (e) => {
+            const id = e.target.value;
+            if (!id) return;
+            const section = $(id);
+            if (section) {
+              const btn = section.querySelector(".sectionToggleBtn");
+              const body = section.querySelector(".sectionBody");
+              if (btn && body && body.classList.contains("sectionBodyCollapsed")) {
+                btn.click();
+              }
+              section.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+            quickJump.value = "";
+          });
+          quickJump.dataset.wired = "1";
+        }
       }
 
       function exportViaHtml2Pdf(filename, innerHtml) {
@@ -2441,6 +2577,7 @@
       resetUploadUi("names");
       resetUploadUi("scores");
       loadState();
+      initSectionToggles();
       render();
     </script>
   </body>
