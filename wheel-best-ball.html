@@ -1792,27 +1792,50 @@ function render() {
   saveState();
 }
 
-function exportViaHtml2Pdf(filename, innerHtml) {
+async function exportViaHtml2Pdf(filename, innerHtml) {
+  const mount = document.createElement("div");
+  mount.setAttribute("data-export-mount", "true");
+  mount.style.position = "fixed";
+  mount.style.left = "-10000px";
+  mount.style.top = "0";
+  mount.style.width = "850px";
+  mount.style.padding = "0";
+  mount.style.margin = "0";
+  mount.style.background = "#ffffff";
+  mount.style.zIndex = "-1";
+
   const container = document.createElement("div");
   container.className = "report";
+  container.style.background = "#ffffff";
+  container.style.width = "850px";
+  container.style.maxWidth = "850px";
   container.innerHTML = innerHtml;
 
-  if (window.html2pdf) {
-    html2pdf().set({
-      margin: 0.35,
-      filename,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
-    }).from(container).save();
-    return;
-  }
+  mount.appendChild(container);
+  document.body.appendChild(mount);
 
-  const popup = window.open("", "_blank");
-  popup.document.write(`<!doctype html><html><head><title>${escapeHtml(filename)}</title><style>body{font-family:Arial;padding:24px;color:#111827;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #d1d5db;padding:8px 10px;font-size:12px;text-align:left;}th{background:#f0fdf4;}</style></head><body>${innerHtml}</body></html>`);
-  popup.document.close();
-  popup.focus();
-  popup.print();
+  try {
+    if (window.html2pdf) {
+      await html2pdf().set({
+        margin: 0.35,
+        filename,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
+      }).from(container).save();
+      return;
+    }
+
+    const popup = window.open("", "_blank");
+    popup.document.write(`<!doctype html><html><head><title>${escapeHtml(filename)}</title><style>body{font-family:Arial;padding:24px;color:#111827;background:#ffffff;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #d1d5db;padding:8px 10px;font-size:12px;text-align:left;}th{background:#f0fdf4;}</style></head><body>${innerHtml}</body></html>`);
+    popup.document.close();
+    popup.focus();
+    popup.print();
+  } finally {
+    setTimeout(() => {
+      if (mount.parentNode) mount.parentNode.removeChild(mount);
+    }, 500);
+  }
 }
 
 function exportPlayerPdf(playerName) {
