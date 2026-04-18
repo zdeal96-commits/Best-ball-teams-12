@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-
+fit=cover" />
+<title>Wheel Best Ball</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/
+html2pdf.bundle.min.js"></script>
+<style>
+:root{--green1:#14532d;--green2:#166534;--green3:#22c55e;--line:#d1d5db;--
+muted:#64748b;}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,-apple-
+system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(to
+bottom right,#22c55e,#dff9fb);color:#111827;min-height:100vh}
+.hubbar{position:sticky;top:0;z-index:50;padding:10px 12px;background:linear-
+gradient(180deg,rgba(5,17,11,.92),rgba(5,17,11,.74));backdrop-filter:blur(10px);border-
+bottom:1px solid rgba(255,255,255,.10)}
+.hubbarRow{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-
+content:space-between;gap:10px;flex-wrap:wrap}
+.hubbarTitle{color:#eaf5ef;font-weight:950;font-
+size:15px}.hubBtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.hubBtn{border:0;border-radius:12px;padding:9px 10px;font-size:13px;font-
+weight:950;cursor:pointer;user-select:none}
+.hubBtnGhost{background:rgba(255,255,255,.08);color:#eaf5ef;border:1px solid
+rgba(255,255,255,.10)}
+.hubBtnDanger{background:linear-
+gradient(135deg,#fb7185,#ef4444);color:#08110c}
+.wrap{max-width:1200px;margin:0
+auto;padding:16px}.hero{background:rgba(255,255,255,.16);border:1px solid
+rgba(255,255,255,.30);border-radius:24px;padding:20px;box-shadow:0 10px 35px
+rgba(0,0,0,.12);margin-bottom:16px;backdrop-filter:blur(10px)}
+.heroTitle{font-size:28px;font-weight:950;color:#083b1d;margin:0 0
+8px}.heroSub{color:#14532d;line-height:1.45;font-size:14px}
+.stickyNav{position:sticky;top:58px;z-
+index:40;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border:1px solid
+rgba(0,0,0,.06);border-radius:18px;padding:10px;margin-bottom:16px;box-shadow:0
+8px 25px rgba(0,0,0,.08)}
+.navLinks{display:flex;gap:8px;flex-wrap:wrap}.navLink{text-
+decoration:none;padding:9px 12px;border-radius:999px;border:1px solid
+#bbf7d0;background:#ecfdf5;color:#166534;font-weight:800;font-size:13px}
+.summaryGrid{display:grid;grid-template-
+columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.summaryCard,.card{background:#fff;border:1px solid rgba(0,0,0,.06);border-
+radius:20px;box-shadow:0 10px 28px rgba(0,0,0,.08)}
+.summaryCard{padding:16px}.summaryLabel{font-size:12px;color:var(--muted);font-
+weight:900;text-transform:uppercase;letter-spacing:.05em}.summaryValue{margin-
+top:6px;font-size:27px;font-weight:950;color:var(--green2)}
+.section{scroll-margin-top:120px;margin-
+bottom:16px}.card{padding:18px}.sectionTitle{font-size:21px;font-
+weight:950;color:var(--green1);margin:0 0 6px}.sectionSub{color:var(--muted);font-
+size:14px;line-height:1.45;margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid4{display:grid;grid-
+template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.field label{display:block;font-size:13px;font-weight:800;color:#374151;margin-
+bottom:6px}.input,.select,.textarea{width:100%;border:1px solid var(--line);border-
+radius:14px;padding:12px;background:#fff;font-size:15px}.textarea{min-
+height:120px;resize:vertical;font-family:ui-monospace,SFMono-
+Regular,Menlo,monospace}
+.btnRow{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-
+radius:14px;padding:12px 14px;font-size:14px;font-
+weight:950;cursor:pointer}.btnGreen{background:linear-gradient(135deg,var(--
+green2),var(--green3));color:#fff}.btnBlue{background:linear-
+gradient(135deg,#2563eb,#38bdf8);color:#fff}.btnGray{background:#edf2f7;color:#1f2
+937}.btnRed{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff}
+.pillWrap{display:flex;gap:8px;flex-wrap:wrap}.pill{display:inline-block;padding:6px
+10px;border-radius:999px;background:#dcfce7;color:#166534;font-size:12px;font-
+weight:800;border:1px solid
+#bbf7d0}.pillMuted{background:#f3f4f6;color:#4b5563;border:1px solid #e5e7eb}
+.note{margin-top:10px;color:#166534;font-size:14px;font-
+weight:700}.warn{color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-
+radius:14px;padding:12px 14px}
+.playersChecklist{display:grid;grid-template-
+columns:repeat(3,minmax(0,1fr));gap:10px;margin-
+top:12px}.checkItem{display:flex;align-
+items:center;gap:8px;background:#f8fafc;border:1px solid #e5e7eb;border-
+radius:14px;padding:10px 12px;font-size:14px;font-weight:700}
+.tableWrap{overflow:auto;border:1px solid #e5e7eb;border-radius:18px}
+table{width:100%;border-collapse:collapse;min-width:900px;background:#fff}
+th,td{padding:11px 12px;border-bottom:1px solid #e5e7eb;text-align:left;font-
+size:14px;vertical-align:top} th{background:#f8fafc;color:#475569;font-size:12px;text-
+transform:uppercase;letter-spacing:.05em;font-weight:900;position:sticky;top:0;z-
+index:1} tr:nth-child(even) td{background:#fcfcfd}
+.statusReady{color:#166534;font-weight:900}.statusPending{color:#92400e;font-
+weight:900}
+.playerCard{border:1px solid #e5e7eb;border-
+radius:18px;padding:14px;background:#fff;margin-
+bottom:12px}.playerHead{display:flex;align-items:flex-start;justify-content:space-
+between;gap:12px;flex-wrap:wrap;margin-bottom:10px}.playerName{font-
+size:20px;font-weight:950;color:#14532d;margin:0}.playerNet{font-size:20px;font-
+weight:950}.gain{color:#166534}.loss{color:#b91c1c}
+.report{font-family:Inter,Arial,sans-serif;color:#111827;padding:24px}.report
+h1,.report h2{margin:0 0 10px;color:#14532d}.report table{min-
+width:0;width:100%;border-collapse:collapse;margin-top:12px}.report th,.report
+td{border:1px solid #d1d5db;padding:8px 10px;font-size:12px;text-
+align:left;background:#fff}.report th{background:#f0fdf4}
+@media (max-width:980px){.summaryGrid,.grid4,.grid2,.playersChecklist{grid-
+template-columns:1fr}.stickyNav{top:56px}}
+</style>
+</head>
+<body>
+<div class="hubbar">
+<div class="hubbarRow">
+<div class="hubbarTitle" id="hubToolTitle">Wheel Best Ball</div>
+<div class="hubBtns">
+<button class="hubBtn hubBtnGhost" type="button" id="hubBackBtn">â Back to
+Hub</button>
+<button class="hubBtn hubBtnGhost" type="button" id="hubResetThisBtn">Reset
+This Tool</button>
+<button class="hubBtn hubBtnDanger" type="button" id="hubResetAllBtn">Reset
+Everything</button>
+</div>
+</div>
+</div>
+<div class="wrap">
+<div class="hero">
+<h1 class="heroTitle">Wheel Best Ball</h1>
+<div class="heroSub">Set one wheel team, choose who is out, import Squabbit
+scores, and calculate every matchup automatically. Payout assumption in this tool: each
+losing player pays each winning player the per person amount.</div>
+</div>
+<div class="stickyNav">
+<div class="navLinks">
+<a class="navLink" href="#section-setup">Setup</a>
+<a class="navLink" href="#section-wheel">Wheel Matchups</a>
+<a class="navLink" href="#section-scores">Scores</a>
+<a class="navLink" href="#section-results">Results</a>
+<a class="navLink" href="#section-players">Player Breakdowns</a>
+<a class="navLink" href="#section-exports">Exports</a>
+</div>
+</div>
+<div class="summaryGrid">
+<div class="summaryCard"><div class="summaryLabel">Players Loaded</div><div
+class="summaryValue" id="summaryPlayers">0</div></div>
+<div class="summaryCard"><div class="summaryLabel">Wheel Matchups</
+div><div class="summaryValue" id="summaryMatchups">0</div></div>
+<div class="summaryCard"><div class="summaryLabel">Wheel Net</div><div
+class="summaryValue" id="summaryWheelNet">$0</div></div>
+<div class="summaryCard"><div class="summaryLabel">Opponents Net</div><div
+class="summaryValue" id="summaryOppNet">$0</div></div>
+</div>
+<section class="section card" id="section-setup">
+<h2 class="sectionTitle">1) Round Setup</h2>
+<div class="sectionSub">Upload a pre round Squabbit roster before tee off, pick
+the wheel team, and exclude anyone who opts out.</div>
+<div class="grid2">
+<div class="field">
+<label>Pre round / roster CSV</label>
+<input id="namesCsvInput" class="input" type="file" accept=".csv,text/csv">
+<div class="note" id="namesMsg">Upload a pre round Squabbit CSV to load
+names.</div>
+</div>
+<div class="field">
+<label>Loaded players</label>
+<div id="loadedPlayerPills" class="pillWrap"></div>
+</div>
+</div>
+<div class="grid4" style="margin-top:14px;">
+<div class="field"><label>Wheel player 1</label><select id="wheelP1"
+class="select"></select></div>
+<div class="field"><label>Wheel player 2</label><select id="wheelP2"
+class="select"></select></div>
+<div class="field"><label>Dollars per shot</label><input id="shotValue"
+class="input" type="number" min="0" step="1" value="3"></div>
+<div class="field"><label>Max shots</label><input id="maxShots" class="input"
+type="number" min="0" step="1" value="7"></div>
+</div>
+<div class="warn" style="margin-top:14px;">Per person payout rule in this tool: if a
+team loses by 2 at $3 a shot, each losing player pays each winning player $6. With a 7
+shot cap, the max per person payment is $21.</div>
+<div style="margin-top:14px;"><div class="field"><label>Exclude players from the
+wheel</label></div><div id="excludeList" class="playersChecklist"></div></div>
+<div class="btnRow" style="margin-top:14px;"><button id="rebuildWheelBtn"
+class="btn btnGreen" type="button">Build Wheel</button></div>
+</section>
+<section class="section card" id="section-wheel">
+<h2 class="sectionTitle">2) Wheel Matchups</h2>
+<div class="sectionSub">The wheel team takes on every two player combination
+from the remaining eligible players.</div>
+<div class="tableWrap">
+<table id="wheelTable"><thead><tr><th>#</th><th>Wheel Team</
+th><th>Opponent Team</th><th>Status</th></tr></thead><tbody></tbody></table>
+</div>
+</section>
+<section class="section card" id="section-scores">
+<h2 class="sectionTitle">3) Import Scores</h2>
+<div class="sectionSub">Upload the completed Squabbit round CSV after the
+round. Best ball totals will populate automatically.</div>
+<div class="grid2">
+<div class="field">
+<label>Completed round CSV</label>
+<input id="scoresCsvInput" class="input" type="file" accept=".csv,text/csv">
+<div class="note" id="scoresMsg">Upload a completed Squabbit CSV later to
+calculate scores and payouts.</div>
+</div>
+<div class="field"><label>Players with finished scores</label><div
+id="scoredPlayerPills" class="pillWrap"></div></div>
+</div>
+</section>
+<section class="section card" id="section-results">
+<h2 class="sectionTitle">4) Results and Payout Table</h2>
+<div class="sectionSub">This table shows every wheel matchup, best ball totals,
+capped stroke amount, and who owes what.</div>
+<div class="tableWrap">
+<table id="resultsTable"><thead><tr><th>#</th><th>Wheel Team</
+th><th>Opponent Team</th><th>Wheel BB</th><th>Opp BB</th><th>Winner</
+th><th>Margin</th><th>Shots Counted</th><th>Per Person</th><th>Team Transfer</
+th><th>Details</th></tr></thead><tbody></tbody></table>
+</div>
+<div class="grid2" style="margin-top:14px;">
+<div class="card" style="padding:14px;"><div class="summaryLabel">Wheel
+Team Total</div><div class="summaryValue" id="wheelTeamTotalBox">$0</div><div
+class="sectionSub" id="wheelTeamNamesBox" style="margin:8px 0 0;">Pick the wheel
+team first.</div></div>
+<div class="card" style="padding:14px;"><div class="summaryLabel">Everyone
+Playing Against The Wheel</div><div class="summaryValue"
+id="oppTeamTotalBox">$0</div><div class="sectionSub" style="margin:8px 0 0;">This
+is the opposite side of the wheel total.</div></div>
+</div>
+</section>
+<section class="section card" id="section-players">
+<h2 class="sectionTitle">5) Player Breakdown</h2>
+<div class="sectionSub">Each player gets a net total and a detailed line by line
+breakdown. You can export any player as a PDF.</div>
+<div id="playerBreakdownList"></div>
+</section>
+<section class="section card" id="section-exports">
+<h2 class="sectionTitle">6) Exports</h2>
+<div class="sectionSub">Export the whole wheel result as a PDF or CSV. The PDF is
+good for sharing. The CSV gives you a spreadsheet.</div>
+<div class="btnRow">
+<button id="exportAllPdfBtn" class="btn btnBlue" type="button">Download All
+Results PDF</button>
+<button id="exportAllCsvBtn" class="btn btnGreen" type="button">Download All
+Results CSV</button>
+</div>
+</section>
+</div>
+<script>
+window.TOOL
+_NAME = "Wheel Best Ball";
+window.TOOL
+STORAGE
+_
+_KEYS = ["wheel_
+best
+ball
+_
+_v1"];
+window.HUB
+_INDEX = "index.html";
+(function(){
+const TOOL
+NAME = window.TOOL
+_
+_NAME || document.title || "Golf Tool";
+const TOOL
+_KEYS = Array.isArray(window.TOOL_
+STORAGE
+_KEYS) ?
+window.TOOL
+STORAGE
+_
+_KEYS : [];
+const HUB
+INDEX = window.HUB
+_
+_INDEX || "index.html";
+const titleEl = document.getElementById("hubToolTitle");
+const backBtn = document.getElementById("hubBackBtn");
+const resetThisBtn = document.getElementById("hubResetThisBtn");
+const resetAllBtn = document.getElementById("hubResetAllBtn");
+if(titleEl) titleEl.textContent = TOOL_NAME;
+backBtn.onclick = () => { window.location.href = HUB_INDEX; };
+resetThisBtn.onclick = () => {
+const ok = confirm("Reset this tool and clear the saved wheel setup on this
+device?");
+if(!ok) return;
+TOOL
+_KEYS.forEach(k => localStorage.removeItem(k));
+window.location.reload();
+};
+resetAllBtn.onclick = () => {
+const ok = confirm("Reset EVERYTHING for this site on this device?");
+if(!ok) return;
+localStorage.clear();
+window.location.href = HUB
+_INDEX;
+};
+})();
+const STORAGE
+KEY = "wheel
+best
+ball
+_
+_
+_
+_v1";
+const state = { names: [], scores: {}, wheel: ["",""], excluded: [], shotValue: 3, maxShots:
+7, matchups: [] };
+const $ = (id) => document.getElementById(id);
+const normalizeSpace = (s) => (s || "").replace(/\s+/g, " ").trim();
+const titleCase = (n) => normalizeSpace(n).split(" ").map(w => w ?
+w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : "").join(" ");
+const toInt = (v) => /^-?\d+$/.test((v || "").trim()) ? parseInt(v, 10) : null;
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function loadState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw)
+Object.assign(state, JSON.parse(raw) || {});}catch(e){console.error(e);} }
+function escapeHtml(s){ return (s ??
+"").toString().replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replac
+eAll('"',"&quot;"); }
+function splitCSVLine(line){
+const out = []; let cur = ""; let inQ = false;
+for(let i=0;i<line.length;i++){
+const c = line[i];
+if(c === '"'){
+if(inQ && line[i+1] === '"'){ cur += '"'; i++; } else { inQ = !inQ; }
+}else if(c === "," && !inQ){ out.push(cur); cur = ""; }
+else{ cur += c; }
+}
+out.push(cur); return out.map(s => (s || "").trim());
+}
+function parseNamesOnlyCSV(txt){
+const rows = txt.split(/\r?\n/).map(splitCSVLine);
+const names = [];
+const playersRow = rows.findIndex(row => normalizeSpace(row[0] ||
+"").toLowerCase() === "players");
+if(playersRow < 0) return [];
+const headerRow = rows[playersRow + 1] || [];
+const nameCol = headerRow.findIndex(c => normalizeSpace(c).toLowerCase() ===
+"name");
+if(nameCol < 0) return [];
+for(let i = playersRow + 2; i < rows.length; i++){
+const row = rows[i];
+const first = normalizeSpace(row[0] || "").toLowerCase();
+if(!row.length || row.every(c => !normalizeSpace(c))) break;
+if(["skins","strokeplay","twos club","best ball","games"].includes(first)) break;
+const nm = titleCase(row[nameCol] || "");
+if(nm && nm.toLowerCase() !== "name" && !/^team\s*\d+/i.test(nm))
+names.push(nm);
+}
+return [...new Set(names)].sort((a,b) => a.localeCompare(b));
+}
+function buildHoleIndex(row){
+const idx = {};
+row.forEach((c, i) => {
+const s = normalizeSpace(c).toLowerCase();
+for(let h=1; h<=18; h++){
+if(s === `hole ${h}` || s === `${h}` || s === `hole${h}`) idx[h] = i;
+}
+});
+return Object.keys(idx).length ? idx : null;
+}
+function parseScoresCSV(txt){
+const rows = txt.split(/\r?\n/).map(splitCSVLine);
+const scoredPlayers = {};
+let headerIndex = -1, holeIdx = null;
+for(let i=0;i<rows.length;i++){
+const row = rows[i];
+if(row.some(c => /hole\s*1/i.test(c || ""))){ headerIndex = i; holeIdx =
+buildHoleIndex(row); break; }
+}
+if(headerIndex < 0 || !holeIdx) return {};
+for(let i = headerIndex + 1; i < rows.length; i++){
+const row = rows[i];
+const name = titleCase(row[0] || "");
+const tee = normalizeSpace(row[1] || "").toLowerCase();
+if(!name || !tee.includes("tee") || ["par","s.i."].includes(name.toLowerCase()))
+continue;
+const strokes = [];
+for(let h=1; h<=18; h++){
+const val = toInt(row[holeIdx[h]]);
+if(val == null){ strokes.length = 0; break; }
+strokes.push(val);
+}
+if(strokes.length === 18) scoredPlayers[name] = strokes;
+}
+return scoredPlayers;
+}
+function bestBall(a,b){ return a.reduce((t,_,i) => t + Math.min(a[i], b[i]), 0); }
+function combinations(arr, k){
+const out = []; const n = arr.length;
+function walk(start, combo){
+if(combo.length === k){ out.push(combo.slice()); return; }
+for(let i=start;i<n;i++){ combo.push(arr[i]); walk(i+1, combo); combo.pop(); }
+}
+walk(0, []); return out;
+}
+function rebuildWheel(){
+const p1 = state.wheel[0], p2 = state.wheel[1];
+if(!p1 || !p2 || p1 === p2){ state.matchups = []; render(); return; }
+const excludedSet = new Set(state.excluded || []);
+const eligible = state.names.filter(n => n !== p1 && n !== p2 && !excludedSet.has(n));
+const combos = combinations(eligible, 2);
+state.matchups = combos.map((team, idx) => ({ id: idx + 1, wheelTeam:
+[p1,p2].slice().sort((a,b)=>a.localeCompare(b)), oppTeam:
+team.slice().sort((a,b)=>a.localeCompare(b)) }));
+render();
+}
+function matchupResult(m){
+const scores = state.scores || {};
+const [w1,w2] = m.wheelTeam, [o1,o2] = m.oppTeam;
+if(!scores[w1] || !scores[w2] || !scores[o1] || !scores[o2]) return { status:"pending",
+missing:[w1,w2,o1,o2].filter(n => !scores[n]) };
+const wheelBB = bestBall(scores[w1], scores[w2]);
+const oppBB = bestBall(scores[o1], scores[o2]);
+if(wheelBB === oppBB) return { status:"ready", wheelBB, oppBB, winner:"Push",
+margin:0, shotsCounted:0, perPerson:0, teamTransfer:0, detail:"Push" };
+const wheelWins = wheelBB < oppBB;
+const margin = Math.abs(oppBB - wheelBB);
+const shotsCounted = Math.min(margin, Number(state.maxShots) || 0);
+const perPerson = shotsCounted * (Number(state.shotValue) || 0);
+const teamTransfer = perPerson * 4;
+const winner = wheelWins ? `${w1} & ${w2}` : `${o1} & ${o2}`;
+const detail = wheelWins ? `Each of ${o1} and ${o2} owes ${w1} and ${w2} $$
+{perPerson} each` : `Each of ${w1} and ${w2} owes ${o1} and ${o2} $${perPerson}
+each`;
+return { status:"ready", wheelBB, oppBB, winner, wheelWins, margin, shotsCounted,
+perPerson, teamTransfer, detail };
+}
+function allResults(){ return (state.matchups || []).map(m => ({ ...m, result:
+matchupResult(m) })); }
+function playerLedger(){
+const map = {}; state.names.forEach(n => { map[n] = { name:n, net:0, lines:[] }; });
+allResults().forEach(item => {
+const r = item.result; if(r.status !== "ready" || r.margin === 0) return;
+const [w1,w2] = item.wheelTeam, [o1,o2] = item.oppTeam, amount = r.perPerson;
+if(r.wheelWins){
+map[w1].net += amount * 2; map[w2].net += amount * 2; map[o1].net -= amount *
+2; map[o2].net -= amount * 2;
+map[w1].lines.push(`${w1} with ${w2} beat ${o1} & ${o2} by ${r.margin}. Collected
+$${amount} from each opponent. Net +$${amount*2}`);
+map[w2].lines.push(`${w1} with ${w2} beat ${o1} & ${o2} by ${r.margin}. Collected
+$${amount} from each opponent. Net +$${amount*2}`);
+map[o1].lines.push(`${o1} with ${o2} lost to ${w1} & ${w2} by ${r.margin}. Paid $$
+{amount} to each wheel player. Net -$${amount*2}`);
+map[o2].lines.push(`${o1} with ${o2} lost to ${w1} & ${w2} by ${r.margin}. Paid $$
+{amount} to each wheel player. Net -$${amount*2}`);
+}else{
+map[w1].net -= amount * 2; map[w2].net -= amount * 2; map[o1].net += amount * 2;
+map[o2].net += amount * 2;
+map[w1].lines.push(`${w1} with ${w2} lost to ${o1} & ${o2} by ${r.margin}. Paid $$
+{amount} to each opponent. Net -$${amount*2}`);
+map[w2].lines.push(`${w1} with ${w2} lost to ${o1} & ${o2} by ${r.margin}. Paid $$
+{amount} to each opponent. Net -$${amount*2}`);
+map[o1].lines.push(`${o1} with ${o2} beat ${w1} & ${w2} by ${r.margin}. Collected $
+${amount} from each wheel player. Net +$${amount*2}`);
+map[o2].lines.push(`${o1} with ${o2} beat ${w1} & ${w2} by ${r.margin}. Collected
+$${amount} from each wheel player. Net +$${amount*2}`);
+}
+});
+return Object.values(map).sort((a,b) => a.name.localeCompare(b.name));
+}
+function wheelTeamNet(){
+const [p1,p2] = state.wheel; if(!p1 || !p2) return 0;
+const ledger = playerLedger(); return (ledger.find(x => x.name === p1)?.net || 0) +
+(ledger.find(x => x.name === p2)?.net || 0);
+}
+function updateSelectOptions(){
+const names = state.names || [];
+const options = ['<option value="">Select player</option>'].concat(names.map(n =>
+`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`)).join("");
+$("wheelP1").innerHTML = options; $("wheelP2").innerHTML = options;
+$("wheelP1").value = state.wheel[0] || ""; $("wheelP2").value = state.wheel[1] || "";
+}
+function renderExcludes(){
+const p1 = state.wheel[0], p2 = state.wheel[1], wrap = $("excludeList"), excluded =
+new Set(state.excluded || []);
+const list = state.names.filter(n => n !== p1 && n !== p2);
+if(!list.length){ wrap.innerHTML = `<div class="small-note">Load names first.</div>`;
+return; }
+wrap.innerHTML = list.map(name => `<label class="checkItem"><input
+type="checkbox" data-exclude="${escapeHtml(name)}" ${excluded.has(name) ?
+"checked" : ""}><span>${escapeHtml(name)}</span></label>`).join("");
+wrap.querySelectorAll("[data-exclude]").forEach(el => el.addEventListener("change",
+() => {
+const name = el.getAttribute("data-exclude"), set = new Set(state.excluded || []);
+if(el.checked) set.add(name); else set.delete(name);
+state.excluded = [...set].sort((a,b)=>a.localeCompare(b)); rebuildWheel();
+}));
+}
+function renderLoadedPills(){
+$("loadedPlayerPills").innerHTML = state.names.length ? state.names.map(n =>
+`<span class="pill">${escapeHtml(n)}</span>`).join("") : `<span class="pill
+pillMuted">No players loaded</span>`;
+const scoredNames = Object.keys(state.scores || {}).sort((a,b)=>a.localeCompare(b));
+$("scoredPlayerPills").innerHTML = scoredNames.length ? scoredNames.map(n =>
+`<span class="pill">${escapeHtml(n)}</span>`).join("") : `<span class="pill
+pillMuted">No finished scores loaded</span>`;
+}
+function renderWheelTable(){
+const tbody = document.querySelector("#wheelTable tbody");
+if(!(state.matchups || []).length){ tbody.innerHTML = `<tr><td colspan="4">Build the
+wheel after selecting the wheel team.</td></tr>`; return; }
+tbody.innerHTML = state.matchups.map((m, idx) => `<tr><td>${idx+1}</td><td>$
+{escapeHtml(m.wheelTeam.join(" & "))}</td><td>${escapeHtml(m.oppTeam.join(" &
+"))}</td><td>${Object.keys(state.scores || {}).length ? '<span
+class="statusPending">Waiting on results table below</span>' : '<span
+class="statusPending">Pending scores</span>'}</td></tr>`).join("");
+}
+function renderResultsTable(){
+const tbody = document.querySelector("#resultsTable tbody"), rows = allResults();
+if(!rows.length){ tbody.innerHTML = `<tr><td colspan="11">Build the wheel first.</
+td></tr>`; return; }
+tbody.innerHTML = rows.map((item, idx) => {
+const r = item.result;
+if(r.status !== "ready"){
+return `<tr><td>${idx+1}</td><td>${escapeHtml(item.wheelTeam.join(" & "))}</
+td><td>${escapeHtml(item.oppTeam.join(" & "))}</td><td>-</td><td>-</td><td><span
+class="statusPending">Pending</span></td><td>-</td><td>-</td><td>-</td><td>-</
+td><td>Missing: ${escapeHtml((r.missing || []).join(", "))}</td></tr>`;
+}
+return `<tr><td>${idx+1}</td><td>${escapeHtml(item.wheelTeam.join(" & "))}</
+td><td>${escapeHtml(item.oppTeam.join(" & "))}</td><td>${r.wheelBB}</td><td>$
+{r.oppBB}</td><td>${escapeHtml(r.winner)}</td><td>${r.margin}</td><td>$
+{r.shotsCounted}</td><td>$${r.perPerson}</td><td>$${r.teamTransfer}</td><td>$
+{escapeHtml(r.detail)}</td></tr>`;
+}).join("");
+}
+function renderPlayerCards(){
+const wrap = $("playerBreakdownList"), players = playerLedger();
+if(!players.length){ wrap.innerHTML = `<div class="small-note">Load names first.</
+div>`; return; }
+wrap.innerHTML = players.map(p => `<div class="playerCard"><div
+class="playerHead"><div><h3 class="playerName">${escapeHtml(p.name)}</h3><div
+class="small-note">${p.lines.length} line item(s)</div></div><div class="playerNet $
+{p.net >= 0 ? "gain" : "loss"}">${p.net >= 0 ? "+" : "-"}$${Math.abs(p.net)}</div></
+div><div class="btnRow" style="margin-bottom:10px;"><button class="btn btnBlue"
+type="button" data-player-pdf="${escapeHtml(p.name)}">Download $
+{escapeHtml(p.name)} PDF</button></div><div
+class="tableWrap"><table><thead><tr><th>#</th><th>Breakdown</th></tr></
+thead><tbody>${p.lines.length ? p.lines.map((line,i)=>`<tr><td>${i+1}</td><td>$
+{escapeHtml(line)}</td></tr>`).join("") : `<tr><td>1</td><td>No settled lines yet.</
+td></tr>`}</tbody></table></div></div>`).join("");
+wrap.querySelectorAll("[data-player-pdf]").forEach(btn =>
+btn.addEventListener("click", () => exportPlayerPdf(btn.getAttribute("data-player-
+pdf"))));
+}
+function renderSummary(){
+const matchups = state.matchups || [], wheelNet = wheelTeamNet();
+$("summaryPlayers").textContent = String(state.names.length || 0);
+$("summaryMatchups").textContent = String(matchups.length);
+$("summaryWheelNet").textContent = `${wheelNet >= 0 ? "+" : "-"}$$
+{Math.abs(wheelNet)}`;
+$("summaryOppNet").textContent = `${-wheelNet >= 0 ? "+" : "-"}$${Math.abs(-
+wheelNet)}`;
+$("wheelTeamTotalBox").textContent = `${wheelNet >= 0 ? "+" : "-"}$$
+{Math.abs(wheelNet)}`;
+$("oppTeamTotalBox").textContent = `${-wheelNet >= 0 ? "+" : "-"}$${Math.abs(-
+wheelNet)}`;
+$("wheelTeamNamesBox").textContent = state.wheel[0] && state.wheel[1] ? `$
+{state.wheel[0]} & ${state.wheel[1]}` : "Pick the wheel team first.";
+}
+function render(){
+state.names = (state.names || []).slice().sort((a,b)=>a.localeCompare(b));
+state.excluded = (state.excluded || []).filter(n => state.names.includes(n));
+updateSelectOptions(); renderExcludes(); renderLoadedPills(); renderWheelTable();
+renderResultsTable(); renderPlayerCards(); renderSummary(); saveState();
+}
+function exportViaHtml2Pdf(filename, innerHtml){
+const container = document.createElement("div"); container.className = "report";
+container.innerHTML = innerHtml;
+if(window.html2pdf){
+html2pdf().set({ margin:0.35, filename, image:{type:"jpeg", quality:0.98},
+html2canvas:{scale:2, useCORS:true}, jsPDF:{unit:"in", format:"letter",
+orientation:"portrait"} }).from(container).save();
+}else{
+const w = window.open("", "_blank");
+w.document.write(`<!doctype html><html><head><title>${escapeHtml(filename)}</
+title><style>body{font-family:Arial;padding:24px;color:#111827;}
+table{width:100%;border-collapse:collapse;}th,td{border:1px solid
+#d1d5db;padding:8px 10px;font-size:12px;text-align:left;}th{background:#f0fdf4;}</
+style></head><body>${innerHtml}</body></html>`);
+w.document.close(); w.focus(); w.print();
+}
+}
+function exportPlayerPdf(playerName){
+const p = playerLedger().find(x => x.name === playerName); if(!p) return;
+const html = `<h1>${escapeHtml(playerName)} Wheel Breakdown</
+h1><p><strong>Net:</strong> ${p.net >= 0 ? "+" : "-"}$${Math.abs(p.net)}</
+p><table><thead><tr><th>#</th><th>Breakdown</th></tr></thead><tbody>$
+{p.lines.length ? p.lines.map((line,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(line)}</
+td></tr>`).join("") : `<tr><td>1</td><td>No settled lines yet.</td></tr>`}</tbody></
+table>`;
+exportViaHtml2Pdf(`${playerName.replace(/\s+/g, "_")}_
+wheel
+_breakdown.pdf`,
+html);
+}
+function exportAllPdf(){
+const resultsRows = allResults().map((item, idx) => {
+const r = item.result;
+if(r.status !== "ready") return `<tr><td>${idx+1}</td><td>$
+{escapeHtml(item.wheelTeam.join(" & "))}</td><td>${escapeHtml(item.oppTeam.join("
+& "))}</td><td>Pending</td><td colspan="6">${escapeHtml((r.missing || []).join(", "))}
+</td></tr>`;
+return `<tr><td>${idx+1}</td><td>${escapeHtml(item.wheelTeam.join(" & "))}</
+td><td>${escapeHtml(item.oppTeam.join(" & "))}</td><td>${r.wheelBB}</td><td>$
+{r.oppBB}</td><td>${escapeHtml(r.winner)}</td><td>${r.margin}</td><td>$
+{r.shotsCounted}</td><td>$${r.perPerson}</td><td>$${r.teamTransfer}</td></tr>`;
+}).join("");
+const ledgerRows = playerLedger().map(p => `<tr><td>${escapeHtml(p.name)}</
+td><td>${p.net >= 0 ? "+" : "-"}$${Math.abs(p.net)}</td><td>${p.lines.length}</td></
+tr>`).join("");
+const html = `<h1>Wheel Best Ball Results</h1><p><strong>Wheel Team:</strong> $
+{escapeHtml(state.wheel.filter(Boolean).join(" & ")) || "Not set"}</
+p><p><strong>Dollars per shot:</strong> $${Number(state.shotValue) || 0} &nbsp;
+<strong>Max shots:</strong> ${Number(state.maxShots) || 0}</p><p><strong>Wheel
+total:</strong> ${wheelTeamNet() >= 0 ? "+" : "-"}$${Math.abs(wheelTeamNet())}</
+p><h2>Matchup Results</h2><table><thead><tr><th>#</th><th>Wheel Team</
+th><th>Opponent Team</th><th>Wheel BB</th><th>Opp BB</th><th>Winner</
+th><th>Margin</th><th>Shots Counted</th><th>Per Person</th><th>Team Transfer</
+th></tr></thead><tbody>${resultsRows || `<tr><td colspan="10">No rows</td></tr>`}
+</tbody></table><h2>Player Net Summary</h2><table><thead><tr><th>Player</
+th><th>Net</th><th>Line Items</th></tr></thead><tbody>${ledgerRows || `<tr><td
+colspan="3">No player rows</td></tr>`}</tbody></table>`;
+exportViaHtml2Pdf("wheel_
+best
+ball
+all
+_
+_
+_results.pdf", html);
+}
+function exportAllCsv(){
+const rows = []; rows.push(["Wheel Team", state.wheel.join(" & ")]);
+rows.push(["Dollars Per Shot", state.shotValue]); rows.push(["Max Shots",
+state.maxShots]); rows.push(["Wheel Net", wheelTeamNet()]); rows.push([]);
+rows.push(["Matchup #","Wheel Team","Opponent Team","Status","Wheel BB","Opp
+BB","Winner","Margin","Shots Counted","Per Person","Team Transfer","Details"]);
+allResults().forEach((item, idx) => {
+const r = item.result;
+if(r.status !== "ready") rows.push([idx+1, item.wheelTeam.join(" & "),
+item.oppTeam.join(" & "), "Pending","","","","","","","",(r.missing || []).join(" | ")]);
+else rows.push([idx+1, item.wheelTeam.join(" & "), item.oppTeam.join(" & "), "Ready",
+r.wheelBB, r.oppBB, r.winner, r.margin, r.shotsCounted, r.perPerson, r.teamTransfer,
+r.detail]);
+});
+rows.push([]); rows.push(["Player","Net","Line Items"]); playerLedger().forEach(p =>
+rows.push([p.name, p.net, p.lines.length]));
+const esc = (v) => { const s = String(v ?? ""); return (s.includes(",") || s.includes('"') ||
+s.includes("\n")) ? `"${s.replace(/"/g,'""')}"` : s; };
+const csv = rows.map(r => r.map(esc).join(",")).join("\n");
+const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" }); const url =
+URL.createObjectURL(blob); const a = document.createElement("a");
+a.href = url; a.download = "wheel_
+best
+ball
+_
+_results.csv";
+document.body.appendChild(a); a.click(); document.body.removeChild(a);
+setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+$("namesCsvInput").addEventListener("change", async (e) => {
+const file = e.target.files && e.target.files[0]; if(!file) return;
+const text = await file.text(); const names = parseNamesOnlyCSV(text);
+state.names = names; state.scores = {}; state.excluded = []; state.matchups = [];
+state.wheel = ["",""];
+$("namesMsg").textContent = names.length ? `Imported ${file.name}. Players loaded:
+${names.length}.` : `Imported ${file.name}, but no names were found in the Players
+section.`;
+$("scoresMsg").textContent = "Upload a completed Squabbit CSV later to calculate
+scores and payouts."; render();
+});
+$("scoresCsvInput").addEventListener("change", async (e) => {
+const file = e.target.files && e.target.files[0]; if(!file) return;
+const text = await file.text(); const scores = parseScoresCSV(text);
+state.scores = scores; const scoreNames =
+Object.keys(scores).sort((a,b)=>a.localeCompare(b));
+state.names = [...new Set([...(state.names ||
+[]), ...scoreNames])].sort((a,b)=>a.localeCompare(b));
+$("scoresMsg").textContent = scoreNames.length ? `Imported ${file.name}. Players
+with finished scores: ${scoreNames.length}.` : `Imported ${file.name}, but no finished
+score rows were found.`; render();
+});
+$("wheelP1").addEventListener("change", (e) => { state.wheel[0] = e.target.value;
+if(state.wheel[0] && state.wheel[0] === state.wheel[1]) state.wheel[1] = "";
+renderExcludes(); rebuildWheel(); });
+$("wheelP2").addEventListener("change", (e) => { state.wheel[1] = e.target.value;
+if(state.wheel[1] && state.wheel[1] === state.wheel[0]) state.wheel[0] = "";
+updateSelectOptions(); renderExcludes(); rebuildWheel(); });
+$("shotValue").addEventListener("input", (e) => { state.shotValue =
+Number(e.target.value) || 0; render(); });
+$("maxShots").addEventListener("input", (e) => { state.maxShots =
+Number(e.target.value) || 0; render(); });
+$("rebuildWheelBtn").addEventListener("click", rebuildWheel);
+$("exportAllPdfBtn").addEventListener("click", exportAllPdf);
+$("exportAllCsvBtn").addEventListener("click", exportAllCsv);
+loadState(); render();
+</script>
+</body>
+</html>
