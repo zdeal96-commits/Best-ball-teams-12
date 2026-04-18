@@ -1792,121 +1792,181 @@ function render() {
   saveState();
 }
 
-async function exportViaHtml2Pdf(filename, innerHtml) {
-  const mount = document.createElement("div");
-  mount.setAttribute("data-export-mount", "true");
-  mount.style.position = "fixed";
-  mount.style.left = "-10000px";
-  mount.style.top = "0";
-  mount.style.width = "850px";
-  mount.style.padding = "0";
-  mount.style.margin = "0";
-  mount.style.background = "#ffffff";
-  mount.style.zIndex = "-1";
+function getJsPdfConstructor() {
+  return window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null;
+}
 
-  const container = document.createElement("div");
-  container.className = "report";
-  container.style.background = "#ffffff";
-  container.style.width = "850px";
-  container.style.maxWidth = "850px";
-  container.innerHTML = innerHtml;
+function createPdfDoc(orientation) {
+  const JsPDF = getJsPdfConstructor();
+  if (!JsPDF) {
+    throw new Error("The PDF library did not load.");
+  }
+  return new JsPDF({
+    unit: "pt",
+    format: "letter",
+    orientation: orientation || "portrait"
+  });
+}
 
-  mount.appendChild(container);
-  document.body.appendChild(mount);
+function pdfEnsureSpace(doc, y, needed, margin) {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  if (y + needed <= pageHeight - margin) return y;
+  doc.addPage();
+  return margin;
+}
 
-  try {
-    if (window.html2pdf) {
-      await html2pdf().set({
-        margin: 0.35,
-        filename,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
-        jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
-      }).from(container).save();
+function pdfWriteWrapped(doc, text, x, y, maxWidth, options) {
+  const opts = options || {};
+  const margin = opts.margin == null ? 40 : opts.margin;
+  const fontSize = opts.fontSize == null ? 11 : opts.fontSize;
+  const lineHeight = opts.lineHeight == null ? Math.ceil(fontSize * 1.35) : opts.lineHeight;
+  const fontStyle = opts.fontStyle || "normal";
+  const lines = doc.splitTextToSize(String(text ?? ""), maxWidth);
+
+  doc.setFont("helvetica", fontStyle);
+  doc.setFontSize(fontSize);
+
+  lines.forEach((line) => {
+    y = pdfEnsureSpace(doc, y, lineHeight + 2, margin);
+    doc.text(line, x, y);
+    y += lineHeight;
+  });
+
+  return y;
+}
+
+function pdfWriteSpacer(doc, y, amount, margin) {
+  return pdfEnsureSpace(doc, y + (amount || 8), 0, margin || 40);
+}
+
+function downloadPdfFromLines(filename, title, lines, orientation) {
+  const doc = createPdfDoc(orientation || "portrait");
+  const margin = 40;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const usableWidth = pageWidth - (margin * 2);
+  let y = margin;
+
+  y = pdfWriteWrapped(doc, title, margin, y, usableWidth, {
+    margin,
+    fontSize: 18,
+    lineHeight: 22,
+    fontStyle: "bold"
+  });
+
+  y = pdfWriteSpacer(doc, y, 12, margin);
+
+  (lines || []).forEach((line) => {
+    if (line && line.__section) {
+      y = pdfWriteSpacer(doc, y, 8, margin);
+      y = pdfWriteWrapped(doc, line.text, margin, y, usableWidth, {
+        margin,
+        fontSize: 14,
+        lineHeight: 18,
+        fontStyle: "bold"
+      });
+      y = pdfWriteSpacer(doc, y, 4, margin);
       return;
     }
 
-    const popup = window.open("", "_blank");
-    popup.document.write(`<!doctype html><html><head><title>${escapeHtml(filename)}</title><style>body{font-family:Arial;padding:24px;color:#111827;background:#ffffff;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #d1d5db;padding:8px 10px;font-size:12px;text-align:left;}th{background:#f0fdf4;}</style></head><body>${innerHtml}</body></html>`);
-    popup.document.close();
-    popup.focus();
-    popup.print();
-  } finally {
-    setTimeout(() => {
-      if (mount.parentNode) mount.parentNode.removeChild(mount);
-    }, 500);
-  }
+    y = pdfWriteWrapped(doc, String(line ?? ""), margin, y, usableWidth, {
+      margin,
+      fontSize: 11,
+      lineHeight: 14,
+      fontStyle: "normal"
+    });
+    y = pdfWriteSpacer(doc, y, 6, margin);
+  });
+
+  doc.save(filename);
 }
 
 function exportPlayerPdf(playerName) {
-  const player = playerLedger().find((entry) => entry.name === playerName);
-  if (!player) return;
+  try {
+    const player = playerLedger().find((entry) => entry.name === playerName);
+    if (!player) return;
 
-  const gross = playerGrossScore(playerName);
-  const html = `
-    <h1>${escapeHtml(playerName)} Wheel Breakdown</h1>
-    <p><strong>Score:</strong> ${gross == null ? "Score not loaded" : `Shot ${gross}`}</p>
-    <table>
-      <thead><tr><th>#</th><th>Breakdown</th></tr></thead>
-      <tbody>
-        ${player.lines.length
-          ? player.lines.map((line, i) => `<tr><td>${i + 1}</td><td>${escapeHtml(line)}</td></tr>`).join("")
-          : `<tr><td>1</td><td>No settled lines yet.</td></tr>`
-        }
-      </tbody>
-    </table>
-    <p><strong>Net:</strong> ${player.net >= 0 ? "+" : "-"}$${Math.abs(player.net)}</p>
-  `;
+    const gross = playerGrossScore(playerName);
+    const lines = [
+      `Player: ${playerName}`,
+      `Score: ${gross == null ? "Score not loaded" : `Shot ${gross}`}`,
+      `Net: ${player.net >= 0 ? "+" : "-"}$${Math.abs(player.net)}`,
+      { __section: true, text: "Breakdown" }
+    ];
 
-  exportViaHtml2Pdf(`${playerName.replace(/\s+/g, "_")}_wheel_breakdown.pdf`, html);
+    if (player.lines.length) {
+      player.lines.forEach((line, index) => {
+        lines.push(`${index + 1}. ${line}`);
+      });
+    } else {
+      lines.push("1. No settled lines yet.");
+    }
+
+    downloadPdfFromLines(
+      `${playerName.replace(/\s+/g, "_")}_wheel_breakdown.pdf`,
+      `${playerName} Wheel Breakdown`,
+      lines,
+      "portrait"
+    );
+  } catch (error) {
+    console.error(error);
+    alert(`Could not create player PDF: ${error.message}`);
+  }
 }
 
 function exportAllPdf() {
-  const resultsRows = allResults().map((item, index) => {
-    const result = item.result;
-    if (result.status !== "ready") {
-      return `<tr><td>${index + 1}</td><td>${escapeHtml(item.wheelTeam.join(" & "))}</td><td>${escapeHtml(item.oppTeam.join(" & "))}</td><td>Pending</td><td colspan="6">${escapeHtml((result.missing || []).join(", "))}</td></tr>`;
+  try {
+    const wheelNames = state.wheel.filter(Boolean).join(" & ") || "Not set";
+    const results = allResults();
+    const ledger = playerLedger();
+
+    const lines = [
+      `Wheel Team: ${wheelNames}`,
+      `Dollars per shot: $${Number(state.shotValue) || 0}`,
+      `Max shots: ${Number(state.maxShots) || 0}`,
+      `Wheel total: ${wheelTeamNet() >= 0 ? "+" : "-"}$${Math.abs(wheelTeamNet())}`,
+      { __section: true, text: "Matchup Results" }
+    ];
+
+    if (!results.length) {
+      lines.push("No matchups have been built yet.");
+    } else {
+      results.forEach((item, index) => {
+        const result = item.result;
+        if (result.status !== "ready") {
+          lines.push(
+            `#${index + 1} | Wheel: ${item.wheelTeam.join(" & ")} | Opponent: ${item.oppTeam.join(" & ")} | Pending | Missing: ${(result.missing || []).join(", ")}`
+          );
+        } else {
+          lines.push(
+            `#${index + 1} | Wheel: ${item.wheelTeam.join(" & ")} | Opponent: ${item.oppTeam.join(" & ")} | Wheel BB ${result.wheelBB} | Opp BB ${result.oppBB} | Winner: ${result.winner} | Margin: ${result.margin} | Shots Counted: ${result.shotsCounted} | Per Person: $${result.perPerson} | Team Transfer: $${result.teamTransfer} | ${result.detail}`
+          );
+        }
+      });
     }
 
-    return `<tr><td>${index + 1}</td><td>${escapeHtml(item.wheelTeam.join(" & "))}</td><td>${escapeHtml(item.oppTeam.join(" & "))}</td><td>${result.wheelBB}</td><td>${result.oppBB}</td><td>${escapeHtml(result.winner)}</td><td>${result.margin}</td><td>${result.shotsCounted}</td><td>$${result.perPerson}</td><td>$${result.teamTransfer}</td></tr>`;
-  }).join("");
+    lines.push({ __section: true, text: "Player Net Summary" });
 
-  const ledgerRows = playerLedger().map((player) => {
-    const gross = playerGrossScore(player.name);
-    return `<tr><td>${escapeHtml(player.name)}</td><td>${gross == null ? "Score not loaded" : `Shot ${gross}`}</td><td>${player.net >= 0 ? "+" : "-"}$${Math.abs(player.net)}</td><td>${player.lines.length}</td></tr>`;
-  }).join("");
+    if (!ledger.length) {
+      lines.push("No player summary yet.");
+    } else {
+      ledger.forEach((player) => {
+        const gross = playerGrossScore(player.name);
+        lines.push(
+          `${player.name} | Score: ${gross == null ? "Score not loaded" : `Shot ${gross}`} | Net: ${player.net >= 0 ? "+" : "-"}$${Math.abs(player.net)} | Line Items: ${player.lines.length}`
+        );
+      });
+    }
 
-  const html = `
-    <h1>Wheel Best Ball Results</h1>
-    <p><strong>Wheel Team:</strong> ${escapeHtml(state.wheel.filter(Boolean).join(" & ")) || "Not set"}</p>
-    <p><strong>Dollars per shot:</strong> $${Number(state.shotValue) || 0} &nbsp; <strong>Max shots:</strong> ${Number(state.maxShots) || 0}</p>
-    <p><strong>Wheel total:</strong> ${wheelTeamNet() >= 0 ? "+" : "-"}$${Math.abs(wheelTeamNet())}</p>
-    <h2>Matchup Results</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Wheel Team</th>
-          <th>Opponent Team</th>
-          <th>Wheel BB</th>
-          <th>Opp BB</th>
-          <th>Winner</th>
-          <th>Margin</th>
-          <th>Shots Counted</th>
-          <th>Per Person</th>
-          <th>Team Transfer</th>
-        </tr>
-      </thead>
-      <tbody>${resultsRows || `<tr><td colspan="10">No rows</td></tr>`}</tbody>
-    </table>
-    <h2>Player Net Summary</h2>
-    <table>
-      <thead><tr><th>Player</th><th>Score</th><th>Net</th><th>Line Items</th></tr></thead>
-      <tbody>${ledgerRows || `<tr><td colspan="4">No player rows</td></tr>`}</tbody>
-    </table>
-  `;
-
-  exportViaHtml2Pdf("wheel_best_ball_all_results.pdf", html);
+    downloadPdfFromLines(
+      "wheel_best_ball_all_results.pdf",
+      "Wheel Best Ball Results",
+      lines,
+      "landscape"
+    );
+  } catch (error) {
+    console.error(error);
+    alert(`Could not create results PDF: ${error.message}`);
+  }
 }
 
 function exportAllCsv() {
