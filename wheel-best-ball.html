@@ -6,7 +6,7 @@
 <title>Wheel Best Ball</title>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --bg0:#0a1b13;
@@ -731,7 +731,7 @@ tr:nth-child(even) td{ background:#fcfcfd; }
 
 <script>
 window.TOOL_NAME = "Wheel Best Ball";
-window.TOOL_STORAGE_KEYS = ["wheel_best_ball_v16"];
+window.TOOL_STORAGE_KEYS = ["wheel_best_ball_v17"];
 window.HUB_INDEX = "index.html";
 
 (function(){
@@ -762,7 +762,7 @@ window.HUB_INDEX = "index.html";
   }
 })();
 
-const STORAGE_KEY = "wheel_best_ball_v16";
+const STORAGE_KEY = "wheel_best_ball_v17";
 
 const state = {
   names: [],
@@ -1792,8 +1792,15 @@ function render() {
   saveState();
 }
 
+function isIosDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
 function getJsPdfConstructor() {
-  return window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null;
+  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  if (window.jsPDF) return window.jsPDF;
+  return null;
 }
 
 function createPdfDoc(orientation) {
@@ -1801,10 +1808,12 @@ function createPdfDoc(orientation) {
   if (!JsPDF) {
     throw new Error("The PDF library did not load.");
   }
+
   return new JsPDF({
     unit: "pt",
     format: "letter",
-    orientation: orientation || "portrait"
+    orientation: orientation || "portrait",
+    compress: true
   });
 }
 
@@ -1837,6 +1846,48 @@ function pdfWriteWrapped(doc, text, x, y, maxWidth, options) {
 
 function pdfWriteSpacer(doc, y, amount, margin) {
   return pdfEnsureSpace(doc, y + (amount || 8), 0, margin || 40);
+}
+
+function showTemporaryToast(message) {
+  const toast = document.createElement("div");
+  toast.style.position = "fixed";
+  toast.style.left = "12px";
+  toast.style.right = "12px";
+  toast.style.bottom = "12px";
+  toast.style.zIndex = "9999";
+  toast.style.background = "#14532d";
+  toast.style.color = "#ffffff";
+  toast.style.padding = "12px 14px";
+  toast.style.borderRadius = "14px";
+  toast.style.fontSize = "14px";
+  toast.style.fontWeight = "700";
+  toast.style.boxShadow = "0 10px 25px rgba(0,0,0,.25)";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    if (toast.parentNode) toast.parentNode.removeChild(toast);
+  }, 5000);
+}
+
+function savePdfDoc(doc, filename) {
+  if (isIosDevice()) {
+    const blob = doc.output("blob");
+    const blobUrl = URL.createObjectURL(blob);
+    const win = window.open(blobUrl, "_blank");
+
+    if (!win) {
+      window.location.href = blobUrl;
+    }
+
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+    }, 60000);
+
+    showTemporaryToast("Your PDF was opened in a new tab. On iPhone, use Share then Save to Files for a non blank PDF.");
+    return;
+  }
+
+  doc.save(filename);
 }
 
 function downloadPdfFromLines(filename, title, lines, orientation) {
@@ -1877,7 +1928,7 @@ function downloadPdfFromLines(filename, title, lines, orientation) {
     y = pdfWriteSpacer(doc, y, 6, margin);
   });
 
-  doc.save(filename);
+  savePdfDoc(doc, filename);
 }
 
 function exportPlayerPdf(playerName) {
