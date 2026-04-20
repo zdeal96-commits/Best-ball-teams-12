@@ -605,6 +605,1223 @@ function extractPuterText(response){
       return '';
     }).join('\n').trim();
   }
+  if(Array.isArray(response?.choices) && response.choices[0]?.message?.content){
+    return extractPuterText(response.choices[0].message.content);
+  }
+  if(typeof response?.text === 'string') return response.text;
+  return JSON.stringify(response,null,2);
+}
+function stripCodeFence(text){
+  const raw = String(text || '').trim();
+  const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  return match ? match[1].trim() : raw;
+}
+function extractJsonObject(text){
+  const raw = stripCodeFence(text);
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if(start >= 0 && end > start) return raw.slice(start, end + 1);
+  return raw;
+}
+function tryParseJson(text){
+  const attempts = [];
+  const raw = String(text || '').trim();
+  attempts.push(raw);
+  attempts.push(stripCodeFence(raw));
+  attempts.push(extractJsonObject(raw));
+  attempts.push(extractJsonObject(raw).replace(/[“”]/g, '"').replace(/[‘’]/g, "'"));
+  for(const candidate of attempts){
+    try{ return JSON.parse(candidate); }catch(_){ }
+  }
+  return null;
+}
+async function repairJsonWithPuter(rawText){
+  const repairPrompt = [
+    'Convert the following malformed model output into valid JSON only.',
+    'Return only JSON.',
+    'Do not add markdown fences.',
+    'Preserve the same schema keys: bets, questions, notes.',
+    'If a field is unclear, keep a safe empty default instead of inventing values.',
+    'Malformed input:',
+    String(rawText || '').slice(0, 16000)
+  ].join('\n');
+
+  const repairResponse = await puter.ai.chat(repairPrompt, false, false, {
+    model: $('modelSelect').value,
+    temperature: 0,
+    max_tokens: 2500
+  });
+  const repairedText = extractPuterText(repairResponse);
+  const repaired = tryParseJson(repairedText);
+  if(!repaired) throw new Error('AI returned malformed JSON and the repair pass failed.');
+  return { repaired, repairedText };
+}
+function setPreview(id, text){ $(id).textContent = text || 'Nothing to show.'; }
+
+async function loadRoster(){
+  const file = $('rosterInput').files && $('rosterInput').files[0];
+  if(!file){ setStatus('rosterPanel','rosterStatusList','error','Roster',['Choose a roster CSV first.']); return; }
+  try{
+    const text = await fileToText(file);
+    state.rosterPlayers = analyzeRosterCSV(text);
+    setStatus('rosterPanel','rosterStatusList', state.rosterPlayers.length ? 'ok' : 'error', 'Roster', [
+      state.rosterPlayers.length ? `Loaded ${state.rosterPlayers.length} players.` : 'No players found in this roster file.'
+    ]);
+    setPreview('loadedPlayersPreview', state.rosterPlayers.join('\n') || 'No players loaded yet.');
+    saveState(); render();
+  }catch(err){ setStatus('rosterPanel','rosterStatusList','error','Roster',[err.message || 'Could not load roster.']); }
+}
+async function loadScores(){
+  const file = $('scoresInput').files && $('scoresInput').files[0];
+  if(!file){ setStatus('scoresPanel','scoresStatusList','error','Scores',['Choose a completed round CSV first.']); return; }
+  try{
+    const text = await fileToText(file);
+    state.scores = analyzeScoresCSV(text);
+    const scoreNames = Object.keys(state.scores).sort((a,b)=>a.localeCompare(b));
+    state.rosterPlayers = uniqueSortedNames([...(state.rosterPlayers||[]), ...scoreNames]);
+    setStatus('scoresPanel','scoresStatusList', scoreNames.length ? 'ok' : 'error', 'Scores', [
+      scoreNames.length ? `Loaded ${scoreNames.length} completed score row(s).` : 'No completed 18 hole score rows found.'
+    ]);
+    setPreview('loadedScoresPreview', scoreNames.map(name => `${name}: Shot ${playerGrossScore(name)}`).join('\n') || 'No scores loaded yet.');
+    saveState(); render();
+  }catch(err){ setStatus('scoresPanel','scoresStatusList','error','Scores',[err.message || 'Could not load scores.']); }
+}
+function clearRoster(){ state.rosterPlayers = []; saveState(); setStatus('rosterPanel','rosterStatusList','info','Roster',['Roster cleared.']); setPreview('loadedPlayersPreview','No players loaded yet.'); render(); }
+function clearScores(){ state.scores = {}; saveState(); setStatus('scoresPanel','scoresStatusList','info','Scores',['Scores cleared.']); setPreview('loadedScoresPreview','No scores loaded yet.'); render(); }
+function clearBetSheet(){ state.betSheetFile = null; state.ocrText = ''; state.aiNotes = []; state.aiQuestions = []; state.bets = []; $('betSheetInput').value = ''; setPreview('ocrPreview','No OCR text yet.'); setPreview('aiNotesPreview','No AI notes yet.'); $('questionsPreview').textContent = 'No questions yet.'; setStatus('betSheetPanel','betSheetStatusList','info','Bet sheet',['Bet sheet data cleared.']); saveState(); render(); }
+
+function buildPrompt(ocrText){
+  const playerList = state.rosterPlayers.join(', ') || 'None';
+  const aliases = JSON.stringify(state.aliases || {});
+  return [
+    'You are reading OCR text from a handwritten golf bet sheet.',
+    'Return only valid JSON.',
+    'Do not use markdown fences.',
+    'Do not include any explanation before or after the JSON.',
+    'Keep note strings short and plain.',
+    'If a value is unclear, set amount to 0 and add a clarification question.',
+    'Use this exact shape:',
+    '{"bets":[{"title":"string","bet_type":"manual_due|gross_match|best_ball_match|nassau_gross|nassau_best_ball","left_team_raw":["string"],"right_team_raw":["string"],"left_team_players":["string"],"right_team_players":["string"],"amount":0,"amount_unit":"match_total","segments":["overall"],"holes":[],"from_player":"","to_player":"","confidence":0.0,"notes":""}],"questions":[{"id":"q1","question":"string","options":["string"]}],"notes":["string"]}',
+    'Rules:',
+    '1. Resolve abbreviations using the alias map first.',
+    '2. If unsure, ask a question instead of guessing.',
+    '3. Only use manual_due when the sheet clearly says one player owes another player a fixed amount.',
+    '4. Use segments front, back, overall for nassau style bets.',
+    '5. Keep both raw team names and resolved full player names.',
+    '6. Do not invent bets that are not present in the OCR text.',
+    '7. Escape all quotes inside JSON strings properly.',
+    `Players: ${playerList}`,
+    `Alias map: ${aliases}`,
+    'OCR text:',
+    String(ocrText || '').slice(0, 12000)
+  ].join('\n');
+}
+async function runOCR(){
+  const file = $('betSheetInput').files && $('betSheetInput').files[0];
+  if(!file){ setStatus('betSheetPanel','betSheetStatusList','error','Bet sheet',['Choose a bet sheet image first.']); return; }
+  parseAliases();
+  try{
+    await ensurePuterSession('OCR', { guestPreferred: true });
+    setStatus('betSheetPanel','betSheetStatusList','info','Bet sheet',['Running OCR on the image. If Puter needs authentication, it should prompt from this action.']);
+    state.betSheetFile = file;
+    const text = await puter.ai.img2txt(file, { provider: 'aws-textract' });
+    state.ocrText = typeof text === 'string' ? text : extractPuterText(text);
+    setPreview('ocrPreview', state.ocrText || 'OCR returned no text.');
+    setStatus('betSheetPanel','betSheetStatusList','ok','Bet sheet',['OCR completed. You can now run AI analysis.']);
+    saveState(); render();
+  }catch(err){ setStatus('betSheetPanel','betSheetStatusList','error','Bet sheet',[err.message || 'OCR failed.']); }
+}
+async function analyzeBetSheet(){
+  const file = $('betSheetInput').files && $('betSheetInput').files[0];
+  if(!file){ setStatus('betSheetPanel','betSheetStatusList','error','Bet sheet',['Choose a bet sheet image first.']); return; }
+  parseAliases();
+  try{
+    await ensurePuterSession('AI analysis', { guestPreferred: true });
+    state.betSheetFile = file;
+
+    if(!state.ocrText){
+      setStatus('betSheetPanel','betSheetStatusList','info','Bet sheet',['No OCR text found yet. Running OCR first so AI can analyze text instead of the raw image.']);
+      const ocrResponse = await puter.ai.img2txt(file, { provider: 'aws-textract' });
+      state.ocrText = typeof ocrResponse === 'string' ? ocrResponse : extractPuterText(ocrResponse);
+      setPreview('ocrPreview', state.ocrText || 'OCR returned no text.');
+    }
+
+    setStatus('betSheetPanel','betSheetStatusList','info','Bet sheet',['Sending OCR text to Puter AI for structured analysis.']);
+    const prompt = buildPrompt(state.ocrText);
+    const response = await puter.ai.chat(prompt, false, false, {
+      model: $('modelSelect').value,
+      temperature: 0,
+      max_tokens: 2500
+    });
+    const rawText = extractPuterText(response);
+    let parsed = tryParseJson(rawText);
+    let repairedUsed = false;
+
+    if(!parsed){
+      const repairedResult = await repairJsonWithPuter(rawText);
+      parsed = repairedResult.repaired;
+      repairedUsed = true;
+    }
+
+    state.aiNotes = Array.isArray(parsed.notes) ? parsed.notes : [];
+    if(repairedUsed) state.aiNotes.unshift('The first AI reply was malformed JSON, so the app ran an automatic repair pass.');
+    state.aiQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
+    state.bets = (Array.isArray(parsed.bets) ? parsed.bets : []).map((bet, index) => normalizeBet(bet, index));
+    setPreview('aiNotesPreview', state.aiNotes.join('\n') || 'No AI notes.');
+    $('questionsPreview').textContent = state.aiQuestions.length ? state.aiQuestions.map(q => `- ${q.question}${q.options && q.options.length ? ` | Options: ${q.options.join(', ')}` : ''}`).join('\n') : 'No questions yet.';
+    setStatus('betSheetPanel','betSheetStatusList', state.bets.length ? 'ok' : 'warn', 'Bet sheet', [
+      state.bets.length ? `Loaded ${state.bets.length} bet(s) from Puter AI.` : 'The AI returned no bets.',
+      state.aiQuestions.length ? `${state.aiQuestions.length} clarification question(s) need review.` : 'No clarification questions from the AI.',
+      repairedUsed ? 'A malformed JSON response was repaired automatically.' : 'JSON came back clean on the first pass.'
+    ]);
+    saveState(); render();
+  }catch(err){
+    console.error(err);
+    setPreview('aiNotesPreview', 'Raw AI output could not be turned into valid JSON. Try OCR first, then Analyze again.');
+    setStatus('betSheetPanel','betSheetStatusList','error','Bet sheet',[err.message || 'AI analysis failed.']);
+  }
+}
+function normalizeBet(rawBet, index){
+  const type = ['manual_due','gross_match','best_ball_match','nassau_gross','nassau_best_ball'].includes(rawBet?.bet_type) ? rawBet.bet_type : 'manual_due';
+  const leftTeamRaw = Array.isArray(rawBet?.left_team_raw) ? rawBet.left_team_raw.map(normalizeSpace).filter(Boolean) : [];
+  const rightTeamRaw = Array.isArray(rawBet?.right_team_raw) ? rawBet.right_team_raw.map(normalizeSpace).filter(Boolean) : [];
+  const leftTeamPlayers = Array.isArray(rawBet?.left_team_players) && rawBet.left_team_players.length ? rawBet.left_team_players.map(resolveAlias).filter(Boolean) : leftTeamRaw.map(resolveAlias).filter(Boolean);
+  const rightTeamPlayers = Array.isArray(rawBet?.right_team_players) && rawBet.right_team_players.length ? rawBet.right_team_players.map(resolveAlias).filter(Boolean) : rightTeamRaw.map(resolveAlias).filter(Boolean);
+  return {
+    id: rawBet?.id || `bet-${Date.now()}-${index}`,
+    title: normalizeSpace(rawBet?.title || `${type.replaceAll('_',' ')} ${index + 1}`),
+    bet_type: type,
+    left_team_raw: leftTeamRaw,
+    right_team_raw: rightTeamRaw,
+    left_team_players: leftTeamPlayers,
+    right_team_players: rightTeamPlayers,
+    amount: Number(rawBet?.amount || 0),
+    amount_unit: normalizeSpace(rawBet?.amount_unit || 'match_total'),
+    segments: Array.isArray(rawBet?.segments) && rawBet.segments.length ? rawBet.segments.map(normalizeSpace) : ['overall'],
+    holes: Array.isArray(rawBet?.holes) ? rawBet.holes.map(v => Number(v)).filter(v => v >= 1 && v <= 18) : [],
+    from_player: normalizeName(rawBet?.from_player || ''),
+    to_player: normalizeName(rawBet?.to_player || ''),
+    confidence: Math.max(0, Math.min(1, Number(rawBet?.confidence ?? 0.5))),
+    notes: normalizeSpace(rawBet?.notes || '')
+  };
+}
+function addBetTemplate(type){
+  const idx = state.bets.length + 1;
+  state.bets.push(normalizeBet({
+    title: `${type.replaceAll('_',' ')} ${idx}`,
+    bet_type: type,
+    left_team_raw: [],
+    right_team_raw: [],
+    left_team_players: [],
+    right_team_players: [],
+    amount: 0,
+    amount_unit: 'match_total',
+    segments: type.startsWith('nassau') ? ['front','back','overall'] : ['overall'],
+    confidence: 1,
+    notes: 'Added manually.'
+  }, idx));
+  saveState(); render();
+}
+function renderBets(){
+  const tbody = $('betsTbody');
+  if(!state.bets.length){
+    tbody.innerHTML = `<tr><td colspan="10">No bets loaded yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.bets.map((bet, index) => {
+    const playerOptions = state.rosterPlayers.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+    const typeOptions = ['manual_due','gross_match','best_ball_match','nassau_gross','nassau_best_ball'].map(type => `<option value="${type}" ${bet.bet_type === type ? 'selected' : ''}>${type}</option>`).join('');
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td><input class="input bet-title" data-index="${index}" value="${escapeHtml(bet.title)}"></td>
+        <td><select class="select bet-type" data-index="${index}">${typeOptions}</select></td>
+        <td>
+          <textarea class="textarea bet-left" data-index="${index}" style="min-height:90px;">${escapeHtml(bet.left_team_players.join('\n'))}</textarea>
+          <div class="tiny">Raw: ${escapeHtml((bet.left_team_raw || []).join(', ')) || 'none'}</div>
+        </td>
+        <td>
+          <textarea class="textarea bet-right" data-index="${index}" style="min-height:90px;">${escapeHtml(bet.right_team_players.join('\n'))}</textarea>
+          <div class="tiny">Raw: ${escapeHtml((bet.right_team_raw || []).join(', ')) || 'none'}</div>
+        </td>
+        <td>
+          <input class="input bet-amount" data-index="${index}" type="number" step="0.01" value="${Number(bet.amount || 0)}">
+          <div class="tiny">${escapeHtml(bet.amount_unit || 'match_total')}</div>
+        </td>
+        <td><input class="input bet-segments" data-index="${index}" value="${escapeHtml((bet.segments || []).join(','))}"><div class="tiny">Use front, back, overall or 1-6-12 custom in notes.</div></td>
+        <td><input class="input bet-confidence" data-index="${index}" type="number" min="0" max="1" step="0.01" value="${bet.confidence}"></td>
+        <td><textarea class="textarea bet-notes" data-index="${index}" style="min-height:90px;">${escapeHtml(bet.notes || '')}</textarea></td>
+        <td><button class="btn btnRed delete-bet" type="button" data-index="${index}">Delete</button></td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('.bet-title').forEach(el => el.addEventListener('input', e => { state.bets[Number(e.target.dataset.index)].title = e.target.value; saveState(); }));
+  tbody.querySelectorAll('.bet-type').forEach(el => el.addEventListener('change', e => { state.bets[Number(e.target.dataset.index)].bet_type = e.target.value; saveState(); }));
+  tbody.querySelectorAll('.bet-left').forEach(el => el.addEventListener('input', e => { state.bets[Number(e.target.dataset.index)].left_team_players = uniqueSortedNames(e.target.value.split(/\r?\n|,/).map(resolveAlias)); saveState(); }));
+  tbody.querySelectorAll('.bet-right').forEach(el => el.addEventListener('input', e => { state.bets[Number(e.target.dataset.index)].right_team_players = uniqueSortedNames(e.target.value.split(/\r?\n|,/).map(resolveAlias)); saveState(); }));
+  tbody.querySelectorAll('.bet-amount').forEach(el => el.addEventListener('input', e => { state.bets[Number(e.target.dataset.index)].amount = Number(e.target.value || 0); saveState(); }));
+  tbody.querySelectorAll('.bet-segments').forEach(el => el.addEventListener('input', e => { state.bets[Number(e.target.dataset.index)].segments = e.target.value.split(',').map(normalizeSpace).filter(Boolean); saveState(); }));
+  tbody.querySelectorAll('.bet-confidence').forEach(el => el.addEventListener('input', e => { state.bets[Number(e.target.dataset.index)].confidence = Math.max(0, Math.min(1, Number(e.target.value || 0))); saveState(); }));
+  tbody.querySelectorAll('.bet-notes').forEach(el => el.addEventListener('input', e => { state.bets[Number(e.target.dataset.index)].notes = e.target.value; saveState(); }));
+  tbody.querySelectorAll('.delete-bet').forEach(el => el.addEventListener('click', e => { state.bets.splice(Number(e.target.dataset.index), 1); saveState(); render(); }));
+}
+
+function holesForSegment(segment){
+  const s = normalizeSpace(segment).toLowerCase();
+  if(s === 'front') return [1,2,3,4,5,6,7,8,9];
+  if(s === 'back') return [10,11,12,13,14,15,16,17,18];
+  if(s === 'overall' || !s) return [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
+  return s.split(/[^0-9]+/).map(n => Number(n)).filter(n => n >= 1 && n <= 18);
+}
+function teamGross(teamPlayers, holes){
+  return (teamPlayers || []).reduce((sum, player) => {
+    const strokes = state.scores[player];
+    if(!strokes) return sum;
+    return sum + holes.reduce((holeSum, h) => holeSum + (Number(strokes[h - 1]) || 0), 0);
+  }, 0);
+}
+function teamBestBall(teamPlayers, holes){
+  if(!(teamPlayers || []).length) return null;
+  return holes.reduce((sum, hole) => {
+    const values = teamPlayers.map(player => state.scores[player] ? state.scores[player][hole - 1] : null).filter(v => v != null);
+    if(!values.length) return sum;
+    return sum + Math.min(...values.map(v => Number(v) || 0));
+  }, 0);
+}
+function teamNames(team){ return (team || []).join(' & '); }
+function addTransfer(lines, ledger, from, to, amount, sourceTitle, reason){
+  amount = Number(amount || 0);
+  if(amount <= 0 || !from || !to) return;
+  lines.push({ from, to, amount, sourceTitle, reason });
+  if(!ledger[from]) ledger[from] = { name: from, net: 0, lines: [] };
+  if(!ledger[to]) ledger[to] = { name: to, net: 0, lines: [] };
+  ledger[from].net -= amount;
+  ledger[to].net += amount;
+  ledger[from].lines.push(`${sourceTitle}: paid ${to} $${amount.toFixed(2).replace(/\.00$/,'')}. ${reason}`);
+  ledger[to].lines.push(`${sourceTitle}: collected $${amount.toFixed(2).replace(/\.00$/,'')} from ${from}. ${reason}`);
+}
+function allocateTeamTransfer(lines, ledger, losers, winners, teamAmount, sourceTitle, reason){
+  const mode = $('teamBetMode').value;
+  const cleanLosers = (losers || []).filter(Boolean);
+  const cleanWinners = (winners || []).filter(Boolean);
+  const amount = Number(teamAmount || 0);
+  if(!cleanLosers.length || !cleanWinners.length || amount <= 0) return;
+  if(mode === 'pairwise_same_size' && cleanLosers.length === cleanWinners.length){
+    const perPair = amount / cleanLosers.length;
+    cleanLosers.forEach((loser, idx) => addTransfer(lines, ledger, loser, cleanWinners[idx], perPair, sourceTitle, reason));
+    return;
+  }
+  const perPair = amount / (cleanLosers.length * cleanWinners.length);
+  cleanLosers.forEach(loser => cleanWinners.forEach(winner => addTransfer(lines, ledger, loser, winner, perPair, sourceTitle, reason)));
+}
+function calculateSettlements(){
+  const settlementRows = [];
+  const ledger = {};
+  state.rosterPlayers.forEach(name => { ledger[name] = { name, net: 0, lines: [] }; });
+  const unsupported = [];
+
+  state.bets.forEach((bet, index) => {
+    const title = bet.title || `Bet ${index + 1}`;
+    const amount = Number(bet.amount || 0);
+    const left = uniqueSortedNames(bet.left_team_players || []);
+    const right = uniqueSortedNames(bet.right_team_players || []);
+
+    if(bet.bet_type === 'manual_due'){
+      const from = bet.from_player || left[0] || '';
+      const to = bet.to_player || right[0] || '';
+      if(from && to && amount > 0){
+        addTransfer(settlementRows, ledger, from, to, amount, title, bet.notes || 'Manual due bet.');
+        settlementRows.push({ bet: title, winner: to, transfer: `$${amount.toFixed(2).replace(/\.00$/,'')}`, explanation: `${from} pays ${to} $${amount.toFixed(2).replace(/\.00$/,'')}.` });
+      }else{
+        settlementRows.push({ bet: title, winner: 'Needs review', transfer: '-', explanation: 'Manual due bet is missing from, to, or amount.' });
+      }
+      return;
+    }
+
+    const segments = (bet.segments && bet.segments.length ? bet.segments : ['overall']).map(normalizeSpace).filter(Boolean);
+    if(!left.length || !right.length || amount <= 0){
+      settlementRows.push({ bet: title, winner: 'Needs review', transfer: '-', explanation: 'This bet is missing players or amount.' });
+      return;
+    }
+
+    segments.forEach(segment => {
+      const holes = holesForSegment(segment);
+      if(!holes.length){
+        settlementRows.push({ bet: title, winner: 'Needs review', transfer: '-', explanation: `Segment ${segment} could not be read.` });
+        return;
+      }
+      let leftScore = null;
+      let rightScore = null;
+      let metricLabel = '';
+      if(bet.bet_type === 'gross_match' || bet.bet_type === 'nassau_gross'){
+        leftScore = teamGross(left, holes);
+        rightScore = teamGross(right, holes);
+        metricLabel = 'gross';
+      }else if(bet.bet_type === 'best_ball_match' || bet.bet_type === 'nassau_best_ball'){
+        leftScore = teamBestBall(left, holes);
+        rightScore = teamBestBall(right, holes);
+        metricLabel = 'best ball';
+      }else{
+        unsupported.push(title);
+        settlementRows.push({ bet: title, winner: 'Unsupported', transfer: '-', explanation: `Automatic scoring is not supported for ${bet.bet_type}. Convert it to a manual due bet.` });
+        return;
+      }
+
+      if(leftScore == null || rightScore == null){
+        settlementRows.push({ bet: `${title} (${segment})`, winner: 'Needs scores', transfer: '-', explanation: 'One or more players are missing completed scores.' });
+        return;
+      }
+      if(leftScore === rightScore){
+        settlementRows.push({ bet: `${title} (${segment})`, winner: 'Push', transfer: '$0', explanation: `Push. Left ${metricLabel}: ${leftScore}. Right ${metricLabel}: ${rightScore}.` });
+        return;
+      }
+      const winnerTeam = leftScore < rightScore ? left : right;
+      const loserTeam = leftScore < rightScore ? right : left;
+      const winnerName = teamNames(winnerTeam);
+      allocateTeamTransfer(settlementRows, ledger, loserTeam, winnerTeam, amount, `${title} (${segment})`, `${metricLabel} result ${leftScore} to ${rightScore}.`);
+      settlementRows.push({
+        bet: `${title} (${segment})`,
+        winner: winnerName,
+        transfer: `$${amount.toFixed(2).replace(/\.00$/,'')}`,
+        explanation: `Left ${metricLabel}: ${leftScore}. Right ${metricLabel}: ${rightScore}. Team amount $${amount.toFixed(2).replace(/\.00$/,'')} moved to ${winnerName}.`
+      });
+    });
+  });
+
+  state.settlements = settlementRows;
+  state.playerLedgers = Object.values(ledger).filter(entry => entry.lines.length || state.rosterPlayers.includes(entry.name)).sort((a,b)=>a.name.localeCompare(b.name));
+
+  const messages = [];
+  if(settlementRows.length) messages.push(`Calculated ${settlementRows.length} settlement row(s).`);
+  if(unsupported.length) messages.push(`Unsupported auto bet type rows: ${[...new Set(unsupported)].join(', ')}`);
+  setStatus('calcPanel','calcStatusList', unsupported.length ? 'warn' : 'ok', 'Calculation', messages.length ? messages : ['No settlement rows created.']);
+  saveState(); render();
+}
+
+function renderSettlements(){
+  const tbody = $('settlementTbody');
+  if(!state.settlements.length){ tbody.innerHTML = `<tr><td colspan="5">No settlements yet.</td></tr>`; return; }
+  tbody.innerHTML = state.settlements.map((row, index) => `
+    <tr>
+      <td>${index + 1}</td>
+      <td>${escapeHtml(row.bet)}</td>
+      <td>${escapeHtml(row.winner)}</td>
+      <td>${escapeHtml(row.transfer)}</td>
+      <td>${escapeHtml(row.explanation)}</td>
+    </tr>
+  `).join('');
+}
+function renderPlayers(){
+  const wrap = $('playerBreakdownList');
+  if(!state.playerLedgers.length){ wrap.innerHTML = `<div class="pill pillMuted">No player breakdowns yet</div>`; return; }
+  wrap.innerHTML = state.playerLedgers.map(player => {
+    const gross = playerGrossScore(player.name);
+    return `
+      <div class="playerCard">
+        <div class="playerHead">
+          <div>
+            <h3 class="playerName">${escapeHtml(player.name)}</h3>
+            <div class="pillWrap">
+              <span class="chip">${gross == null ? 'Score not loaded' : `Shot ${gross}`}</span>
+              <span class="chip">${player.lines.length} line item(s)</span>
+            </div>
+          </div>
+          <div class="playerNet ${player.net >= 0 ? 'gain' : 'loss'}">${friendlyMoney(player.net)}</div>
+        </div>
+        <div class="btnRow" style="margin-bottom:10px;"><button class="btn btnBlue export-player" type="button" data-name="${escapeHtml(player.name)}">Download ${escapeHtml(player.name)} PDF</button></div>
+        <div class="breakdownList">
+          ${player.lines.length ? player.lines.map((line, i) => `<div class="breakdownItem"><div class="breakdownIndex">${i + 1}</div><div class="breakdownText">${escapeHtml(line)}</div></div>`).join('') : `<div class="breakdownItem"><div class="breakdownIndex">1</div><div class="breakdownText">No settled lines yet.</div></div>`}
+        </div>
+      </div>
+    `;
+  }).join('');
+  wrap.querySelectorAll('.export-player').forEach(btn => btn.addEventListener('click', () => exportPlayerPdf(btn.dataset.name)));
+}
+function playerGrossScore(name){
+  const strokes = state.scores && state.scores[name];
+  if(!Array.isArray(strokes) || strokes.length !== 18) return null;
+  return strokes.reduce((sum, value) => sum + (Number(value) || 0), 0);
+}
+
+function getJsPDF(){ return window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null; }
+function makeDoc(orientation){ const JsPDF = getJsPDF(); if(!JsPDF) throw new Error('jsPDF did not load.'); return new JsPDF({ unit: 'pt', format: 'letter', orientation: orientation || 'portrait' }); }
+function isIos(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function savePdfDoc(doc, filename){
+  if(isIos()){
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if(!win) window.location.href = url;
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    showToast('Your PDF opened in a new tab. On iPhone, use Share then Save to Files.');
+    return;
+  }
+  doc.save(filename);
+}
+function showToast(message){
+  const toast = document.createElement('div');
+  toast.style.position='fixed';toast.style.left='12px';toast.style.right='12px';toast.style.bottom='12px';toast.style.zIndex='9999';toast.style.background='#14532d';toast.style.color='#fff';toast.style.padding='12px 14px';toast.style.borderRadius='14px';toast.style.fontSize='14px';toast.style.fontWeight='700';toast.style.boxShadow='0 10px 25px rgba(0,0,0,.25)';toast.textContent=message;document.body.appendChild(toast);setTimeout(()=>toast.remove(),5000);
+}
+function pdfText(doc, text, x, y, width, options){
+  const opts = options || {}; const lines = Array.isArray(text) ? text : doc.splitTextToSize(String(text ?? ''), width);
+  const fontSize = opts.fontSize || 11; const lineHeight = opts.lineHeight || Math.ceil(fontSize * 1.45);
+  doc.setFont('helvetica', opts.fontStyle || 'normal'); doc.setFontSize(fontSize);
+  if(opts.color) doc.setTextColor(...opts.color); else doc.setTextColor(17,24,39);
+  lines.forEach(line => { if(y > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; } doc.text(String(line), x, y); y += lineHeight; });
+  return y;
+}
+function pdfHeader(doc, title, subtitle){
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 56; const width = pageWidth - (margin * 2); let y = 70;
+  doc.setFillColor(240,253,244); doc.setDrawColor(187,247,208); doc.roundedRect(margin, 42, width, 82, 16, 16, 'FD');
+  y = pdfText(doc, title, margin + 16, y, width - 32, { fontSize: 20, lineHeight: 24, fontStyle: 'bold', color: [20,83,45] });
+  y = pdfText(doc, subtitle, margin + 16, y, width - 32, { fontSize: 10, lineHeight: 14, color: [71,85,105] });
+  return y + 8;
+}
+function pdfCard(doc, x, y, width, title, value){
+  const titleLines = doc.splitTextToSize(String(title || ''), width - 24);
+  const valueLines = doc.splitTextToSize(String(value || ''), width - 24);
+  const height = 22 + (titleLines.length * 12) + (valueLines.length * 16) + 18;
+  if(y + height > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
+  doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240); doc.roundedRect(x, y, width, height, 12, 12, 'FD');
+  let ty = y + 18;
+  ty = pdfText(doc, titleLines, x + 12, ty, width - 24, { fontSize: 10, lineHeight: 12, fontStyle: 'bold', color: [71,85,105] });
+  pdfText(doc, valueLines, x + 12, ty + 2, width - 24, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] });
+  return y + height;
+}
+function exportPlayerPdf(playerName){
+  const player = state.playerLedgers.find(p => p.name === playerName); if(!player) return;
+  const doc = makeDoc('portrait'); const margin = 56; const pageWidth = doc.internal.pageSize.getWidth(); const usable = pageWidth - (margin * 2);
+  let y = pdfHeader(doc, `${playerName} Settlement Sheet`, [
+    playerGrossScore(playerName) == null ? 'Round score not loaded' : `Round score: Shot ${playerGrossScore(playerName)}`,
+    `Net result: ${friendlyMoney(player.net)}`
+  ]);
+  const cardWidth = (usable - 14) / 2;
+  const row1 = y; const h1 = pdfCard(doc, margin, row1, cardWidth, 'Player', playerName); const h2 = pdfCard(doc, margin + cardWidth + 14, row1, cardWidth, 'Net Total', friendlyMoney(player.net)); y = Math.max(h1,h2) + 10;
+  const h3 = pdfCard(doc, margin, y, cardWidth, 'Score', playerGrossScore(playerName) == null ? 'Score not loaded' : `Shot ${playerGrossScore(playerName)}`); const h4 = pdfCard(doc, margin + cardWidth + 14, y, cardWidth, 'Line Items', String(player.lines.length)); y = Math.max(h3,h4) + 16;
+  y = pdfText(doc, 'Breakdown', margin, y, usable, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] });
+  doc.setDrawColor(209,213,219); doc.line(margin, y, margin + usable, y); y += 16;
+  if(!player.lines.length){ y = pdfText(doc, 'No settled lines yet.', margin, y, usable, { fontSize: 11, lineHeight: 16 }); }
+  else player.lines.forEach((line, idx) => {
+    const blockHeight = 40 + doc.splitTextToSize(line, usable - 24).length * 14;
+    if(y + blockHeight > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
+    doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240); doc.roundedRect(margin, y, usable, blockHeight, 12, 12, 'FD');
+    let ty = y + 18;
+    ty = pdfText(doc, `Line ${idx + 1}`, margin + 12, ty, usable - 24, { fontSize: 10, lineHeight: 12, fontStyle: 'bold', color: [71,85,105] });
+    pdfText(doc, line, margin + 12, ty + 2, usable - 24, { fontSize: 11, lineHeight: 16 });
+    y += blockHeight + 10;
+  });
+  savePdfDoc(doc, `${playerName.replace(/\s+/g,'_')}_bet_sheet_settlement.pdf`);
+}
+function exportAllPdf(){
+  const doc = makeDoc('portrait'); const margin = 56; const pageWidth = doc.internal.pageSize.getWidth(); const usable = pageWidth - (margin * 2);
+  let y = pdfHeader(doc, 'Golf Bet Sheet Settlement Report', [
+    `Players loaded: ${state.rosterPlayers.length}    Finished scores: ${Object.keys(state.scores).length}`,
+    `Bets loaded: ${state.bets.length}    Settlement rows: ${state.settlements.length}`
+  ]);
+  const cardWidth = (usable - 14) / 2;
+  const h1 = pdfCard(doc, margin, y, cardWidth, 'Team Bet Style', $('teamBetMode').selectedOptions[0].textContent); const h2 = pdfCard(doc, margin + cardWidth + 14, y, cardWidth, 'AI Notes', state.aiNotes.length ? state.aiNotes.join(' | ') : 'No AI notes'); y = Math.max(h1,h2) + 16;
+  y = pdfText(doc, 'Settlement Rows', margin, y, usable, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] }); doc.setDrawColor(209,213,219); doc.line(margin, y, margin + usable, y); y += 16;
+  if(!state.settlements.length){ y = pdfText(doc, 'No settlement rows yet.', margin, y, usable, { fontSize: 11, lineHeight: 16 }); }
+  else state.settlements.forEach((row, idx) => {
+    const content = [`Winner: ${row.winner}`, `Transfer: ${row.transfer}`, row.explanation].join('\n');
+    const blockHeight = 44 + doc.splitTextToSize(content, usable - 24).length * 14;
+    if(y + blockHeight > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
+    doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240); doc.roundedRect(margin, y, usable, blockHeight, 12, 12, 'FD');
+    let ty = y + 18;
+    ty = pdfText(doc, `Settlement ${idx + 1}: ${row.bet}`, margin + 12, ty, usable - 24, { fontSize: 11, lineHeight: 14, fontStyle: 'bold', color: [20,83,45] });
+    pdfText(doc, content, margin + 12, ty + 2, usable - 24, { fontSize: 10, lineHeight: 15 });
+    y += blockHeight + 10;
+  });
+  y += 6;
+  y = pdfText(doc, 'Player Net Summary', margin, y, usable, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] }); doc.setDrawColor(209,213,219); doc.line(margin, y, margin + usable, y); y += 16;
+  state.playerLedgers.forEach(player => {
+    const content = `Score: ${playerGrossScore(player.name) == null ? 'Score not loaded' : `Shot ${playerGrossScore(player.name)}`}    Net: ${friendlyMoney(player.net)}    Line Items: ${player.lines.length}`;
+    const blockHeight = 42;
+    if(y + blockHeight > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
+    doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240); doc.roundedRect(margin, y, usable, blockHeight, 12, 12, 'FD');
+    let ty = y + 18;
+    ty = pdfText(doc, player.name, margin + 12, ty, usable - 24, { fontSize: 11, lineHeight: 14, fontStyle: 'bold', color: [20,83,45] });
+    pdfText(doc, content, margin + 12, ty + 1, usable - 24, { fontSize: 10, lineHeight: 14 });
+    y += blockHeight + 8;
+  });
+  savePdfDoc(doc, 'golf_bet_sheet_full_report.pdf');
+}
+function exportAllCsv(){
+  const rows = [];
+  rows.push(['Players Loaded', state.rosterPlayers.join(' | ')]);
+  rows.push(['AI Notes', state.aiNotes.join(' | ')]);
+  rows.push([]);
+  rows.push(['Settlement #','Bet','Winner','Transfer','Explanation']);
+  state.settlements.forEach((row, idx) => rows.push([idx + 1, row.bet, row.winner, row.transfer, row.explanation]));
+  rows.push([]);
+  rows.push(['Player','Score','Net','Line Items']);
+  state.playerLedgers.forEach(player => rows.push([player.name, playerGrossScore(player.name) == null ? '' : playerGrossScore(player.name), player.net, player.lines.length]));
+  const esc = v => { const s = String(v ?? ''); return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const csv = rows.map(r => r.map(esc).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'golf_bet_sheet_settlements.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function render(){
+  parseAliases();
+  updateSummary();
+  renderBets();
+  renderSettlements();
+  renderPlayers();
+  $('questionsPreview').textContent = state.aiQuestions.length ? state.aiQuestions.map(q => `- ${q.question}${q.options && q.options.length ? ` | Options: ${q.options.join(', ')}` : ''}`).join('\n') : 'No questions yet.';
+  setPreview('ocrPreview', state.ocrText || 'No OCR text yet.');
+  setPreview('aiNotesPreview', state.aiNotes.join('\n') || 'No AI notes yet.');
+  setPreview('loadedPlayersPreview', state.rosterPlayers.join('\n') || 'No players loaded yet.');
+  const scoreNames = Object.keys(state.scores || {}).sort((a,b)=>a.localeCompare(b));
+  setPreview('loadedScoresPreview', scoreNames.map(name => `${name}: Shot ${playerGrossScore(name)}`).join('\n') || 'No scores loaded yet.');
+}
+
+$('signInBtn').addEventListener('click', async () => {
+  try{
+    await ensurePuterSession('Continue with Puter', { guestPreferred: false });
+  }catch(err){
+    setStatus('authPanel','authStatusList','warn','Authentication', authStatusLines([err.message || 'Sign in did not finish. Open this page from http://localhost and allow popups for Puter.','Try Continue as Guest instead.']));
+  }
+});
+$('guestSignInBtn').addEventListener('click', async () => {
+  try{
+    await ensurePuterSession('Continue as Guest', { guestPreferred: true });
+  }catch(err){
+    setStatus('authPanel','authStatusList','warn','Authentication', authStatusLines([err.message || 'Guest sign in did not finish. Open this page from http://localhost and allow popups for Puter.','If this page is opened from Files on iPhone, try hosting it on GitHub Pages and open it from Safari.']));
+  }
+});
+$('refreshAuthBtn').addEventListener('click', refreshAuthStatus);
+$('signOutBtn').addEventListener('click', async () => { try{ await Promise.resolve(puter.auth.signOut()); await refreshAuthStatus(); }catch(err){ setStatus('authPanel','authStatusList','error','Authentication',[err.message || 'Could not sign out.']); } });
+$('loadRosterBtn').addEventListener('click', loadRoster);
+$('loadScoresBtn').addEventListener('click', loadScores);
+$('clearRosterBtn').addEventListener('click', clearRoster);
+$('clearScoresBtn').addEventListener('click', clearScores);
+$('ocrBtn').addEventListener('click', runOCR);
+$('analyzeBetSheetBtn').addEventListener('click', analyzeBetSheet);
+$('clearBetSheetBtn').addEventListener('click', clearBetSheet);
+$('addManualDueBtn').addEventListener('click', () => addBetTemplate('manual_due'));
+$('addGrossMatchBtn').addEventListener('click', () => addBetTemplate('gross_match'));
+$('addBestBallBtn').addEventListener('click', () => addBetTemplate('best_ball_match'));
+$('addNassauBtn').addEventListener('click', () => addBetTemplate('nassau_best_ball'));
+$('calcBtn').addEventListener('click', calculateSettlements);
+$('exportAllPdfBtn').addEventListener('click', exportAllPdf);
+$('exportAllCsvBtn').addEventListener('click', exportAllCsv);
+
+loadState();
+render();
+refreshAuthStatus();
+</script>
+</body>
+</html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Golf Bet Sheet AI with Puter</title>
+  <script src="https://js.puter.com/v2/"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root{
+      --bg0:#0a1b13;
+      --bg1:#113021;
+      --card:#ffffff;
+      --line:#e5e7eb;
+      --text:#111827;
+      --muted:#64748b;
+      --green1:#14532d;
+      --green2:#166534;
+      --green3:#22c55e;
+      --blue1:#2563eb;
+      --blue2:#38bdf8;
+      --warn:#92400e;
+      --warnBg:#fffbeb;
+      --warnBorder:#fde68a;
+      --bad:#991b1b;
+      --badBg:#fef2f2;
+      --badBorder:#fecaca;
+      --ok:#166534;
+      --okBg:#f0fdf4;
+      --okBorder:#bbf7d0;
+      --info:#1d4ed8;
+      --infoBg:#eff6ff;
+      --infoBorder:#bfdbfe;
+      --shadow:0 14px 45px rgba(0,0,0,.20);
+    }
+    *{box-sizing:border-box}
+    html,body{max-width:100%;overflow-x:hidden}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family:-apple-system,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #08140e);
+    }
+    .wrap{width:100%;max-width:1200px;margin:0 auto;padding:16px}
+    .hero{
+      background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.10));
+      border:1px solid rgba(255,255,255,.22);
+      border-radius:24px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      margin-bottom:16px;
+      backdrop-filter:blur(10px);
+      color:#eaf5ef;
+    }
+    .hero h1{margin:0 0 8px;font-size:30px;font-weight:950}
+    .hero p{margin:0;color:#d9f5e4;line-height:1.45;font-size:14px;max-width:900px}
+    .summaryGrid,.grid2,.grid3,.grid4{display:grid;grid-template-columns:1fr;gap:12px}
+    .card,.summaryCard{
+      background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:20px;
+      box-shadow:0 10px 28px rgba(0,0,0,.08)
+    }
+    .card{padding:18px;margin-bottom:16px}
+    .summaryCard{padding:16px}
+    .summaryLabel{font-size:12px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+    .summaryValue{margin-top:6px;font-size:28px;font-weight:950;color:var(--green2)}
+    .sectionTitle{margin:0 0 6px;font-size:22px;font-weight:950;color:var(--green1)}
+    .sectionSub{color:var(--muted);font-size:14px;line-height:1.45;margin-bottom:14px}
+    .field label{display:block;font-size:13px;font-weight:800;color:#374151;margin-bottom:6px}
+    .input,.select,.textarea{
+      width:100%;border:1px solid #d1d5db;border-radius:14px;padding:12px;background:#fff;font-size:15px
+    }
+    .textarea{min-height:120px;resize:vertical;font-family:inherit}
+    .btnRow{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{
+      border:0;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:950;cursor:pointer;white-space:nowrap
+    }
+    .btnGreen{background:linear-gradient(135deg,var(--green2),var(--green3));color:#fff}
+    .btnBlue{background:linear-gradient(135deg,var(--blue1),var(--blue2));color:#fff}
+    .btnGray{background:linear-gradient(135deg,#6b7280,#9ca3af);color:#fff}
+    .btnRed{background:linear-gradient(135deg,#ef4444,#f87171);color:#fff}
+    .pillWrap{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#dcfce7;color:#166534;font-size:12px;font-weight:800;border:1px solid #bbf7d0}
+    .pillMuted{background:#f3f4f6;color:#4b5563;border:1px solid #e5e7eb}
+    .statusPanel{margin-top:12px;border-radius:16px;padding:12px 14px;border:1px solid #d1d5db;background:#f8fafc}
+    .statusPanel.ok{background:var(--okBg);border-color:var(--okBorder)}
+    .statusPanel.warn{background:var(--warnBg);border-color:var(--warnBorder)}
+    .statusPanel.error{background:var(--badBg);border-color:var(--badBorder)}
+    .statusPanel.info{background:var(--infoBg);border-color:var(--infoBorder)}
+    .statusTitle{font-weight:900;margin-bottom:6px}
+    .statusList{margin:0;padding-left:18px;color:#374151;line-height:1.45}
+    .statusList li+li{margin-top:4px}
+    .note{margin-top:10px;color:#166534;font-size:14px;font-weight:700}
+    .warn{color:var(--warn);background:var(--warnBg);border:1px solid var(--warnBorder);border-radius:14px;padding:12px 14px;margin-top:14px;line-height:1.45}
+    .previewBox{border:1px solid #e5e7eb;background:#fff;border-radius:14px;padding:12px}
+    .previewLabel{font-size:12px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+    .previewText{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;font-size:12px;color:#111827;max-height:220px;overflow:auto}
+    .tableWrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e7eb;border-radius:18px;background:#fff}
+    table{width:100%;min-width:980px;border-collapse:collapse;background:#fff}
+    th,td{padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px;vertical-align:top}
+    th{background:#f8fafc;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:900;position:sticky;top:0;z-index:1}
+    tr:nth-child(even) td{background:#fcfcfd}
+    .tiny{font-size:12px;color:#64748b}
+    .strong{font-weight:900}
+    .playerCard{margin-bottom:12px;border:1px solid #e5e7eb;border-radius:18px;padding:14px;background:#fff}
+    .playerHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+    .playerName{font-size:20px;font-weight:950;color:#14532d;margin:0}
+    .playerNet{font-size:20px;font-weight:950}
+    .gain{color:#166534}
+    .loss{color:#b91c1c}
+    .breakdownList{border:1px solid #e5e7eb;border-radius:18px;background:#fff;overflow:hidden}
+    .breakdownItem{display:grid;grid-template-columns:52px 1fr;gap:12px;padding:14px 12px;border-bottom:1px solid #e5e7eb;align-items:start}
+    .breakdownItem:last-child{border-bottom:0}
+    .breakdownIndex{font-size:13px;font-weight:900;color:#475569}
+    .breakdownText{font-size:15px;line-height:1.45;color:#111827;word-break:break-word}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #bbf7d0;font-size:12px;font-weight:900}
+    @media (min-width:820px){.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4,.summaryGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>Golf Bet Sheet AI with Puter</h1>
+    <p>Upload a pre round Squabbit CSV, a completed round CSV, and a bet sheet image. This version uses Puter.js in the browser instead of your own backend. It can OCR the bet sheet, ask AI to extract bets, let you review and edit them, calculate settlements for supported bet types, and export a full PDF plus one PDF per player.</p>
+  </div>
+
+  <div class="summaryGrid">
+    <div class="summaryCard"><div class="summaryLabel">Players Loaded</div><div class="summaryValue" id="summaryPlayers">0</div></div>
+    <div class="summaryCard"><div class="summaryLabel">Finished Scores</div><div class="summaryValue" id="summaryScores">0</div></div>
+    <div class="summaryCard"><div class="summaryLabel">Bets Loaded</div><div class="summaryValue" id="summaryBets">0</div></div>
+    <div class="summaryCard"><div class="summaryLabel">Settlements</div><div class="summaryValue" id="summarySettlements">0</div></div>
+  </div>
+
+  <section class="card">
+    <h2 class="sectionTitle">1) Puter Access</h2>
+    <div class="sectionSub">This version uses Puter directly in the browser. Start Puter from a normal web page, not a local file. If sign in hangs, use Continue as Guest first, then run OCR or Analyze from the same browser tab.</div>
+    <div class="btnRow">
+      <button class="btn btnBlue" id="signInBtn" type="button">Continue with Puter</button>
+      <button class="btn btnGreen" id="guestSignInBtn" type="button">Continue as Guest</button>
+      <button class="btn btnGray" id="refreshAuthBtn" type="button">Refresh Status</button>
+      <button class="btn btnGray" id="signOutBtn" type="button">Sign Out</button>
+    </div>
+    <div id="authPanel" class="statusPanel info" style="margin-top:12px;">
+      <div class="statusTitle">Authentication</div>
+      <ul class="statusList" id="authStatusList"><li>Checking Puter availability.</li></ul>
+    </div>
+    <div class="warn">Important: open this page from http://localhost or a normal https site. Puter popup auth is less reliable on file:// pages, popup-blocked tabs, or cross-origin-isolated pages.</div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">2) Squabbit Uploads</h2>
+    <div class="sectionSub">Load the player roster first, then load the completed round so the app can resolve abbreviations and score based bets.</div>
+    <div class="grid2">
+      <div>
+        <div class="field"><label for="rosterInput">Pre round / roster CSV</label><input class="input" id="rosterInput" type="file" accept=".csv,text/csv,text/plain" /></div>
+        <div class="btnRow"><button class="btn btnGreen" id="loadRosterBtn" type="button">Load Roster</button><button class="btn btnGray" id="clearRosterBtn" type="button">Clear Roster</button></div>
+        <div id="rosterPanel" class="statusPanel info"><div class="statusTitle">Roster</div><ul class="statusList" id="rosterStatusList"><li>No roster loaded yet.</li></ul></div>
+        <div class="previewBox" style="margin-top:12px;"><div class="previewLabel">Loaded players</div><div class="previewText" id="loadedPlayersPreview">No players loaded yet.</div></div>
+      </div>
+      <div>
+        <div class="field"><label for="scoresInput">Completed round CSV</label><input class="input" id="scoresInput" type="file" accept=".csv,text/csv,text/plain" /></div>
+        <div class="btnRow"><button class="btn btnGreen" id="loadScoresBtn" type="button">Load Scores</button><button class="btn btnGray" id="clearScoresBtn" type="button">Clear Scores</button></div>
+        <div id="scoresPanel" class="statusPanel info"><div class="statusTitle">Scores</div><ul class="statusList" id="scoresStatusList"><li>No scores loaded yet.</li></ul></div>
+        <div class="previewBox" style="margin-top:12px;"><div class="previewLabel">Finished score rows</div><div class="previewText" id="loadedScoresPreview">No scores loaded yet.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">3) Aliases and Bet Sheet Image</h2>
+    <div class="sectionSub">Use aliases for shorthand like Deal, ZD, Daw, CW, and KM. Then upload the bet sheet image.</div>
+    <div class="grid2">
+      <div>
+        <div class="field">
+          <label for="aliasInput">Alias map</label>
+          <textarea class="textarea" id="aliasInput">Deal=Brad Deal
+ZD=Zack Deal
+Daw=Dawson
+CW=Clay Watkins
+KM=Keith Mcdaniel
+JH=Joey Hall
+Wat=K Waters</textarea>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label for="teamBetMode">Team bet settlement style</label>
+          <select class="select" id="teamBetMode">
+            <option value="team_total_split_evenly">Team total split evenly across the winner and loser sides</option>
+            <option value="pairwise_same_size">Pair by player order if both teams are the same size</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div class="field"><label for="betSheetInput">Bet sheet image</label><input class="input" id="betSheetInput" type="file" accept="image/*" /></div>
+        <div class="field" style="margin-top:12px;"><label for="modelSelect">Puter model</label>
+          <select class="select" id="modelSelect">
+            <option value="google/gemini-2.5-flash">google/gemini-2.5-flash</option>
+            <option value="gpt-5-nano">gpt-5-nano</option>
+            <option value="claude-sonnet-4">claude-sonnet-4</option>
+          </select>
+        </div>
+        <div class="btnRow" style="margin-top:12px;">
+          <button class="btn btnBlue" id="ocrBtn" type="button">OCR Bet Sheet</button>
+          <button class="btn btnGreen" id="analyzeBetSheetBtn" type="button">Analyze Bet Sheet with Puter</button>
+          <button class="btn btnGray" id="clearBetSheetBtn" type="button">Clear Bet Sheet</button>
+        </div>
+        <div id="betSheetPanel" class="statusPanel info"><div class="statusTitle">Bet sheet</div><ul class="statusList" id="betSheetStatusList"><li>No image analyzed yet.</li></ul></div>
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:12px;">
+      <div class="previewBox"><div class="previewLabel">OCR text</div><div class="previewText" id="ocrPreview">No OCR text yet.</div></div>
+      <div class="previewBox"><div class="previewLabel">AI notes</div><div class="previewText" id="aiNotesPreview">No AI notes yet.</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">4) Questions and Bet Review</h2>
+    <div class="sectionSub">If the AI is unsure about a row, abbreviation, or amount, fix it here before calculating settlements.</div>
+    <div class="previewBox" style="margin-bottom:12px;"><div class="previewLabel">AI questions</div><div class="previewText" id="questionsPreview">No questions yet.</div></div>
+    <div class="btnRow" style="margin-bottom:12px;">
+      <button class="btn btnGreen" id="addManualDueBtn" type="button">Add Manual Due Bet</button>
+      <button class="btn btnGreen" id="addGrossMatchBtn" type="button">Add Gross Match Bet</button>
+      <button class="btn btnGreen" id="addBestBallBtn" type="button">Add Best Ball Match Bet</button>
+      <button class="btn btnGreen" id="addNassauBtn" type="button">Add Nassau Best Ball Bet</button>
+    </div>
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Left Team</th>
+            <th>Right Team</th>
+            <th>Amount</th>
+            <th>Segments</th>
+            <th>Confidence</th>
+            <th>Notes</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody id="betsTbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">5) Calculate Settlements</h2>
+    <div class="sectionSub">Supported automatic bet types are manual due, gross match, best ball match, nassau gross, and nassau best ball. Anything else should be converted into a manual due bet before you finalize.</div>
+    <div class="btnRow"><button class="btn btnBlue" id="calcBtn" type="button">Calculate Settlements</button></div>
+    <div id="calcPanel" class="statusPanel info"><div class="statusTitle">Calculation</div><ul class="statusList" id="calcStatusList"><li>No settlement run yet.</li></ul></div>
+    <div class="tableWrap" style="margin-top:12px;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Bet</th>
+            <th>Winner</th>
+            <th>Transfer</th>
+            <th>Explanation</th>
+          </tr>
+        </thead>
+        <tbody id="settlementTbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">6) Player Breakdowns</h2>
+    <div class="sectionSub">Each player gets a net total and a detailed line by line explanation. You can export one PDF per player.</div>
+    <div id="playerBreakdownList"></div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">7) Exports</h2>
+    <div class="sectionSub">Export the whole settlement sheet as a PDF or CSV, or export a single player PDF.</div>
+    <div class="btnRow">
+      <button class="btn btnBlue" id="exportAllPdfBtn" type="button">Download All Results PDF</button>
+      <button class="btn btnGreen" id="exportAllCsvBtn" type="button">Download All Results CSV</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const state = {
+  rosterPlayers: [],
+  scores: {},
+  aliases: {},
+  betSheetFile: null,
+  ocrText: "",
+  aiNotes: [],
+  aiQuestions: [],
+  bets: [],
+  settlements: [],
+  playerLedgers: []
+};
+
+const $ = (id) => document.getElementById(id);
+const APP_KEY = 'golf_bet_sheet_puter_v1';
+
+function normalizeSpace(value){ return String(value ?? '').replace(/\s+/g,' ').trim(); }
+function normalizeName(value){
+  return normalizeSpace(value)
+    .split(' ')
+    .filter(Boolean)
+    .map(part => part.split('-').map(piece => piece ? piece.charAt(0).toUpperCase() + piece.slice(1).toLowerCase() : '').join('-'))
+    .join(' ')
+    .replace(/\s+\(.*?\)\s*$/,'')
+    .trim();
+}
+function toInt(v){ const s = normalizeSpace(v); return /^-?\d+$/.test(s) ? parseInt(s,10) : null; }
+function escapeHtml(s){ return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+function friendlyMoney(v){ return `${v >= 0 ? '+' : '-'}$${Math.abs(Number(v || 0)).toFixed(2).replace(/\.00$/,'')}`; }
+function setStatus(panelId,listId,tone,title,lines){
+  const panel = $(panelId), list = $(listId);
+  panel.className = `statusPanel ${tone}`;
+  panel.querySelector('.statusTitle').textContent = title;
+  list.innerHTML = (lines && lines.length ? lines : ['No details']).map(line => `<li>${escapeHtml(line)}</li>`).join('');
+}
+function saveState(){
+  localStorage.setItem(APP_KEY, JSON.stringify({
+    rosterPlayers: state.rosterPlayers,
+    scores: state.scores,
+    aliases: state.aliases,
+    ocrText: state.ocrText,
+    aiNotes: state.aiNotes,
+    aiQuestions: state.aiQuestions,
+    bets: state.bets
+  }));
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(APP_KEY);
+    if(!raw) return;
+    const parsed = JSON.parse(raw);
+    Object.assign(state, parsed || {});
+  }catch(err){ console.error(err); }
+}
+function updateSummary(){
+  $('summaryPlayers').textContent = String(state.rosterPlayers.length || 0);
+  $('summaryScores').textContent = String(Object.keys(state.scores || {}).length || 0);
+  $('summaryBets').textContent = String((state.bets || []).length || 0);
+  $('summarySettlements').textContent = String((state.settlements || []).length || 0);
+}
+
+function sniffDelimiter(text){
+  const sample = String(text || '').split(/\r?\n/).slice(0,20).join('\n');
+  const candidates = [',',';','\t','|'];
+  let best = ','; let bestScore = -1;
+  candidates.forEach(delimiter => {
+    const score = sample.split(/\r?\n/).reduce((sum,line) => {
+      if(delimiter === '\t') return sum + ((line.match(/\t/g)||[]).length);
+      const re = new RegExp(`\\${delimiter}`,'g');
+      return sum + ((line.match(re)||[]).length);
+    },0);
+    if(score > bestScore){ best = delimiter; bestScore = score; }
+  });
+  return best;
+}
+function parseCSV(text, delimiter){
+  const rows = []; let row = []; let cell = ''; let inQuotes = false;
+  const src = String(text || '').replace(/^\uFEFF/,'');
+  for(let i=0;i<src.length;i++){
+    const char = src[i], next = src[i+1];
+    if(char === '"'){
+      if(inQuotes && next === '"'){ cell += '"'; i++; }
+      else inQuotes = !inQuotes;
+    }else if(char === delimiter && !inQuotes){
+      row.push(cell.trim()); cell='';
+    }else if((char === '\n' || char === '\r') && !inQuotes){
+      if(char === '\r' && next === '\n') i++;
+      row.push(cell.trim()); rows.push(row); row=[]; cell='';
+    }else cell += char;
+  }
+  if(cell.length || row.length){ row.push(cell.trim()); rows.push(row); }
+  return rows.filter(r => r.some(c => normalizeSpace(c)));
+}
+function uniqueSortedNames(names){
+  return [...new Set((names||[]).map(normalizeName).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+}
+function rowLooksLikePlayerScoreRow(row){
+  const clean = (row||[]).map(normalizeSpace);
+  const lower = clean.map(c => c.toLowerCase());
+  const name = normalizeName(clean[0] || '');
+  if(!name || ['par','s.i.','si','name'].includes(name.toLowerCase())) return false;
+  const hasTee = lower.some(c => c.includes('tee'));
+  const numericCount = clean.filter(c => /^-?\d+$/.test(c)).length;
+  return hasTee || numericCount >= 9;
+}
+function analyzeRosterCSV(text){
+  const delimiter = sniffDelimiter(text);
+  const rows = parseCSV(text, delimiter);
+  const names = [];
+  let playersRow = -1;
+  for(let i=0;i<rows.length;i++){
+    if((rows[i]||[]).some(c => normalizeSpace(c).toLowerCase() === 'players')){ playersRow = i; break; }
+  }
+  if(playersRow >= 0){
+    const headerRow = rows[playersRow + 1] || [];
+    let nameCol = headerRow.findIndex(c => normalizeSpace(c).toLowerCase() === 'name');
+    if(nameCol < 0) nameCol = 0;
+    for(let i=playersRow + 2;i<rows.length;i++){
+      const row = rows[i] || [];
+      const first = normalizeSpace((row.find(c => normalizeSpace(c)) || ''));
+      if(!first) break;
+      if(/^(skins|strokeplay|stroke play|twos club|best ball|games|summary|totals|round \d+)$/i.test(first)) break;
+      const name = normalizeName(row[nameCol] || row[0] || '');
+      if(name) names.push(name);
+    }
+  }
+  rows.forEach(row => {
+    if(rowLooksLikePlayerScoreRow(row)){
+      const name = normalizeName(row[0] || '');
+      if(name) names.push(name);
+    }
+  });
+  return uniqueSortedNames(names);
+}
+function buildHoleIndex(row){
+  const index = {};
+  (row||[]).forEach((cell,i)=>{
+    const t = normalizeSpace(cell).toLowerCase();
+    for(let h=1;h<=18;h++) if(t === `hole ${h}` || t === `hole${h}` || t === `${h}`) index[h] = i;
+  });
+  return Object.keys(index).length ? index : null;
+}
+function analyzeScoresCSV(text){
+  const delimiter = sniffDelimiter(text);
+  const rows = parseCSV(text, delimiter);
+  let headerIndex = -1, holeIndex = null;
+  for(let i=0;i<rows.length;i++){
+    if((rows[i]||[]).some(c => /hole\s*1/i.test(c || ''))){ headerIndex = i; holeIndex = buildHoleIndex(rows[i]); break; }
+  }
+  const scores = {};
+  if(headerIndex < 0 || !holeIndex) return scores;
+  for(let i=headerIndex + 1;i<rows.length;i++){
+    const row = rows[i] || [];
+    const name = normalizeName(row[0] || '');
+    const rowText = row.map(c => normalizeSpace(c).toLowerCase());
+    if(!name) continue;
+    if(['par','s.i.','si','name'].includes(name.toLowerCase())) continue;
+    if(!rowText.some(c => c.includes('tee')) && row.filter(c => /^-?\d+$/.test(normalizeSpace(c))).length < 9) continue;
+    const strokes = [];
+    for(let h=1;h<=18;h++){
+      const value = toInt(row[holeIndex[h]]);
+      if(value == null){ strokes.length = 0; break; }
+      strokes.push(value);
+    }
+    if(strokes.length === 18) scores[name] = strokes;
+  }
+  return scores;
+}
+function parseAliases(){
+  const lines = $('aliasInput').value.split(/\r?\n/);
+  const map = {};
+  lines.forEach(line => {
+    const raw = line.trim();
+    if(!raw) return;
+    const parts = raw.split('=');
+    if(parts.length < 2) return;
+    const key = normalizeSpace(parts[0]);
+    const value = normalizeName(parts.slice(1).join('='));
+    if(key && value) map[key.toLowerCase()] = value;
+  });
+  state.aliases = map;
+  return map;
+}
+function resolveAlias(rawName){
+  const raw = normalizeSpace(rawName);
+  if(!raw) return '';
+  const lower = raw.toLowerCase();
+  const aliasHit = state.aliases[lower];
+  if(aliasHit) return aliasHit;
+  const exact = state.rosterPlayers.find(p => p.toLowerCase() === lower);
+  if(exact) return exact;
+  const byLast = state.rosterPlayers.find(p => p.split(' ').slice(-1)[0].toLowerCase() === lower);
+  if(byLast) return byLast;
+  const partial = state.rosterPlayers.find(p => p.toLowerCase().includes(lower));
+  return partial || normalizeName(raw);
+}
+function fileToText(file){ return file.text(); }
+
+const AUTH_TIMEOUT_MS = 25000;
+
+function isFileProtocol(){
+  return window.location.protocol === 'file:';
+}
+
+function isUnsafePuterEnvironment(){
+  return !!window.crossOriginIsolated;
+}
+
+function authStatusLines(baseLines){
+  const lines = [...baseLines];
+  if(isFileProtocol()) lines.push('This page is running from file://. Open it from http://localhost or a normal https page instead.');
+  if(isUnsafePuterEnvironment()) lines.push('This page is cross origin isolated. Puter popup login can fail in that mode.');
+  return lines;
+}
+
+function withTimeout(promise, ms, message){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
+  ]);
+}
+
+async function refreshAuthStatus(){
+  try{
+    if(!window.puter || !puter.ai || !puter.auth){
+      setStatus('authPanel','authStatusList','error','Authentication',['Puter.js did not load on this page.']);
+      return;
+    }
+    const signedIn = await Promise.resolve(puter.auth.isSignedIn());
+    if(!signedIn){
+      setStatus('authPanel','authStatusList','info','Authentication', authStatusLines([
+        'Puter is loaded in this page.',
+        'No Puter session is active yet.',
+        'Use Continue as Guest first if normal Puter sign in keeps spinning.'
+      ]));
+      return;
+    }
+    let userText = 'Signed in with Puter.';
+    try{
+      const user = await puter.auth.getUser();
+      if(user){
+        if(user.is_temp) userText = 'Signed in with a temporary Puter guest session.';
+        else if(user.username || user.email || user.name) userText = `Signed in as ${user.username || user.email || user.name}.`;
+      }
+    }catch(_){ }
+    setStatus('authPanel','authStatusList','ok','Authentication', authStatusLines([
+      userText,
+      'OCR and AI analysis should run from this browser session.'
+    ]));
+  }catch(err){
+    setStatus('authPanel','authStatusList','warn','Authentication', authStatusLines([
+      err.message || 'Could not read auth status.',
+      'Try Continue as Guest, then try OCR or Analyze again.'
+    ]));
+  }
+}
+
+async function ensurePuterReady(){
+  if(!window.puter || !puter.ai || !puter.auth) throw new Error('Puter.js did not load.');
+  if(isFileProtocol()) throw new Error('This page is opened as a local file. Puter works better from http://localhost or a normal https page.');
+  if(isUnsafePuterEnvironment()) throw new Error('This page is cross origin isolated. Puter popup auth can fail in that mode.');
+}
+
+async function ensurePuterSession(actionLabel, options = {}){
+  await ensurePuterReady();
+  const guestPreferred = options.guestPreferred !== false;
+
+  try{
+    const signedIn = await withTimeout(Promise.resolve(puter.auth.isSignedIn()), 5000, 'Timed out checking Puter session.');
+    if(signedIn){
+      await refreshAuthStatus();
+      return true;
+    }
+  }catch(_){ }
+
+  setStatus('authPanel','authStatusList','info','Authentication', authStatusLines([
+    `${actionLabel} is opening Puter sign in from this tap.`,
+    guestPreferred ? 'Trying guest session first.' : 'Trying normal Puter sign in first.',
+    'If a popup opens, finish it and return to this tab.'
+  ]));
+
+  const attempts = guestPreferred
+    ? [
+        () => puter.auth.signIn({ attempt_temp_user_creation: true }),
+        () => puter.auth.signIn()
+      ]
+    : [
+        () => puter.auth.signIn(),
+        () => puter.auth.signIn({ attempt_temp_user_creation: true })
+      ];
+
+  let lastError = null;
+  for(const attempt of attempts){
+    try{
+      await withTimeout(Promise.resolve(attempt()), AUTH_TIMEOUT_MS, 'Puter sign in did not complete. Check popup blocking or open this page from localhost instead of file://.');
+      const signedInAfter = await withTimeout(Promise.resolve(puter.auth.isSignedIn()), 6000, 'Timed out verifying Puter session after sign in.');
+      if(signedInAfter){
+        await refreshAuthStatus();
+        return true;
+      }
+      lastError = new Error('Puter popup closed but no signed in session was detected.');
+    }catch(err){
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('Could not create a Puter session.');
+}
+
+function extractPuterText(response){
+  if(response == null) return '';
+  if(typeof response === 'string') return response;
+  if(typeof response?.message?.content === 'string') return response.message.content;
+  if(Array.isArray(response?.message?.content)){
+    return response.message.content.map(part => {
+      if(typeof part === 'string') return part;
+      if(part?.text) return part.text;
+      if(part?.content) return part.content;
+      return '';
+    }).join('\n').trim();
+  }
   if(response?.text) return response.text;
   return JSON.stringify(response,null,2);
 }
