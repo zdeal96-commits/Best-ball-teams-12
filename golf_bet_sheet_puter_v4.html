@@ -3,6 +3,1277 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Golf Best Ball Bet Sheet with Puter</title>
+  <script src="https://js.puter.com/v2/"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root{
+      --bg0:#0a1b13;
+      --bg1:#113021;
+      --card:#ffffff;
+      --line:#e5e7eb;
+      --text:#111827;
+      --muted:#64748b;
+      --green1:#14532d;
+      --green2:#166534;
+      --green3:#22c55e;
+      --blue1:#2563eb;
+      --blue2:#38bdf8;
+      --warn:#92400e;
+      --warnBg:#fffbeb;
+      --warnBorder:#fde68a;
+      --bad:#991b1b;
+      --badBg:#fef2f2;
+      --badBorder:#fecaca;
+      --ok:#166534;
+      --okBg:#f0fdf4;
+      --okBorder:#bbf7d0;
+      --info:#1d4ed8;
+      --infoBg:#eff6ff;
+      --infoBorder:#bfdbfe;
+      --shadow:0 14px 45px rgba(0,0,0,.20);
+    }
+    *{box-sizing:border-box}
+    html,body{max-width:100%;overflow-x:hidden}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family:-apple-system,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #08140e);
+    }
+    .wrap{width:100%;max-width:1280px;margin:0 auto;padding:16px}
+    .hero{
+      background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.10));
+      border:1px solid rgba(255,255,255,.22);
+      border-radius:24px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      margin-bottom:16px;
+      backdrop-filter:blur(10px);
+      color:#eaf5ef;
+    }
+    .hero h1{margin:0 0 8px;font-size:30px;font-weight:950}
+    .hero p{margin:0;color:#d9f5e4;line-height:1.45;font-size:14px;max-width:980px}
+    .summaryGrid,.grid2,.grid3,.grid4{display:grid;grid-template-columns:1fr;gap:12px}
+    .card,.summaryCard{
+      background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:20px;
+      box-shadow:0 10px 28px rgba(0,0,0,.08)
+    }
+    .card{padding:18px;margin-bottom:16px}
+    .summaryCard{padding:16px}
+    .summaryLabel{font-size:12px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+    .summaryValue{margin-top:6px;font-size:28px;font-weight:950;color:var(--green2)}
+    .sectionTitle{margin:0 0 6px;font-size:22px;font-weight:950;color:var(--green1)}
+    .sectionSub{color:var(--muted);font-size:14px;line-height:1.45;margin-bottom:14px}
+    .field label{display:block;font-size:13px;font-weight:800;color:#374151;margin-bottom:6px}
+    .input,.select,.textarea{
+      width:100%;border:1px solid #d1d5db;border-radius:14px;padding:12px;background:#fff;font-size:15px
+    }
+    .textarea{min-height:120px;resize:vertical;font-family:inherit}
+    .btnRow{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{
+      border:0;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:950;cursor:pointer;white-space:nowrap
+    }
+    .btnGreen{background:linear-gradient(135deg,var(--green2),var(--green3));color:#fff}
+    .btnBlue{background:linear-gradient(135deg,var(--blue1),var(--blue2));color:#fff}
+    .btnGray{background:linear-gradient(135deg,#6b7280,#9ca3af);color:#fff}
+    .btnRed{background:linear-gradient(135deg,#ef4444,#f87171);color:#fff}
+    .pillWrap{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#dcfce7;color:#166534;font-size:12px;font-weight:800;border:1px solid #bbf7d0}
+    .pillMuted{background:#f3f4f6;color:#4b5563;border:1px solid #e5e7eb}
+    .statusPanel{margin-top:12px;border-radius:16px;padding:12px 14px;border:1px solid #d1d5db;background:#f8fafc}
+    .statusPanel.ok{background:var(--okBg);border-color:var(--okBorder)}
+    .statusPanel.warn{background:var(--warnBg);border-color:var(--warnBorder)}
+    .statusPanel.error{background:var(--badBg);border-color:var(--badBorder)}
+    .statusPanel.info{background:var(--infoBg);border-color:var(--infoBorder)}
+    .statusTitle{font-weight:900;margin-bottom:6px}
+    .statusList{margin:0;padding-left:18px;color:#374151;line-height:1.45}
+    .statusList li+li{margin-top:4px}
+    .warn{color:var(--warn);background:var(--warnBg);border:1px solid var(--warnBorder);border-radius:14px;padding:12px 14px;margin-top:14px;line-height:1.45}
+    .previewBox{border:1px solid #e5e7eb;background:#fff;border-radius:14px;padding:12px}
+    .previewLabel{font-size:12px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+    .previewText{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;font-size:12px;color:#111827;max-height:260px;overflow:auto}
+    .tableWrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e7eb;border-radius:18px;background:#fff}
+    table{width:100%;min-width:1240px;border-collapse:collapse;background:#fff}
+    th,td{padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px;vertical-align:top}
+    th{background:#f8fafc;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:900;position:sticky;top:0;z-index:1}
+    tr:nth-child(even) td{background:#fcfcfd}
+    .tiny{font-size:12px;color:#64748b}
+    .playerCard{margin-bottom:12px;border:1px solid #e5e7eb;border-radius:18px;padding:14px;background:#fff}
+    .playerHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+    .playerName{font-size:20px;font-weight:950;color:#14532d;margin:0}
+    .playerNet{font-size:20px;font-weight:950}
+    .gain{color:#166534}
+    .loss{color:#b91c1c}
+    .breakdownList{border:1px solid #e5e7eb;border-radius:18px;background:#fff;overflow:hidden}
+    .breakdownItem{display:grid;grid-template-columns:52px 1fr;gap:12px;padding:14px 12px;border-bottom:1px solid #e5e7eb;align-items:start}
+    .breakdownItem:last-child{border-bottom:0}
+    .breakdownIndex{font-size:13px;font-weight:900;color:#475569}
+    .breakdownText{font-size:15px;line-height:1.45;color:#111827;word-break:break-word}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #bbf7d0;font-size:12px;font-weight:900}
+    .rowEditors textarea{min-height:74px;font-size:14px}
+    @media (min-width:900px){.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4,.summaryGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>Golf Best Ball Bet Sheet with Puter</h1>
+    <p>This version is built for your handwritten best ball sheet. It assumes one best ball matchup per hole, compares the two teams on that hole only, uses dollars per shot and max shots like the wheel tool, and keeps a manual review table so you can fix anything Puter reads wrong before calculating settlements.</p>
+  </div>
+
+  <div class="summaryGrid">
+    <div class="summaryCard"><div class="summaryLabel">Players Loaded</div><div class="summaryValue" id="summaryPlayers">0</div></div>
+    <div class="summaryCard"><div class="summaryLabel">Finished Scores</div><div class="summaryValue" id="summaryScores">0</div></div>
+    <div class="summaryCard"><div class="summaryLabel">Hole Bets Ready</div><div class="summaryValue" id="summaryBets">0</div></div>
+    <div class="summaryCard"><div class="summaryLabel">Settlements</div><div class="summaryValue" id="summarySettlements">0</div></div>
+  </div>
+
+  <section class="card">
+    <h2 class="sectionTitle">1) Puter Access</h2>
+    <div class="sectionSub">Use Continue as Guest if normal Puter sign in hangs. Open this page from GitHub Pages, localhost, or another normal web address, not a local file.</div>
+    <div class="btnRow">
+      <button class="btn btnBlue" id="signInBtn" type="button">Continue with Puter</button>
+      <button class="btn btnGreen" id="guestSignInBtn" type="button">Continue as Guest</button>
+      <button class="btn btnGray" id="refreshAuthBtn" type="button">Refresh Status</button>
+      <button class="btn btnGray" id="signOutBtn" type="button">Sign Out</button>
+    </div>
+    <div id="authPanel" class="statusPanel info" style="margin-top:12px;">
+      <div class="statusTitle">Authentication</div>
+      <ul class="statusList" id="authStatusList"><li>Checking Puter availability.</li></ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">2) Squabbit Uploads</h2>
+    <div class="sectionSub">Load the player roster first, then the completed round scores so each hole can be settled automatically.</div>
+    <div class="grid2">
+      <div>
+        <div class="field"><label for="rosterInput">Pre round / roster CSV</label><input class="input" id="rosterInput" type="file" accept=".csv,text/csv,text/plain" /></div>
+        <div class="btnRow"><button class="btn btnGreen" id="loadRosterBtn" type="button">Load Roster</button><button class="btn btnGray" id="clearRosterBtn" type="button">Clear Roster</button></div>
+        <div id="rosterPanel" class="statusPanel info"><div class="statusTitle">Roster</div><ul class="statusList" id="rosterStatusList"><li>No roster loaded yet.</li></ul></div>
+        <div class="previewBox" style="margin-top:12px;"><div class="previewLabel">Loaded players</div><div class="previewText" id="loadedPlayersPreview">No players loaded yet.</div></div>
+      </div>
+      <div>
+        <div class="field"><label for="scoresInput">Completed round CSV</label><input class="input" id="scoresInput" type="file" accept=".csv,text/csv,text/plain" /></div>
+        <div class="btnRow"><button class="btn btnGreen" id="loadScoresBtn" type="button">Load Scores</button><button class="btn btnGray" id="clearScoresBtn" type="button">Clear Scores</button></div>
+        <div id="scoresPanel" class="statusPanel info"><div class="statusTitle">Scores</div><ul class="statusList" id="scoresStatusList"><li>No scores loaded yet.</li></ul></div>
+        <div class="previewBox" style="margin-top:12px;"><div class="previewLabel">Finished score rows</div><div class="previewText" id="loadedScoresPreview">No scores loaded yet.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">3) Sheet Settings and Image</h2>
+    <div class="sectionSub">This tool is set up for one best ball bet per hole. Adjust aliases, dollars per shot, and max shots, then upload the handwritten sheet.</div>
+    <div class="grid2">
+      <div>
+        <div class="field">
+          <label for="aliasInput">Alias map</label>
+          <textarea class="textarea" id="aliasInput">Deal=Brad Deal
+ZD=Zack Deal
+Daw=Dawson
+CW=Clay Watkins
+KM=Keith Mcdaniel
+JH=Joey Hall
+Wat=K Waters
+Gilmer=Gilmer Hinshaw</textarea>
+        </div>
+        <div class="grid2" style="margin-top:12px;">
+          <div class="field">
+            <label for="shotValue">Dollars per shot</label>
+            <input class="input" id="shotValue" type="number" min="0" step="1" value="3" />
+          </div>
+          <div class="field">
+            <label for="maxShots">Max shots</label>
+            <input class="input" id="maxShots" type="number" min="0" step="1" value="7" />
+          </div>
+        </div>
+        <div class="warn">Like the wheel tool, each losing player pays one winning player. If the margin is 4 and dollars per shot is 3, each losing player owes one winning player $12. Max shots caps the margin counted per hole.</div>
+      </div>
+      <div>
+        <div class="field"><label for="betSheetInput">Bet sheet image</label><input class="input" id="betSheetInput" type="file" accept="image/*" /></div>
+        <div class="field" style="margin-top:12px;">
+          <label for="modelSelect">Puter model</label>
+          <select class="select" id="modelSelect">
+            <option value="google/gemini-2.5-flash">google/gemini-2.5-flash</option>
+            <option value="gpt-5-nano">gpt-5-nano</option>
+            <option value="claude-sonnet-4">claude-sonnet-4</option>
+          </select>
+        </div>
+        <div class="btnRow" style="margin-top:12px;">
+          <button class="btn btnBlue" id="ocrBtn" type="button">Read Sheet Text</button>
+          <button class="btn btnGreen" id="analyzeBetSheetBtn" type="button">Build Hole Bets from Image</button>
+          <button class="btn btnGray" id="clearBetSheetBtn" type="button">Clear Sheet</button>
+        </div>
+        <div id="betSheetPanel" class="statusPanel info"><div class="statusTitle">Bet sheet</div><ul class="statusList" id="betSheetStatusList"><li>No image analyzed yet.</li></ul></div>
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:12px;">
+      <div class="previewBox"><div class="previewLabel">Read sheet text</div><div class="previewText" id="ocrPreview">No OCR text yet.</div></div>
+      <div class="previewBox"><div class="previewLabel">AI notes and questions</div><div class="previewText" id="aiNotesPreview">No AI notes yet.</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">4) Hole by Hole Best Ball Review</h2>
+    <div class="sectionSub">Each row is one hole. The AI tries to resolve ditto marks and same-as-above rows, but you can edit anything here before calculating.</div>
+    <div class="previewBox" style="margin-bottom:12px;"><div class="previewLabel">Questions</div><div class="previewText" id="questionsPreview">No questions yet.</div></div>
+    <div class="btnRow" style="margin-bottom:12px;">
+      <button class="btn btnGreen" id="fillEmptyRowsBtn" type="button">Fill Empty Teams from Row Above</button>
+      <button class="btn btnGray" id="clearRowsBtn" type="button">Clear All Hole Rows</button>
+    </div>
+    <div class="tableWrap rowEditors">
+      <table>
+        <thead>
+          <tr>
+            <th>Hole</th>
+            <th>Left Team</th>
+            <th>Right Team</th>
+            <th>Confidence</th>
+            <th>Notes</th>
+            <th>Left BB</th>
+            <th>Right BB</th>
+            <th>Winner</th>
+            <th>Margin</th>
+            <th>Counted</th>
+            <th>Per Person</th>
+          </tr>
+        </thead>
+        <tbody id="rowsTbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">5) Calculate Settlements</h2>
+    <div class="sectionSub">This compares each row as a one-hole best ball bet using the completed Squabbit scores you loaded above.</div>
+    <div class="btnRow"><button class="btn btnBlue" id="calcBtn" type="button">Calculate Settlements</button></div>
+    <div id="calcPanel" class="statusPanel info"><div class="statusTitle">Calculation</div><ul class="statusList" id="calcStatusList"><li>No settlement run yet.</li></ul></div>
+    <div class="tableWrap" style="margin-top:12px;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Hole</th>
+            <th>Matchup</th>
+            <th>Winner</th>
+            <th>Transfer</th>
+            <th>Explanation</th>
+          </tr>
+        </thead>
+        <tbody id="settlementTbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">6) Player Breakdowns</h2>
+    <div class="sectionSub">Each player gets a net total and a detailed line by line explanation. You can export one PDF per player.</div>
+    <div id="playerBreakdownList"></div>
+  </section>
+
+  <section class="card">
+    <h2 class="sectionTitle">7) Exports</h2>
+    <div class="sectionSub">Export the whole settlement sheet as a PDF or CSV.</div>
+    <div class="btnRow">
+      <button class="btn btnBlue" id="exportAllPdfBtn" type="button">Download All Results PDF</button>
+      <button class="btn btnGreen" id="exportAllCsvBtn" type="button">Download All Results CSV</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const APP_KEY = 'golf_best_ball_sheet_v6';
+
+const state = {
+  rosterPlayers: [],
+  scores: {},
+  aliases: {},
+  betSheetFile: null,
+  ocrText: '',
+  aiNotes: [],
+  aiQuestions: [],
+  holeRows: [],
+  settlements: [],
+  playerLedgers: [],
+  shotValue: 3,
+  maxShots: 7
+};
+
+const $ = (id) => document.getElementById(id);
+
+function defaultHoleRows(){
+  return Array.from({ length: 18 }, (_, idx) => ({
+    hole: idx + 1,
+    left_raw: ['', ''],
+    right_raw: ['', ''],
+    left_players: ['', ''],
+    right_players: ['', ''],
+    confidence: 0,
+    notes: ''
+  }));
+}
+
+function normalizeSpace(value){ return String(value ?? '').replace(/\s+/g, ' ').trim(); }
+function normalizeName(value){
+  return normalizeSpace(value)
+    .split(' ')
+    .filter(Boolean)
+    .map(part => part.split('-').map(piece => piece ? piece.charAt(0).toUpperCase() + piece.slice(1).toLowerCase() : '').join('-'))
+    .join(' ')
+    .replace(/\s+\(.*?\)\s*$/,'')
+    .trim();
+}
+function toInt(v){ const s = normalizeSpace(v); return /^-?\d+$/.test(s) ? parseInt(s,10) : null; }
+function escapeHtml(s){ return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+function friendlyMoney(v){ return `${v >= 0 ? '+' : '-'}$${Math.abs(Number(v || 0)).toFixed(2).replace(/\.00$/,'')}`; }
+
+function saveState(){
+  localStorage.setItem(APP_KEY, JSON.stringify({
+    rosterPlayers: state.rosterPlayers,
+    scores: state.scores,
+    aliases: state.aliases,
+    ocrText: state.ocrText,
+    aiNotes: state.aiNotes,
+    aiQuestions: state.aiQuestions,
+    holeRows: state.holeRows,
+    shotValue: state.shotValue,
+    maxShots: state.maxShots
+  }));
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(APP_KEY);
+    if(!raw) return;
+    Object.assign(state, JSON.parse(raw) || {});
+  }catch(err){ console.error(err); }
+}
+function setStatus(panelId, listId, tone, title, lines){
+  const panel = $(panelId), list = $(listId);
+  panel.className = `statusPanel ${tone}`;
+  panel.querySelector('.statusTitle').textContent = title;
+  list.innerHTML = (lines && lines.length ? lines : ['No details']).map(line => `<li>${escapeHtml(line)}</li>`).join('');
+}
+function setPreview(id, text){ $(id).textContent = text || 'Nothing to show.'; }
+
+function updateSummary(){
+  $('summaryPlayers').textContent = String(state.rosterPlayers.length || 0);
+  $('summaryScores').textContent = String(Object.keys(state.scores || {}).length || 0);
+  const readyRows = state.holeRows.filter(row => row.left_players.filter(Boolean).length === 2 && row.right_players.filter(Boolean).length === 2).length;
+  $('summaryBets').textContent = String(readyRows);
+  $('summarySettlements').textContent = String(state.settlements.length || 0);
+}
+
+function sniffDelimiter(text){
+  const sample = String(text || '').split(/\r?\n/).slice(0,20).join('\n');
+  const candidates = [',',';','\t','|'];
+  let best = ','; let bestScore = -1;
+  candidates.forEach(delimiter => {
+    const score = sample.split(/\r?\n/).reduce((sum,line) => {
+      if(delimiter === '\t') return sum + ((line.match(/\t/g)||[]).length);
+      const re = new RegExp(`\\${delimiter}`,'g');
+      return sum + ((line.match(re)||[]).length);
+    },0);
+    if(score > bestScore){ best = delimiter; bestScore = score; }
+  });
+  return best;
+}
+function parseCSV(text, delimiter){
+  const rows = []; let row = []; let cell = ''; let inQuotes = false;
+  const src = String(text || '').replace(/^\uFEFF/,'');
+  for(let i=0;i<src.length;i++){
+    const char = src[i], next = src[i+1];
+    if(char === '"'){
+      if(inQuotes && next === '"'){ cell += '"'; i++; }
+      else inQuotes = !inQuotes;
+    }else if(char === delimiter && !inQuotes){
+      row.push(cell.trim()); cell='';
+    }else if((char === '\n' || char === '\r') && !inQuotes){
+      if(char === '\r' && next === '\n') i++;
+      row.push(cell.trim()); rows.push(row); row=[]; cell='';
+    }else cell += char;
+  }
+  if(cell.length || row.length){ row.push(cell.trim()); rows.push(row); }
+  return rows.filter(r => r.some(c => normalizeSpace(c)));
+}
+function uniqueSortedNames(names){
+  return [...new Set((names||[]).map(normalizeName).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+}
+function rowLooksLikePlayerScoreRow(row){
+  const clean = (row||[]).map(normalizeSpace);
+  const lower = clean.map(c => c.toLowerCase());
+  const name = normalizeName(clean[0] || '');
+  if(!name || ['par','s.i.','si','name'].includes(name.toLowerCase())) return false;
+  const hasTee = lower.some(c => c.includes('tee'));
+  const numericCount = clean.filter(c => /^-?\d+$/.test(c)).length;
+  return hasTee || numericCount >= 9;
+}
+function analyzeRosterCSV(text){
+  const delimiter = sniffDelimiter(text);
+  const rows = parseCSV(text, delimiter);
+  const names = [];
+  let playersRow = -1;
+  for(let i=0;i<rows.length;i++){
+    if((rows[i]||[]).some(c => normalizeSpace(c).toLowerCase() === 'players')){ playersRow = i; break; }
+  }
+  if(playersRow >= 0){
+    const headerRow = rows[playersRow + 1] || [];
+    let nameCol = headerRow.findIndex(c => normalizeSpace(c).toLowerCase() === 'name');
+    if(nameCol < 0) nameCol = 0;
+    for(let i=playersRow + 2;i<rows.length;i++){
+      const row = rows[i] || [];
+      const first = normalizeSpace((row.find(c => normalizeSpace(c)) || ''));
+      if(!first) break;
+      if(/^(skins|strokeplay|stroke play|twos club|best ball|games|summary|totals|round \d+)$/i.test(first)) break;
+      const name = normalizeName(row[nameCol] || row[0] || '');
+      if(name) names.push(name);
+    }
+  }
+  rows.forEach(row => {
+    if(rowLooksLikePlayerScoreRow(row)){
+      const name = normalizeName(row[0] || '');
+      if(name) names.push(name);
+    }
+  });
+  return uniqueSortedNames(names);
+}
+function buildHoleIndex(row){
+  const index = {};
+  (row||[]).forEach((cell,i) => {
+    const t = normalizeSpace(cell).toLowerCase();
+    for(let h=1;h<=18;h++) if(t === `hole ${h}` || t === `hole${h}` || t === `${h}`) index[h] = i;
+  });
+  return Object.keys(index).length ? index : null;
+}
+function analyzeScoresCSV(text){
+  const delimiter = sniffDelimiter(text);
+  const rows = parseCSV(text, delimiter);
+  let headerIndex = -1, holeIndex = null;
+  for(let i=0;i<rows.length;i++){
+    if((rows[i]||[]).some(c => /hole\s*1/i.test(c || ''))){ headerIndex = i; holeIndex = buildHoleIndex(rows[i]); break; }
+  }
+  const scores = {};
+  if(headerIndex < 0 || !holeIndex) return scores;
+  for(let i=headerIndex + 1;i<rows.length;i++){
+    const row = rows[i] || [];
+    const name = normalizeName(row[0] || '');
+    const rowText = row.map(c => normalizeSpace(c).toLowerCase());
+    if(!name) continue;
+    if(['par','s.i.','si','name'].includes(name.toLowerCase())) continue;
+    if(!rowText.some(c => c.includes('tee')) && row.filter(c => /^-?\d+$/.test(normalizeSpace(c))).length < 9) continue;
+    const strokes = [];
+    for(let h=1;h<=18;h++){
+      const value = toInt(row[holeIndex[h]]);
+      if(value == null){ strokes.length = 0; break; }
+      strokes.push(value);
+    }
+    if(strokes.length === 18) scores[name] = strokes;
+  }
+  return scores;
+}
+
+function parseAliases(){
+  const lines = $('aliasInput').value.split(/\r?\n/);
+  const map = {};
+  lines.forEach(line => {
+    const raw = line.trim();
+    if(!raw) return;
+    const parts = raw.split('=');
+    if(parts.length < 2) return;
+    const key = normalizeSpace(parts[0]);
+    const value = normalizeName(parts.slice(1).join('='));
+    if(key && value) map[key.toLowerCase()] = value;
+  });
+  state.aliases = map;
+  return map;
+}
+function resolveAlias(rawName){
+  const raw = normalizeSpace(rawName);
+  if(!raw) return '';
+  const lower = raw.toLowerCase();
+  if(state.aliases[lower]) return state.aliases[lower];
+  const exact = state.rosterPlayers.find(p => p.toLowerCase() === lower);
+  if(exact) return exact;
+  const byLast = state.rosterPlayers.find(p => p.split(' ').slice(-1)[0].toLowerCase() === lower);
+  if(byLast) return byLast;
+  const partial = state.rosterPlayers.find(p => p.toLowerCase().includes(lower));
+  return partial || normalizeName(raw);
+}
+function fileToText(file){ return file.text(); }
+function playerGrossScore(name){
+  const strokes = state.scores && state.scores[name];
+  if(!Array.isArray(strokes) || strokes.length !== 18) return null;
+  return strokes.reduce((sum, value) => sum + (Number(value) || 0), 0);
+}
+
+const AUTH_TIMEOUT_MS = 25000;
+function isFileProtocol(){ return window.location.protocol === 'file:'; }
+function isUnsafePuterEnvironment(){ return !!window.crossOriginIsolated; }
+function authStatusLines(baseLines){
+  const lines = [...baseLines];
+  if(isFileProtocol()) lines.push('This page is running from file://. Open it from http://localhost or a normal https page instead.');
+  if(isUnsafePuterEnvironment()) lines.push('This page is cross origin isolated. Puter popup login can fail in that mode.');
+  return lines;
+}
+function withTimeout(promise, ms, message){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
+  ]);
+}
+async function refreshAuthStatus(){
+  try{
+    if(!window.puter || !puter.ai || !puter.auth){
+      setStatus('authPanel','authStatusList','error','Authentication',['Puter.js did not load on this page.']);
+      return;
+    }
+    const signedIn = await Promise.resolve(puter.auth.isSignedIn());
+    if(!signedIn){
+      setStatus('authPanel','authStatusList','info','Authentication', authStatusLines([
+        'Puter is loaded in this page.',
+        'No Puter session is active yet.',
+        'Use Continue as Guest first if normal Puter sign in keeps spinning.'
+      ]));
+      return;
+    }
+    let userText = 'Signed in with Puter.';
+    try{
+      const user = await puter.auth.getUser();
+      if(user){
+        if(user.is_temp) userText = 'Signed in with a temporary Puter guest session.';
+        else if(user.username || user.email || user.name) userText = `Signed in as ${user.username || user.email || user.name}.`;
+      }
+    }catch(_){ }
+    setStatus('authPanel','authStatusList','ok','Authentication', authStatusLines([
+      userText,
+      'Read sheet text and Build Hole Bets should run from this browser session.'
+    ]));
+  }catch(err){
+    setStatus('authPanel','authStatusList','warn','Authentication', authStatusLines([
+      err.message || 'Could not read auth status.',
+      'Try Continue as Guest, then try again.'
+    ]));
+  }
+}
+async function ensurePuterReady(){
+  if(!window.puter || !puter.ai || !puter.auth) throw new Error('Puter.js did not load.');
+  if(isFileProtocol()) throw new Error('This page is opened as a local file. Puter works better from http://localhost or a normal https page.');
+  if(isUnsafePuterEnvironment()) throw new Error('This page is cross origin isolated. Puter popup auth can fail in that mode.');
+}
+async function ensurePuterSession(actionLabel, options = {}){
+  await ensurePuterReady();
+  const guestPreferred = options.guestPreferred !== false;
+  try{
+    const signedIn = await withTimeout(Promise.resolve(puter.auth.isSignedIn()), 5000, 'Timed out checking Puter session.');
+    if(signedIn){ await refreshAuthStatus(); return true; }
+  }catch(_){}
+
+  setStatus('authPanel','authStatusList','info','Authentication', authStatusLines([
+    `${actionLabel} is opening Puter sign in from this tap.`,
+    guestPreferred ? 'Trying guest session first.' : 'Trying normal Puter sign in first.',
+    'If a popup opens, finish it and return to this tab.'
+  ]));
+
+  const attempts = guestPreferred
+    ? [() => puter.auth.signIn({ attempt_temp_user_creation: true }), () => puter.auth.signIn()]
+    : [() => puter.auth.signIn(), () => puter.auth.signIn({ attempt_temp_user_creation: true })];
+
+  let lastError = null;
+  for(const attempt of attempts){
+    try{
+      await withTimeout(Promise.resolve(attempt()), AUTH_TIMEOUT_MS, 'Puter sign in did not complete. Check popup blocking or open this page from localhost instead of file://.');
+      const signedInAfter = await withTimeout(Promise.resolve(puter.auth.isSignedIn()), 6000, 'Timed out verifying Puter session after sign in.');
+      if(signedInAfter){ await refreshAuthStatus(); return true; }
+      lastError = new Error('Puter popup closed but no signed in session was detected.');
+    }catch(err){ lastError = err; }
+  }
+  throw lastError || new Error('Could not create a Puter session.');
+}
+
+function extractPuterText(response){
+  if(response == null) return '';
+  if(typeof response === 'string') return response;
+  if(typeof response?.message?.content === 'string') return response.message.content;
+  if(Array.isArray(response?.message?.content)){
+    return response.message.content.map(part => {
+      if(typeof part === 'string') return part;
+      if(part?.text) return part.text;
+      if(part?.content) return part.content;
+      return '';
+    }).join('\n').trim();
+  }
+  if(response?.text) return response.text;
+  return JSON.stringify(response, null, 2);
+}
+function stripCodeFence(text){
+  const raw = String(text || '').trim();
+  const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  return match ? match[1].trim() : raw;
+}
+
+async function loadRoster(){
+  const file = $('rosterInput').files && $('rosterInput').files[0];
+  if(!file){ setStatus('rosterPanel','rosterStatusList','error','Roster',['Choose a roster CSV first.']); return; }
+  try{
+    const text = await fileToText(file);
+    state.rosterPlayers = analyzeRosterCSV(text);
+    setStatus('rosterPanel','rosterStatusList', state.rosterPlayers.length ? 'ok' : 'error', 'Roster', [
+      state.rosterPlayers.length ? `Loaded ${state.rosterPlayers.length} players.` : 'No players found in this roster file.'
+    ]);
+    saveState(); render();
+  }catch(err){ setStatus('rosterPanel','rosterStatusList','error','Roster',[err.message || 'Could not load roster.']); }
+}
+async function loadScores(){
+  const file = $('scoresInput').files && $('scoresInput').files[0];
+  if(!file){ setStatus('scoresPanel','scoresStatusList','error','Scores',['Choose a completed round CSV first.']); return; }
+  try{
+    const text = await fileToText(file);
+    state.scores = analyzeScoresCSV(text);
+    const scoreNames = Object.keys(state.scores).sort((a,b)=>a.localeCompare(b));
+    state.rosterPlayers = uniqueSortedNames([...(state.rosterPlayers || []), ...scoreNames]);
+    setStatus('scoresPanel','scoresStatusList', scoreNames.length ? 'ok' : 'error', 'Scores', [
+      scoreNames.length ? `Loaded ${scoreNames.length} completed score row(s).` : 'No completed 18 hole score rows found.'
+    ]);
+    saveState(); render();
+  }catch(err){ setStatus('scoresPanel','scoresStatusList','error','Scores',[err.message || 'Could not load scores.']); }
+}
+function clearRoster(){ state.rosterPlayers = []; saveState(); setStatus('rosterPanel','rosterStatusList','info','Roster',['Roster cleared.']); render(); }
+function clearScores(){ state.scores = {}; saveState(); setStatus('scoresPanel','scoresStatusList','info','Scores',['Scores cleared.']); render(); }
+function clearBetSheet(){
+  state.betSheetFile = null;
+  state.ocrText = '';
+  state.aiNotes = [];
+  state.aiQuestions = [];
+  state.holeRows = defaultHoleRows();
+  $('betSheetInput').value = '';
+  setStatus('betSheetPanel','betSheetStatusList','info','Bet sheet',['Bet sheet data cleared.']);
+  saveState(); render();
+}
+
+function buildOcrPrompt(){
+  return [
+    'Transcribe this handwritten golf best ball bet sheet as plain text.',
+    'Keep line breaks.',
+    'Do not summarize.',
+    'If something is unclear, write a ? for that spot instead of inventing it.'
+  ].join('\n');
+}
+function buildBestBallPrompt(){
+  const playerList = state.rosterPlayers.join(', ') || 'None';
+  const aliases = JSON.stringify(state.aliases || {});
+  const ocrBlock = state.ocrText ? `OCR text to use only as a weak hint if helpful:\n${state.ocrText}` : 'No OCR text available.';
+  return [
+    'You are reading a handwritten golf best ball bet sheet.',
+    'This specific sheet is one best ball matchup per hole, not multiple bet types.',
+    'The far right column is the hole number.',
+    'The two left columns are the left team.',
+    'The two right columns are the right team.',
+    'Ditto marks, quote marks, and repeat lines often mean use the same player from the row above.',
+    'Vertical marks can also mean same team as above.',
+    'Return ONLY plain text lines in this exact format with no markdown and no extra commentary:',
+    'hole|leftA,leftB|rightA,rightB|confidence|notes',
+    'Rules:',
+    '1. Output one line for each visible hole you can identify.',
+    '2. Keep raw abbreviations in the leftA,leftB,rightA,rightB positions. Do not expand them there.',
+    '3. If a position clearly means same as above, write SAME in that position.',
+    '4. If a whole side is same as above, write SAME,SAME.',
+    '5. If uncertain, use ? and explain in notes.',
+    '6. Confidence must be a number from 0 to 1.',
+    `Players: ${playerList}`,
+    `Alias map: ${aliases}`,
+    ocrBlock
+  ].join('\n');
+}
+
+async function runOCR(){
+  const file = $('betSheetInput').files && $('betSheetInput').files[0];
+  if(!file){ setStatus('betSheetPanel','betSheetStatusList','error','Bet sheet',['Choose a bet sheet image first.']); return; }
+  parseAliases();
+  try{
+    await ensurePuterSession('Read sheet text', { guestPreferred: true });
+    setStatus('betSheetPanel','betSheetStatusList','info','Bet sheet',['Reading handwritten text from the image with the selected vision model.']);
+    state.betSheetFile = file;
+    const response = await puter.ai.chat(buildOcrPrompt(), file, false, {
+      model: $('modelSelect').value,
+      temperature: 0.1,
+      max_tokens: 2000
+    });
+    state.ocrText = stripCodeFence(extractPuterText(response));
+    setStatus('betSheetPanel','betSheetStatusList','ok','Bet sheet',['Sheet text was read. You can now build hole bets from the image.']);
+    saveState(); render();
+  }catch(err){
+    console.error(err);
+    setStatus('betSheetPanel','betSheetStatusList','error','Bet sheet',[err.message || 'Could not read the sheet text.']);
+  }
+}
+
+function normalizeToken(token){
+  const t = normalizeSpace(token).replace(/[|]/g,'').trim();
+  if(!t) return '';
+  const lower = t.toLowerCase();
+  if(['same','same as above','ditto','"',"''",'""','same,same'].includes(lower)) return 'SAME';
+  if(/^"+$/.test(t)) return 'SAME';
+  return t;
+}
+function applyCarryForward(curr, prev){
+  const out = ['', ''];
+  const previous = Array.isArray(prev) ? prev : ['', ''];
+  const current = Array.isArray(curr) ? curr : ['', ''];
+
+  for(let i=0;i<2;i++){
+    const token = normalizeToken(current[i] || '');
+    if(!token || token === 'SAME') out[i] = previous[i] || '';
+    else out[i] = token;
+  }
+
+  return out;
+}
+function parseAnalyzedRows(text){
+  const rows = defaultHoleRows();
+  const rawLines = stripCodeFence(text).split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const foundHoles = new Set();
+  let prevLeft = ['', ''];
+  let prevRight = ['', ''];
+
+  rawLines.forEach(line => {
+    const parts = line.split('|').map(part => part.trim());
+    if(parts.length < 3) return;
+    const hole = Number(parts[0]);
+    if(!(hole >= 1 && hole <= 18)) return;
+
+    const leftParts = (parts[1] || '').split(',').map(normalizeToken);
+    const rightParts = (parts[2] || '').split(',').map(normalizeToken);
+    const confidence = Math.max(0, Math.min(1, Number(parts[3] || 0.5)));
+    const notes = normalizeSpace(parts.slice(4).join(' | '));
+
+    const leftRaw = applyCarryForward([leftParts[0] || '', leftParts[1] || ''], prevLeft);
+    const rightRaw = applyCarryForward([rightParts[0] || '', rightParts[1] || ''], prevRight);
+
+    prevLeft = leftRaw.slice();
+    prevRight = rightRaw.slice();
+
+    rows[hole - 1] = {
+      hole,
+      left_raw: leftRaw,
+      right_raw: rightRaw,
+      left_players: leftRaw.map(resolveAlias),
+      right_players: rightRaw.map(resolveAlias),
+      confidence,
+      notes
+    };
+    foundHoles.add(hole);
+  });
+
+  return { rows, foundHoles: [...foundHoles].sort((a,b)=>a-b) };
+}
+
+async function analyzeBetSheet(){
+  const file = $('betSheetInput').files && $('betSheetInput').files[0];
+  if(!file){ setStatus('betSheetPanel','betSheetStatusList','error','Bet sheet',['Choose a bet sheet image first.']); return; }
+  parseAliases();
+  try{
+    await ensurePuterSession('Build hole bets', { guestPreferred: true });
+    setStatus('betSheetPanel','betSheetStatusList','info','Bet sheet',['Reading the image as a best ball by hole sheet and trying to build rows 1 through 18.']);
+    state.betSheetFile = file;
+
+    const response = await puter.ai.chat(buildBestBallPrompt(), file, false, {
+      model: $('modelSelect').value,
+      temperature: 0.1,
+      max_tokens: 2500
+    });
+
+    const aiText = stripCodeFence(extractPuterText(response));
+    const parsed = parseAnalyzedRows(aiText);
+    state.holeRows = parsed.rows;
+    state.aiNotes = [
+      `Detected hole rows: ${parsed.foundHoles.length ? parsed.foundHoles.join(', ') : 'none'}`,
+      'This parser is now image first and sheet-layout specific, not generic OCR first.'
+    ];
+    state.aiQuestions = parsed.foundHoles.length === 18
+      ? []
+      : [{ question: 'The AI did not confidently identify all 18 holes. Review the blank or low confidence rows below and fill them in manually.', options: [] }];
+
+    setStatus('betSheetPanel','betSheetStatusList', parsed.foundHoles.length ? 'ok' : 'warn', 'Bet sheet', [
+      parsed.foundHoles.length ? `Built ${parsed.foundHoles.length} hole row(s) from the image.` : 'No hole rows were detected from the image.',
+      parsed.foundHoles.length === 18 ? 'All 18 hole rows were detected.' : 'Some hole rows still need manual review.'
+    ]);
+
+    saveState(); render();
+  }catch(err){
+    console.error(err);
+    setStatus('betSheetPanel','betSheetStatusList','error','Bet sheet',[err.message || 'Could not build hole bets from the image.']);
+  }
+}
+
+function fillEmptyRowsFromAbove(){
+  let prevLeft = ['', ''];
+  let prevRight = ['', ''];
+  state.holeRows = state.holeRows.map(row => {
+    const leftRaw = applyCarryForward(row.left_raw, prevLeft);
+    const rightRaw = applyCarryForward(row.right_raw, prevRight);
+    prevLeft = leftRaw.slice();
+    prevRight = rightRaw.slice();
+    return {
+      ...row,
+      left_raw: leftRaw,
+      right_raw: rightRaw,
+      left_players: leftRaw.map(resolveAlias),
+      right_players: rightRaw.map(resolveAlias)
+    };
+  });
+  saveState(); render();
+}
+
+function clearAllRows(){
+  state.holeRows = defaultHoleRows();
+  state.settlements = [];
+  state.playerLedgers = [];
+  saveState(); render();
+}
+
+function bestBallForHole(players, hole){
+  const values = (players || []).map(player => {
+    const strokes = state.scores[player];
+    if(!strokes || !Array.isArray(strokes)) return null;
+    return Number(strokes[hole - 1]);
+  }).filter(v => v != null && !Number.isNaN(v));
+  if(!values.length) return null;
+  return Math.min(...values);
+}
+
+function addTransfer(ledger, from, to, amount, sourceTitle, reason){
+  amount = Number(amount || 0);
+  if(amount <= 0 || !from || !to) return;
+  if(!ledger[from]) ledger[from] = { name: from, net: 0, lines: [] };
+  if(!ledger[to]) ledger[to] = { name: to, net: 0, lines: [] };
+  ledger[from].net -= amount;
+  ledger[to].net += amount;
+  ledger[from].lines.push(`${sourceTitle}: paid ${to} $${amount.toFixed(2).replace(/\.00$/,'')}. ${reason}`);
+  ledger[to].lines.push(`${sourceTitle}: collected $${amount.toFixed(2).replace(/\.00$/,'')} from ${from}. ${reason}`);
+}
+
+function calculateSettlements(){
+  const rows = [];
+  const ledger = {};
+  state.rosterPlayers.forEach(name => { ledger[name] = { name, net: 0, lines: [] }; });
+
+  const shotValue = Number(state.shotValue || 0);
+  const maxShots = Number(state.maxShots || 0);
+
+  state.holeRows.forEach(row => {
+    const hole = Number(row.hole);
+    const left = uniqueSortedNames(row.left_players || []);
+    const right = uniqueSortedNames(row.right_players || []);
+    const title = `Hole ${hole}: ${left.join(' & ') || 'Left team'} vs ${right.join(' & ') || 'Right team'}`;
+
+    if(left.length !== 2 || right.length !== 2){
+      rows.push({
+        hole,
+        matchup: `${left.join(' & ') || 'Incomplete left'} vs ${right.join(' & ') || 'Incomplete right'}`,
+        winner: 'Needs review',
+        transfer: '-',
+        explanation: 'Each side needs exactly two players before this hole can be settled.'
+      });
+      return;
+    }
+
+    const leftBB = bestBallForHole(left, hole);
+    const rightBB = bestBallForHole(right, hole);
+
+    if(leftBB == null || rightBB == null){
+      rows.push({
+        hole,
+        matchup: `${left.join(' & ')} vs ${right.join(' & ')}`,
+        winner: 'Needs scores',
+        transfer: '-',
+        explanation: 'One or more players in this hole do not have a completed score loaded for that hole.'
+      });
+      return;
+    }
+
+    if(leftBB === rightBB){
+      rows.push({
+        hole,
+        matchup: `${left.join(' & ')} vs ${right.join(' & ')}`,
+        winner: 'Push',
+        transfer: '$0',
+        explanation: `Push. Left best ball ${leftBB}. Right best ball ${rightBB}.`
+      });
+      return;
+    }
+
+    const leftWins = leftBB < rightBB;
+    const margin = Math.abs(rightBB - leftBB);
+    const shotsCounted = Math.min(margin, maxShots);
+    const perPerson = shotsCounted * shotValue;
+    const teamTransfer = perPerson * 2;
+    const winners = leftWins ? left : right;
+    const losers = leftWins ? right : left;
+    const winnerName = winners.join(' & ');
+
+    addTransfer(ledger, losers[0], winners[0], perPerson, title, `Best ball ${leftBB} to ${rightBB}. Margin ${margin}, counted ${shotsCounted}.`);
+    addTransfer(ledger, losers[1], winners[1], perPerson, title, `Best ball ${leftBB} to ${rightBB}. Margin ${margin}, counted ${shotsCounted}.`);
+
+    rows.push({
+      hole,
+      matchup: `${left.join(' & ')} vs ${right.join(' & ')}`,
+      winner: winnerName,
+      transfer: `$${teamTransfer.toFixed(2).replace(/\.00$/,'')}`,
+      explanation: `${losers[0]} pays ${winners[0]} $${perPerson.toFixed(2).replace(/\.00$/,'')}. ${losers[1]} pays ${winners[1]} $${perPerson.toFixed(2).replace(/\.00$/,'')}. Left best ball ${leftBB}. Right best ball ${rightBB}. Margin ${margin}, counted ${shotsCounted}.`
+    });
+  });
+
+  state.settlements = rows;
+  state.playerLedgers = Object.values(ledger).filter(entry => entry.lines.length || state.rosterPlayers.includes(entry.name)).sort((a,b)=>a.name.localeCompare(b.name));
+
+  const settled = rows.filter(row => row.winner !== 'Needs review' && row.winner !== 'Needs scores').length;
+  setStatus('calcPanel','calcStatusList','ok','Calculation',[
+    `Calculated ${rows.length} settlement row(s).`,
+    `${settled} row(s) produced a winner or push.`
+  ]);
+
+  saveState(); render();
+}
+
+function renderRows(){
+  const tbody = $('rowsTbody');
+  const shotValue = Number(state.shotValue || 0);
+  const maxShots = Number(state.maxShots || 0);
+
+  tbody.innerHTML = state.holeRows.map((row, idx) => {
+    const left = uniqueSortedNames(row.left_players || []);
+    const right = uniqueSortedNames(row.right_players || []);
+    const leftBB = left.length === 2 ? bestBallForHole(left, row.hole) : null;
+    const rightBB = right.length === 2 ? bestBallForHole(right, row.hole) : null;
+    let winner = '';
+    let margin = '';
+    let counted = '';
+    let perPerson = '';
+
+    if(leftBB != null && rightBB != null){
+      if(leftBB === rightBB){
+        winner = 'Push';
+        margin = '0';
+        counted = '0';
+        perPerson = '$0';
+      }else{
+        const leftWins = leftBB < rightBB;
+        const diff = Math.abs(rightBB - leftBB);
+        const countedNum = Math.min(diff, maxShots);
+        winner = leftWins ? left.join(' & ') : right.join(' & ');
+        margin = String(diff);
+        counted = String(countedNum);
+        perPerson = `$${(countedNum * shotValue).toFixed(2).replace(/\.00$/,'')}`;
+      }
+    }
+
+    return `
+      <tr>
+        <td>${row.hole}</td>
+        <td><textarea class="textarea row-left" data-index="${idx}">${escapeHtml(left.join('\n') || row.left_raw.filter(Boolean).join('\n'))}</textarea></td>
+        <td><textarea class="textarea row-right" data-index="${idx}">${escapeHtml(right.join('\n') || row.right_raw.filter(Boolean).join('\n'))}</textarea></td>
+        <td><input class="input row-confidence" data-index="${idx}" type="number" min="0" max="1" step="0.01" value="${Number(row.confidence || 0)}"></td>
+        <td><textarea class="textarea row-notes" data-index="${idx}">${escapeHtml(row.notes || '')}</textarea></td>
+        <td>${leftBB == null ? '-' : leftBB}</td>
+        <td>${rightBB == null ? '-' : rightBB}</td>
+        <td>${escapeHtml(winner || '-')}</td>
+        <td>${escapeHtml(margin || '-')}</td>
+        <td>${escapeHtml(counted || '-')}</td>
+        <td>${escapeHtml(perPerson || '-')}</td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('.row-left').forEach(el => el.addEventListener('input', e => {
+    const idx = Number(e.target.dataset.index);
+    const players = uniqueSortedNames(e.target.value.split(/\r?\n|,/).map(resolveAlias).filter(Boolean));
+    state.holeRows[idx].left_players = players;
+    state.holeRows[idx].left_raw = players.slice(0,2);
+    saveState(); render();
+  }));
+  tbody.querySelectorAll('.row-right').forEach(el => el.addEventListener('input', e => {
+    const idx = Number(e.target.dataset.index);
+    const players = uniqueSortedNames(e.target.value.split(/\r?\n|,/).map(resolveAlias).filter(Boolean));
+    state.holeRows[idx].right_players = players;
+    state.holeRows[idx].right_raw = players.slice(0,2);
+    saveState(); render();
+  }));
+  tbody.querySelectorAll('.row-confidence').forEach(el => el.addEventListener('input', e => {
+    const idx = Number(e.target.dataset.index);
+    state.holeRows[idx].confidence = Math.max(0, Math.min(1, Number(e.target.value || 0)));
+    saveState();
+  }));
+  tbody.querySelectorAll('.row-notes').forEach(el => el.addEventListener('input', e => {
+    const idx = Number(e.target.dataset.index);
+    state.holeRows[idx].notes = e.target.value;
+    saveState();
+  }));
+}
+
+function renderSettlements(){
+  const tbody = $('settlementTbody');
+  if(!state.settlements.length){
+    tbody.innerHTML = `<tr><td colspan="6">No settlements yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.settlements.map((row, idx) => `
+    <tr>
+      <td>${idx + 1}</td>
+      <td>${row.hole}</td>
+      <td>${escapeHtml(row.matchup)}</td>
+      <td>${escapeHtml(row.winner)}</td>
+      <td>${escapeHtml(row.transfer)}</td>
+      <td>${escapeHtml(row.explanation)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderPlayers(){
+  const wrap = $('playerBreakdownList');
+  if(!state.playerLedgers.length){
+    wrap.innerHTML = `<div class="pill pillMuted">No player breakdowns yet.</div>`;
+    return;
+  }
+  wrap.innerHTML = state.playerLedgers.map(player => {
+    const gross = playerGrossScore(player.name);
+    return `
+      <div class="playerCard">
+        <div class="playerHead">
+          <div>
+            <h3 class="playerName">${escapeHtml(player.name)}</h3>
+            <div class="pillWrap">
+              <span class="chip">${gross == null ? 'Score not loaded' : `Shot ${gross}`}</span>
+              <span class="chip">${player.lines.length} line item(s)</span>
+            </div>
+          </div>
+          <div class="playerNet ${player.net >= 0 ? 'gain' : 'loss'}">${friendlyMoney(player.net)}</div>
+        </div>
+        <div class="btnRow" style="margin-bottom:10px;">
+          <button class="btn btnBlue export-player" type="button" data-name="${escapeHtml(player.name)}">Download ${escapeHtml(player.name)} PDF</button>
+        </div>
+        <div class="breakdownList">
+          ${player.lines.length ? player.lines.map((line, i) => `<div class="breakdownItem"><div class="breakdownIndex">${i + 1}</div><div class="breakdownText">${escapeHtml(line)}</div></div>`).join('') : `<div class="breakdownItem"><div class="breakdownIndex">1</div><div class="breakdownText">No settled lines yet.</div></div>`}
+        </div>
+      </div>
+    `;
+  }).join('');
+  wrap.querySelectorAll('.export-player').forEach(btn => btn.addEventListener('click', () => exportPlayerPdf(btn.dataset.name)));
+}
+
+function getJsPDF(){ return window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null; }
+function makeDoc(orientation){ const JsPDF = getJsPDF(); if(!JsPDF) throw new Error('jsPDF did not load.'); return new JsPDF({ unit: 'pt', format: 'letter', orientation: orientation || 'portrait' }); }
+function isIos(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function savePdfDoc(doc, filename){
+  if(isIos()){
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if(!win) window.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    showToast('Your PDF opened in a new tab. On iPhone, use Share then Save to Files.');
+    return;
+  }
+  doc.save(filename);
+}
+function showToast(message){
+  const toast = document.createElement('div');
+  toast.style.position='fixed'; toast.style.left='12px'; toast.style.right='12px'; toast.style.bottom='12px'; toast.style.zIndex='9999';
+  toast.style.background='#14532d'; toast.style.color='#fff'; toast.style.padding='12px 14px'; toast.style.borderRadius='14px';
+  toast.style.fontSize='14px'; toast.style.fontWeight='700'; toast.style.boxShadow='0 10px 25px rgba(0,0,0,.25)';
+  toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.remove(), 5000);
+}
+function pdfText(doc, text, x, y, width, options){
+  const opts = options || {};
+  const lines = Array.isArray(text) ? text : doc.splitTextToSize(String(text ?? ''), width);
+  const fontSize = opts.fontSize || 11;
+  const lineHeight = opts.lineHeight || Math.ceil(fontSize * 1.45);
+  doc.setFont('helvetica', opts.fontStyle || 'normal');
+  doc.setFontSize(fontSize);
+  if(opts.color) doc.setTextColor(...opts.color); else doc.setTextColor(17,24,39);
+  lines.forEach(line => {
+    if(y > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
+    doc.text(String(line), x, y);
+    y += lineHeight;
+  });
+  return y;
+}
+function pdfHeader(doc, title, subtitle){
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 56; const width = pageWidth - (margin * 2); let y = 70;
+  doc.setFillColor(240,253,244); doc.setDrawColor(187,247,208); doc.roundedRect(margin, 42, width, 82, 16, 16, 'FD');
+  y = pdfText(doc, title, margin + 16, y, width - 32, { fontSize: 20, lineHeight: 24, fontStyle: 'bold', color: [20,83,45] });
+  y = pdfText(doc, subtitle, margin + 16, y, width - 32, { fontSize: 10, lineHeight: 14, color: [71,85,105] });
+  return y + 8;
+}
+function pdfCard(doc, x, y, width, title, value){
+  const titleLines = doc.splitTextToSize(String(title || ''), width - 24);
+  const valueLines = doc.splitTextToSize(String(value || ''), width - 24);
+  const height = 22 + (titleLines.length * 12) + (valueLines.length * 16) + 18;
+  if(y + height > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
+  doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240); doc.roundedRect(x, y, width, height, 12, 12, 'FD');
+  let ty = y + 18;
+  ty = pdfText(doc, titleLines, x + 12, ty, width - 24, { fontSize: 10, lineHeight: 12, fontStyle: 'bold', color: [71,85,105] });
+  pdfText(doc, valueLines, x + 12, ty + 2, width - 24, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] });
+  return y + height;
+}
+function exportPlayerPdf(playerName){
+  const player = state.playerLedgers.find(p => p.name === playerName);
+  if(!player) return;
+  const doc = makeDoc('portrait');
+  const margin = 56; const pageWidth = doc.internal.pageSize.getWidth(); const usable = pageWidth - (margin * 2);
+  let y = pdfHeader(doc, `${playerName} Best Ball Settlement`, [
+    playerGrossScore(playerName) == null ? 'Round score not loaded' : `Round score: Shot ${playerGrossScore(playerName)}`,
+    `Net result: ${friendlyMoney(player.net)}`
+  ]);
+  const cardWidth = (usable - 14) / 2;
+  const h1 = pdfCard(doc, margin, y, cardWidth, 'Player', playerName);
+  const h2 = pdfCard(doc, margin + cardWidth + 14, y, cardWidth, 'Net Total', friendlyMoney(player.net));
+  y = Math.max(h1,h2) + 10;
+  const h3 = pdfCard(doc, margin, y, cardWidth, 'Score', playerGrossScore(playerName) == null ? 'Score not loaded' : `Shot ${playerGrossScore(playerName)}`);
+  const h4 = pdfCard(doc, margin + cardWidth + 14, y, cardWidth, 'Line Items', String(player.lines.length));
+  y = Math.max(h3,h4) + 16;
+  y = pdfText(doc, 'Breakdown', margin, y, usable, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] });
+  doc.setDrawColor(209,213,219); doc.line(margin, y, margin + usable, y); y += 16;
+  if(!player.lines.length){ y = pdfText(doc, 'No settled lines yet.', margin, y, usable, { fontSize: 11, lineHeight: 16 }); }
+  else player.lines.forEach((line, idx) => {
+    const blockHeight = 40 + doc.splitTextToSize(line, usable - 24).length * 14;
+    if(y + blockHeight > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
+    doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240); doc.roundedRect(margin, y, usable, blockHeight, 12, 12, 'FD');
+    let ty = y + 18;
+    ty = pdfText(doc, `Line ${idx + 1}`, margin + 12, ty, usable - 24, { fontSize: 10, lineHeight: 12, fontStyle: 'bold', color: [71,85,105] });
+    pdfText(doc, line, margin + 12, ty + 2, usable - 24, { fontSize: 11, lineHeight: 16 });
+    y += blockHeight + 10;
+  });
+  savePdfDoc(doc, `${playerName.replace(/\s+/g,'_')}_best_ball_settlement.pdf`);
+}
+function exportAllPdf(){
+  const doc = makeDoc('portrait');
+  const margin = 56; const pageWidth = doc.internal.pageSize.getWidth(); const usable = pageWidth - (margin * 2);
+  let y = pdfHeader(doc, 'Golf Best Ball Bet Sheet Results', [
+    `Players loaded: ${state.rosterPlayers.length}    Finished scores: ${Object.keys(state.scores).length}`,
+    `Dollars per shot: $${Number(state.shotValue || 0)}    Max shots: ${Number(state.maxShots || 0)}`
+  ]);
+  const cardWidth = (usable - 14) / 2;
+  const h1 = pdfCard(doc, margin, y, cardWidth, 'Detected Hole Rows', state.holeRows.filter(row => row.left_players.filter(Boolean).length === 2 && row.right_players.filter(Boolean).length === 2).length);
+  const h2 = pdfCard(doc, margin + cardWidth + 14, y, cardWidth, 'AI Notes', state.aiNotes.length ? state.aiNotes.join(' | ') : 'No AI notes');
+  y = Math.max(h1,h2) + 16;
+  y = pdfText(doc, 'Settlement Rows', margin, y, usable, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] });
+  doc.setDrawColor(209,213,219); doc.line(margin, y, margin + usable, y); y += 16;
+  if(!state.settlements.length){ y = pdfText(doc, 'No settlement rows yet.', margin, y, usable, { fontSize: 11, lineHeight: 16 }); }
+  else state.settlements.forEach((row, idx) => {
+    const content = [`Winner: ${row.winner}`, `Transfer: ${row.transfer}`, row.explanation].join('\n');
+    const blockHeight = 44 + doc.splitTextToSize(content, usable - 24).length * 14;
+    if(y + blockHeight > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
+    doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240); doc.roundedRect(margin, y, usable, blockHeight, 12, 12, 'FD');
+    let ty = y + 18;
+    ty = pdfText(doc, `Settlement ${idx + 1}: Hole ${row.hole}`, margin + 12, ty, usable - 24, { fontSize: 11, lineHeight: 14, fontStyle: 'bold', color: [20,83,45] });
+    pdfText(doc, content, margin + 12, ty + 2, usable - 24, { fontSize: 10, lineHeight: 15 });
+    y += blockHeight + 10;
+  });
+  y += 6;
+  y = pdfText(doc, 'Player Net Summary', margin, y, usable, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] });
+  doc.setDrawColor(209,213,219); doc.line(margin, y, margin + usable, y); y += 16;
+  state.playerLedgers.forEach(player => {
+    const content = `Score: ${playerGrossScore(player.name) == null ? 'Score not loaded' : `Shot ${playerGrossScore(player.name)}`}    Net: ${friendlyMoney(player.net)}    Line Items: ${player.lines.length}`;
+    const blockHeight = 42;
+    if(y + blockHeight > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
+    doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240); doc.roundedRect(margin, y, usable, blockHeight, 12, 12, 'FD');
+    let ty = y + 18;
+    ty = pdfText(doc, player.name, margin + 12, ty, usable - 24, { fontSize: 11, lineHeight: 14, fontStyle: 'bold', color: [20,83,45] });
+    pdfText(doc, content, margin + 12, ty + 1, usable - 24, { fontSize: 10, lineHeight: 14 });
+    y += blockHeight + 8;
+  });
+  savePdfDoc(doc, 'golf_best_ball_bet_sheet_results.pdf');
+}
+function exportAllCsv(){
+  const rows = [];
+  rows.push(['Dollars Per Shot', state.shotValue]);
+  rows.push(['Max Shots', state.maxShots]);
+  rows.push([]);
+  rows.push(['Hole','Left Team','Right Team','Left BB','Right BB','Winner','Transfer','Explanation']);
+  state.settlements.forEach(row => rows.push([row.hole, row.matchup.split(' vs ')[0] || '', row.matchup.split(' vs ')[1] || '', '', '', row.winner, row.transfer, row.explanation]));
+  rows.push([]);
+  rows.push(['Player','Score','Net','Line Items']);
+  state.playerLedgers.forEach(player => rows.push([player.name, playerGrossScore(player.name) == null ? '' : playerGrossScore(player.name), player.net, player.lines.length]));
+  const esc = v => {
+    const s = String(v ?? '');
+    return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g,'""')}"` : s;
+  };
+  const csv = rows.map(r => r.map(esc).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'golf_best_ball_bet_sheet_results.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function render(){
+  parseAliases();
+  state.shotValue = Number($('shotValue').value || state.shotValue || 0);
+  state.maxShots = Number($('maxShots').value || state.maxShots || 0);
+  if(!Array.isArray(state.holeRows) || state.holeRows.length !== 18) state.holeRows = defaultHoleRows();
+  updateSummary();
+  renderRows();
+  renderSettlements();
+  renderPlayers();
+  $('questionsPreview').textContent = state.aiQuestions.length ? state.aiQuestions.map(q => `- ${q.question}${q.options && q.options.length ? ` | Options: ${q.options.join(', ')}` : ''}`).join('\n') : 'No questions yet.';
+  setPreview('ocrPreview', state.ocrText || 'No OCR text yet.');
+  setPreview('aiNotesPreview', state.aiNotes.join('\n') || 'No AI notes yet.');
+  setPreview('loadedPlayersPreview', state.rosterPlayers.join('\n') || 'No players loaded yet.');
+  const scoreNames = Object.keys(state.scores || {}).sort((a,b)=>a.localeCompare(b));
+  setPreview('loadedScoresPreview', scoreNames.map(name => `${name}: Shot ${playerGrossScore(name)}`).join('\n') || 'No scores loaded yet.');
+}
+
+$('signInBtn').addEventListener('click', async () => {
+  try{ await ensurePuterSession('Continue with Puter', { guestPreferred: false }); }
+  catch(err){ setStatus('authPanel','authStatusList','warn','Authentication', authStatusLines([err.message || 'Sign in did not finish.','Try Continue as Guest instead.'])); }
+});
+$('guestSignInBtn').addEventListener('click', async () => {
+  try{ await ensurePuterSession('Continue as Guest', { guestPreferred: true }); }
+  catch(err){ setStatus('authPanel','authStatusList','warn','Authentication', authStatusLines([err.message || 'Guest sign in did not finish.','Open this page from GitHub Pages or localhost and allow popups.'])); }
+});
+$('refreshAuthBtn').addEventListener('click', refreshAuthStatus);
+$('signOutBtn').addEventListener('click', async () => { try{ await Promise.resolve(puter.auth.signOut()); await refreshAuthStatus(); }catch(err){ setStatus('authPanel','authStatusList','error','Authentication',[err.message || 'Could not sign out.']); } });
+
+$('loadRosterBtn').addEventListener('click', loadRoster);
+$('loadScoresBtn').addEventListener('click', loadScores);
+$('clearRosterBtn').addEventListener('click', clearRoster);
+$('clearScoresBtn').addEventListener('click', clearScores);
+
+$('ocrBtn').addEventListener('click', runOCR);
+$('analyzeBetSheetBtn').addEventListener('click', analyzeBetSheet);
+$('clearBetSheetBtn').addEventListener('click', clearBetSheet);
+$('fillEmptyRowsBtn').addEventListener('click', fillEmptyRowsFromAbove);
+$('clearRowsBtn').addEventListener('click', clearAllRows);
+$('calcBtn').addEventListener('click', calculateSettlements);
+$('exportAllPdfBtn').addEventListener('click', exportAllPdf);
+$('exportAllCsvBtn').addEventListener('click', exportAllCsv);
+$('shotValue').addEventListener('input', () => { state.shotValue = Number($('shotValue').value || 0); saveState(); render(); });
+$('maxShots').addEventListener('input', () => { state.maxShots = Number($('maxShots').value || 0); saveState(); render(); });
+
+loadState();
+if(!Array.isArray(state.holeRows) || state.holeRows.length !== 18) state.holeRows = defaultHoleRows();
+$('shotValue').value = state.shotValue ?? 3;
+$('maxShots').value = state.maxShots ?? 7;
+refreshAuthStatus();
+render();
+</script>
+</body>
+</html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Golf Bet Sheet AI with Puter</title>
   <script src="https://js.puter.com/v2/"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
