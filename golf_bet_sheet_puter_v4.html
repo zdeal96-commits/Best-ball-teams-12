@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Golf Best Ball Sheet with Puter - Stable Restore</title>
+  <title>Golf Best Ball Sheet with Puter v17</title>
   <script src="https://js.puter.com/v2/"></script>
   <link href="https://unpkg.com/filepond/dist/filepond.min.css" rel="stylesheet">
   <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css" rel="stylesheet">
@@ -12,6 +12,8 @@
   <script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.min.js"></script>
   <script src="https://unpkg.com/filepond-plugin-image-exif-orientation/dist/filepond-plugin-image-exif-orientation.min.js"></script>
   <script src="https://unpkg.com/filepond/dist/filepond.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root{
@@ -135,7 +137,7 @@
   <div class="hero">
     <div class="heroTop">
       <div>
-        <h1>Golf Best Ball Sheet with Puter</h1>
+        <h1>Golf Best Ball Sheet with Puter v17</h1>
         <p>This version follows the sheet order from top to bottom. It treats each row as one best ball matchup between two teams, not as holes. It fills rows the AI is confident about, keeps unclear rows in place for you to review, supports uneven team sizes like 2v3, supports multiple bet sheet images, and uses dollars per shot plus max shots like the wheel tool.</p>
       </div>
       <div class="btnRow">
@@ -187,7 +189,7 @@
 
   <section class="card">
     <h2 class="sectionTitle">3) Sheet Settings and Image</h2>
-    <div class="sectionSub">Adjust aliases, dollars per shot, and max shots, then upload the handwritten sheet. This version is locked to Google because that has been the reliable Puter reader for your sheet.</div>
+    <div class="sectionSub">Adjust aliases, dollars per shot, and max shots, then upload the handwritten sheet. This version prepares multiple analysis views, uses Gemini as the primary image reader, and then lets Claude or GPT audit the transcript in text mode.</div>
     <div class="grid2">
       <div>
         <div class="field">
@@ -219,18 +221,31 @@
         <div class="warn">For normal 2v2 rows, the losing side pays the winning side the same way as the wheel tool. For uneven rows like 2v3, this version keeps the same total team value based on the smaller side and splits that amount evenly across the losing and winning players.</div>
       </div>
       <div>
-        <div class="field"><label for="betSheetInput">Bet sheet image(s)</label><input class="input" id="betSheetInput" type="file" accept="image/*" multiple /><div class="pondNote">Drag files in or tap browse. The uploader previews images, keeps the original file, and passes the selected files into the existing Puter flow.</div></div>
+        <div class="field"><label for="betSheetInput">Bet sheet image(s)</label><input class="input" id="betSheetInput" type="file" accept="image/*" multiple /><div class="pondNote">Drag files in or tap browse. The uploader previews images, keeps the original files untouched, and creates multiple prepared analysis views before sending them into the reader pipeline.</div></div>
         <div class="field" style="margin-top:12px;">
-          <label for="modelSelect">Puter model strategy</label>
+          <label for="modelSelect">Reader strategy</label>
           <select class="select" id="modelSelect">
-            <option value="auto">Auto fallback</option>
-            <option value="google/gemini-2.5-flash">google/gemini-2.5-flash</option>
-            <option value="claude-sonnet-4">claude-sonnet-4</option>
-            <option value="gpt-5-nano">gpt-5-nano</option>
+            <option value="auto">Gemini primary with transcript audit</option>
+            <option value="google/gemini-2.5-flash">Gemini only</option>
           </select>
         </div>
-        <div class="tiny" style="margin-top:8px;">Auto tries Google first, then Claude, then GPT, and keeps the best row read.</div>
+        <div class="tiny" style="margin-top:8px;">Gemini is the primary image reader. Claude and GPT audit the transcript and extracted rows in text mode.</div>
+        <div class="grid2" style="margin-top:12px;">
+          <div class="field">
+            <label><input id="ollamaEnabled" type="checkbox" /> Enable Ollama fallback</label>
+            <div class="tiny">Optional home server fallback for local vision review.</div>
+          </div>
+          <div class="field">
+            <label for="ollamaModel">Ollama model</label>
+            <input class="input" id="ollamaModel" type="text" value="llava" />
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label for="ollamaEndpoint">Ollama endpoint</label>
+          <input class="input" id="ollamaEndpoint" type="text" value="http://localhost:11434/api/generate" />
+        </div>
         <div class="btnRow" style="margin-top:12px;">
+          <button class="btn btnBlue" id="prepareViewsBtn" type="button">Prepare Image Views</button>
           <button class="btn btnBlue" id="readSheetBtn" type="button">Read Sheet Text</button>
           <button class="btn btnGreen" id="buildRowsBtn" type="button">Build Rows from Image</button>
           <button class="btn btnGray" id="clearSheetBtn" type="button">Clear Sheet</button>
@@ -241,6 +256,14 @@
     <div class="grid2" style="margin-top:12px;">
       <div class="previewBox"><div class="previewLabel">Read sheet text</div><div class="previewText" id="ocrPreview">No sheet text yet.</div></div>
       <div class="previewBox"><div class="previewLabel">AI notes and questions</div><div class="previewText" id="aiNotesPreview">No AI notes yet.</div></div>
+    </div>
+    <div class="grid2" style="margin-top:12px;">
+      <div class="previewBox"><div class="previewLabel">Prepared analysis views</div><div class="previewText" id="preparedViewsPreview">No prepared image views yet.</div></div>
+      <div class="previewBox"><div class="previewLabel">Winning extraction per sheet</div><div class="previewText" id="winnerPreview">No winner chosen yet.</div></div>
+    </div>
+    <div class="grid2" style="margin-top:12px;">
+      <div class="previewBox"><div class="previewLabel">Merged row extraction</div><div class="previewText" id="mergedRowsPreview">No merged rows yet.</div></div>
+      <div class="previewBox"><div class="previewLabel">Original files</div><div class="previewText" id="originalFilesPreview">No bet sheet images selected yet.</div></div>
     </div>
   </section>
 
@@ -316,7 +339,7 @@
 </div>
 
 <script>
-const APP_KEY = 'golf_best_ball_sheet_v10';
+const APP_KEY = 'golf_best_ball_sheet_v17';
 const DEFAULT_ALIASES = `Deal=Brad Deal
 ZD=Zack Deal
 Daw=Dawson
@@ -337,13 +360,29 @@ const state = {
   sheetRows: [],
   settlements: [],
   playerLedgers: [],
+  preparedSheets: [],
+  winnerNotes: [],
+  transcriptAudits: [],
+  ollamaEnabled: false,
+  ollamaEndpoint: 'http://localhost:11434/api/generate',
+  ollamaModel: 'llava',
   shotValue: 3,
   maxShots: 7
 };
 
 const $ = (id) => document.getElementById(id);
 
+
 let betSheetPond = null;
+
+function updateSelectedFilePreviews(){
+  const files = getSelectedBetSheetFiles();
+  const text = files.length
+    ? files.map((file, i) => `${i + 1}. ${file.name} (${Math.round(file.size / 1024)} KB)`).join('\n')
+    : 'No bet sheet images selected yet.';
+  if($('selectedUploadsPreview')) $('selectedUploadsPreview').textContent = text;
+  if($('originalFilesPreview')) $('originalFilesPreview').textContent = text;
+}
 
 function initBetSheetUploader(){
   if(!window.FilePond) return;
@@ -362,7 +401,7 @@ function initBetSheetUploader(){
     allowReorder: true,
     acceptedFileTypes: ['image/png','image/jpeg','image/webp','image/heic','image/heif'],
     fileValidateTypeDetectType: (source, type) => new Promise(resolve => resolve(type)),
-    maxFiles: 15,
+    maxFiles: 20,
     maxFileSize: '25MB',
     storeAsFile: true,
     imagePreviewHeight: 180,
@@ -371,17 +410,21 @@ function initBetSheetUploader(){
     labelIdle: 'Drop bet sheet images here or <span class="filepond--label-action">Browse</span>'
   });
 
-  const updatePreview = () => {
-    const files = getSelectedBetSheetFiles();
-    $('selectedUploadsPreview').textContent = files.length
-      ? files.map((file, i) => `${i + 1}. ${file.name} (${Math.round(file.size / 1024)} KB)`).join('\n')
-      : 'No bet sheet images selected yet.';
+  const onChange = () => {
+    updateSelectedFilePreviews();
+    state.preparedSheets = [];
+    state.winnerNotes = [];
+    state.transcriptAudits = [];
+    setPreview('preparedViewsPreview','No prepared image views yet.');
+    setPreview('winnerPreview','No winner chosen yet.');
+    setPreview('mergedRowsPreview', state.sheetRows.length ? state.sheetRows.map(row => `Row ${row.order}: ${(row.left_players||[]).join(' & ')} vs ${(row.right_players||[]).join(' & ')}`).join('\n') : 'No merged rows yet.');
+    saveState();
   };
 
-  betSheetPond.on('addfile', updatePreview);
-  betSheetPond.on('removefile', updatePreview);
-  betSheetPond.on('reorderfiles', updatePreview);
-  updatePreview();
+  betSheetPond.on('addfile', onChange);
+  betSheetPond.on('removefile', onChange);
+  betSheetPond.on('reorderfiles', onChange);
+  onChange();
 }
 
 function getSelectedBetSheetFiles(){
@@ -392,6 +435,232 @@ function getSelectedBetSheetFiles(){
   }
   return Array.from(($('betSheetInput').files || []));
 }
+
+async function fileToDataUrl(file){
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+async function loadImageElement(file){
+  const url = URL.createObjectURL(file);
+  try{
+    const img = await new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = url;
+    });
+    return img;
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+}
+function makeCanvas(width, height){
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(width));
+  canvas.height = Math.max(1, Math.round(height));
+  return canvas;
+}
+function canvasToDataUrl(canvas, type='image/png', quality=0.95){
+  return canvas.toDataURL(type, quality);
+}
+async function dataUrlToFile(dataUrl, name, type='image/png'){
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], name, { type: type || blob.type || 'image/png' });
+}
+function drawNormalizedCanvas(img, maxHeight=2600){
+  const scale = Math.min(1, maxHeight / img.height);
+  const width = Math.max(1, Math.round(img.width * scale));
+  const height = Math.max(1, Math.round(img.height * scale));
+  const canvas = makeCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, width, height);
+  return canvas;
+}
+function applyContrastBrightness(canvas, contrast=1.22, brightness=6){
+  const out = makeCanvas(canvas.width, canvas.height);
+  const ctx = out.getContext('2d');
+  ctx.drawImage(canvas, 0, 0);
+  const imgData = ctx.getImageData(0,0,out.width,out.height);
+  const d = imgData.data;
+  for(let i=0;i<d.length;i+=4){
+    d[i] = Math.max(0, Math.min(255, ((d[i]-128)*contrast)+128+brightness));
+    d[i+1] = Math.max(0, Math.min(255, ((d[i+1]-128)*contrast)+128+brightness));
+    d[i+2] = Math.max(0, Math.min(255, ((d[i+2]-128)*contrast)+128+brightness));
+  }
+  ctx.putImageData(imgData,0,0);
+  return out;
+}
+function applyThreshold(canvas, threshold=165){
+  const out = makeCanvas(canvas.width, canvas.height);
+  const ctx = out.getContext('2d');
+  ctx.drawImage(canvas, 0, 0);
+  const imgData = ctx.getImageData(0,0,out.width,out.height);
+  const d = imgData.data;
+  for(let i=0;i<d.length;i+=4){
+    const gray = Math.round((d[i]*0.299) + (d[i+1]*0.587) + (d[i+2]*0.114));
+    const val = gray >= threshold ? 255 : 0;
+    d[i] = val; d[i+1] = val; d[i+2] = val;
+  }
+  ctx.putImageData(imgData,0,0);
+  return out;
+}
+function cropVerticalWindow(canvas, startRatio, endRatio){
+  const y = Math.max(0, Math.floor(canvas.height * startRatio));
+  const h = Math.max(1, Math.min(canvas.height - y, Math.floor(canvas.height * (endRatio - startRatio))));
+  const out = makeCanvas(canvas.width, h);
+  const ctx = out.getContext('2d');
+  ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+  return out;
+}
+async function createPreparedViewsForFile(file){
+  const originalDataUrl = await fileToDataUrl(file);
+  const img = await loadImageElement(file);
+  const normalized = drawNormalizedCanvas(img, 2600);
+  const contrast = applyContrastBrightness(normalized, 1.24, 8);
+  const threshold = applyThreshold(contrast, 168);
+  const top = cropVerticalWindow(contrast, 0.00, 0.46);
+  const middle = cropVerticalWindow(contrast, 0.27, 0.73);
+  const bottom = cropVerticalWindow(contrast, 0.54, 1.00);
+
+  const views = [];
+  views.push({ key:'original_full', label:'Original full', dataUrl: originalDataUrl, file, width: img.width, height: img.height });
+  const normalizedDataUrl = canvasToDataUrl(normalized, 'image/jpeg', 0.96);
+  const contrastDataUrl = canvasToDataUrl(contrast, 'image/jpeg', 0.96);
+  const thresholdDataUrl = canvasToDataUrl(threshold, 'image/png', 1);
+  const topDataUrl = canvasToDataUrl(top, 'image/jpeg', 0.96);
+  const middleDataUrl = canvasToDataUrl(middle, 'image/jpeg', 0.96);
+  const bottomDataUrl = canvasToDataUrl(bottom, 'image/jpeg', 0.96);
+
+  views.push({ key:'normalized_full', label:'Normalized full', dataUrl: normalizedDataUrl, file: await dataUrlToFile(normalizedDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_normalized.jpg`, 'image/jpeg'), width: normalized.width, height: normalized.height });
+  views.push({ key:'contrast_full', label:'Higher contrast full', dataUrl: contrastDataUrl, file: await dataUrlToFile(contrastDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_contrast.jpg`, 'image/jpeg'), width: contrast.width, height: contrast.height });
+  views.push({ key:'top_crop', label:'Top focus', dataUrl: topDataUrl, file: await dataUrlToFile(topDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_top.jpg`, 'image/jpeg'), width: top.width, height: top.height });
+  views.push({ key:'middle_crop', label:'Middle focus', dataUrl: middleDataUrl, file: await dataUrlToFile(middleDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_middle.jpg`, 'image/jpeg'), width: middle.width, height: middle.height });
+  views.push({ key:'bottom_crop', label:'Bottom focus', dataUrl: bottomDataUrl, file: await dataUrlToFile(bottomDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_bottom.jpg`, 'image/jpeg'), width: bottom.width, height: bottom.height });
+  views.push({ key:'threshold_full', label:'Threshold full', dataUrl: thresholdDataUrl, file: await dataUrlToFile(thresholdDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_threshold.png`, 'image/png'), width: threshold.width, height: threshold.height });
+
+  return { sourceName: file.name, originalFile: file, views };
+}
+function renderPreparedSheetsPreview(){
+  if(!state.preparedSheets || !state.preparedSheets.length){
+    setPreview('preparedViewsPreview','No prepared image views yet.');
+    return;
+  }
+  const lines = [];
+  state.preparedSheets.forEach((sheet, idx) => {
+    lines.push(`Sheet ${idx + 1}: ${sheet.sourceName}`);
+    sheet.views.forEach((view, viewIdx) => {
+      lines.push(`  ${viewIdx + 1}. ${view.label} - ${view.width}x${view.height}`);
+    });
+    lines.push('');
+  });
+  setPreview('preparedViewsPreview', lines.join('\n').trim());
+}
+async function prepareImageViews(){
+  const files = getSelectedBetSheetFiles();
+  if(!files.length){
+    setStatus('sheetPanel','sheetStatusList','error','Bet sheet',['Choose at least one bet sheet image first.']);
+    return [];
+  }
+  setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Preparing multiple image views for analysis.']);
+  const prepared = [];
+  for(const file of files){
+    prepared.push(await createPreparedViewsForFile(file));
+  }
+  state.preparedSheets = prepared;
+  renderPreparedSheetsPreview();
+  saveState();
+  setStatus('sheetPanel','sheetStatusList','ok','Bet sheet',[`Prepared ${prepared.reduce((sum, item) => sum + item.views.length, 0)} analysis view(s) from ${prepared.length} uploaded sheet image(s).`]);
+  return prepared;
+}
+async function ensurePreparedSheets(){
+  if(state.preparedSheets && state.preparedSheets.length && getSelectedBetSheetFiles().length === state.preparedSheets.length){
+    return state.preparedSheets;
+  }
+  return await prepareImageViews();
+}
+async function runOcrHelperForView(view){
+  if(!window.Tesseract) return '';
+  try{
+    const result = await Tesseract.recognize(view.dataUrl, 'eng', { logger: () => {} });
+    return normalizeSpace(result?.data?.text || '');
+  }catch(_){
+    return '';
+  }
+}
+async function runOllamaVision(view, prompt){
+  if(!state.ollamaEnabled || !state.ollamaEndpoint) throw new Error('Ollama disabled.');
+  const base64 = String(view.dataUrl || '').split(',')[1] || '';
+  const payload = {
+    model: state.ollamaModel || 'llava',
+    prompt,
+    images: [base64],
+    stream: false
+  };
+  const res = await fetch(state.ollamaEndpoint, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
+  const json = await res.json();
+  return String(json.response || json.message?.content || '').trim();
+}
+async function callPuterTextAudit(model, prompt){
+  try{
+    return await puter.ai.chat(prompt, null, false, { model, temperature: 0.1, max_tokens: 2200 });
+  }catch(_){
+    return await puter.ai.chat(prompt, undefined, false, { model, temperature: 0.1, max_tokens: 2200 });
+  }
+}
+function buildViewReadPrompt(view, ocrHint=''){
+  const focus = view.key.includes('top') ? 'Pay extra attention to the top of the sheet.' :
+    view.key.includes('bottom') ? 'Pay extra attention to the bottom of the sheet.' :
+    view.key.includes('middle') ? 'Pay extra attention to the middle of the sheet.' :
+    'Read the full sheet from top to bottom.';
+  return [
+    'Transcribe this handwritten golf best ball bet sheet as plain text.',
+    focus,
+    'Keep the order from top to bottom.',
+    'Keep line breaks.',
+    'Do not summarize.',
+    'If something is unclear, write ? instead of inventing it.',
+    ocrHint ? `OCR helper hint:\n${ocrHint}` : ''
+  ].filter(Boolean).join('\n');
+}
+function buildTranscriptCleanupPrompt(transcript){
+  return [
+    'You are cleaning up OCR style text from a handwritten golf best ball bet sheet.',
+    'Return plain text only.',
+    'Preserve order from top to bottom.',
+    'Keep line breaks.',
+    'Do not summarize.',
+    'Do not invent names.',
+    'Use ? for unclear parts.',
+    '',
+    'Text to clean:',
+    transcript || 'No transcript available.'
+  ].join('\n');
+}
+function buildRowsAuditPrompt(passNumber, transcript, currentRowsText=''){
+  return [
+    buildRowsPrompt(passNumber),
+    '',
+    'Audit the transcript and current extracted rows.',
+    'Use the transcript to improve row order, keep vertical carry-down players, and do not skip top or bottom rows.',
+    '',
+    'Transcript:',
+    transcript || 'No transcript available.',
+    '',
+    'Current extracted rows:',
+    currentRowsText || 'No extracted rows yet.'
+  ].join('\n');
+}
+
 
 function defaultRows(){
   return Array.from({ length: 1 }, (_, idx) => ({
@@ -466,9 +735,8 @@ function generateAliasSuggestions(){
 
 function getModelPlan(){
   const selected = $('modelSelect').value;
-  const base = ['google/gemini-2.5-flash','claude-sonnet-4','gpt-5-nano'];
-  if(selected === 'auto') return base;
-  return [selected, ...base.filter(m => m !== selected)];
+  if(selected === 'google/gemini-2.5-flash') return ['google/gemini-2.5-flash'];
+  return ['google/gemini-2.5-flash','claude-sonnet-4','gpt-5-nano'];
 }
 
 function saveState(){
@@ -480,6 +748,11 @@ function saveState(){
     aiNotes: state.aiNotes,
     aiQuestions: state.aiQuestions,
     sheetRows: state.sheetRows,
+    winnerNotes: state.winnerNotes,
+    transcriptAudits: state.transcriptAudits,
+    ollamaEnabled: $('ollamaEnabled') ? $('ollamaEnabled').checked : false,
+    ollamaEndpoint: $('ollamaEndpoint') ? $('ollamaEndpoint').value : state.ollamaEndpoint,
+    ollamaModel: $('ollamaModel') ? $('ollamaModel').value : state.ollamaModel,
     shotValue: state.shotValue,
     maxShots: state.maxShots,
     aliasText: $('aliasInput').value
@@ -491,6 +764,7 @@ function loadState(){
     if(!raw) return;
     const parsed = JSON.parse(raw) || {};
     Object.assign(state, parsed);
+    state.preparedSheets = [];
     if(parsed.aliasText) $('aliasInput').value = parsed.aliasText;
   }catch(err){ console.error(err); }
 }
@@ -504,8 +778,14 @@ function resetTool(){
   state.aiNotes = [];
   state.aiQuestions = [];
   state.sheetRows = defaultRows();
+  state.preparedSheets = [];
+  state.winnerNotes = [];
+  state.transcriptAudits = [];
   state.settlements = [];
   state.playerLedgers = [];
+  state.ollamaEnabled = false;
+  state.ollamaEndpoint = 'http://localhost:11434/api/generate';
+  state.ollamaModel = 'llava';
   state.shotValue = 3;
   state.maxShots = 7;
 
@@ -513,6 +793,9 @@ function resetTool(){
   if (betSheetPond) betSheetPond.removeFiles();
   else $('betSheetInput').value = '';
   $('modelSelect').value = 'auto';
+  if($('ollamaEnabled')) $('ollamaEnabled').checked = false;
+  if($('ollamaEndpoint')) $('ollamaEndpoint').value = state.ollamaEndpoint;
+  if($('ollamaModel')) $('ollamaModel').value = state.ollamaModel;
   $('rosterInput').value = '';
   $('scoresInput').value = '';
   $('shotValue').value = '3';
@@ -523,6 +806,10 @@ function resetTool(){
   setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['No image analyzed yet.']);
   setStatus('calcPanel','calcStatusList','info','Calculation',['No settlement run yet.']);
   setPreview('aliasSuggestionsPreview','No alias suggestions yet.');
+  setPreview('preparedViewsPreview','No prepared image views yet.');
+  setPreview('winnerPreview','No winner chosen yet.');
+  setPreview('mergedRowsPreview','No merged rows yet.');
+  setPreview('originalFilesPreview','No bet sheet images selected yet.');
   refreshAuthStatus();
   render();
 }
@@ -823,6 +1110,9 @@ function clearSheet(){
   state.ocrText = '';
   state.aiNotes = [];
   state.aiQuestions = [];
+  state.preparedSheets = [];
+  state.winnerNotes = [];
+  state.transcriptAudits = [];
   state.sheetRows = defaultRows();
   if (betSheetPond) betSheetPond.removeFiles();
   else $('betSheetInput').value = '';
@@ -834,6 +1124,8 @@ function clearSheet(){
 function buildReadPrompt(){
   return [
     'Transcribe this handwritten golf best ball bet sheet as plain text.',
+    'Read the full sheet from top to bottom.',
+    'Look carefully at the very top rows and the very bottom rows so no bets are missed.',
     'Keep the order from top to bottom.',
     'Keep line breaks.',
     'Do not summarize.',
@@ -843,7 +1135,8 @@ function buildReadPrompt(){
 function buildRowsPrompt(passNumber){
   const players = state.rosterPlayers.join(', ') || 'None';
   const aliases = JSON.stringify(state.aliases || {});
-  const ocrHint = state.ocrText ? `Weak OCR hint:\n${state.ocrText}` : 'No OCR hint.';
+  const ocrHint = state.ocrText ? `Weak OCR hint:
+${state.ocrText}` : 'No OCR hint.';
   const strictLine = passNumber === 2
     ? 'Second pass: go line by line and do not skip short rows, ditto rows, or partially blank rows if there are names on either side.'
     : 'Go line by line in the same visual order as the sheet.';
@@ -858,6 +1151,7 @@ function buildRowsPrompt(passNumber){
     'A vertical line drawn downward from a player means that same player continues on the rows below until the line ends.',
     'If one carried player stays the same and only the partner changes, keep the anchor and change only the partner.',
     'Ditto marks, quote marks, SAME, or vertical carry marks can mean use the same player or same side as the row above.',
+    'Pay extra attention to the first few rows at the top and the last few rows at the bottom.',
     'Return ONLY plain text lines with no markdown and no extra commentary.',
     'Use these line types only:',
     'ROW|order|left players raw comma separated|right players raw comma separated|confidence|notes',
@@ -953,24 +1247,157 @@ function parseAiRows(text){
   return { rows, notes, questions: [...questions, ...unknownAliasQuestions] };
 }
 
-async function runPuterPromptWithFallback(promptBuilder, file){
-  const models = getModelPlan();
-  let best = { rows: [], notes: [], questions: [], raw: '', model: '', pass: 1 };
-  const modelNotes = [];
-  for(const model of models){
+
+function rowsToAuditText(rows){
+  return (rows || []).map(row => `ROW|${row.order}|${(row.left_raw||[]).join(',')}|${(row.right_raw||[]).join(',')}|${Number(row.confidence||0).toFixed(2)}|${row.notes||''}`).join('\n');
+}
+function scoreExtractionCandidate(parsed){
+  const rows = Array.isArray(parsed?.rows) ? parsed.rows : [];
+  const complete = rows.filter(row => (row.left_players || []).length >= 2 && (row.right_players || []).length >= 2).length;
+  const avgConfidence = rows.length ? rows.reduce((sum, row) => sum + Number(row.confidence || 0), 0) / rows.length : 0;
+  const questions = Array.isArray(parsed?.questions) ? parsed.questions.length : 0;
+  return (rows.length * 100) + (complete * 35) + Math.round(avgConfidence * 25) - (questions * 5);
+}
+function buildRowsPromptForView(passNumber, view, transcript=''){
+  const focus = view.key.includes('top')
+    ? 'Focus on the top of the sheet.'
+    : view.key.includes('bottom')
+      ? 'Focus on the bottom of the sheet.'
+      : view.key.includes('middle')
+        ? 'Focus on the middle of the sheet.'
+        : 'Use the full sheet.';
+  return [
+    buildRowsPrompt(passNumber),
+    focus,
+    transcript ? `Transcript hint from OCR and prior reads:
+${transcript}` : ''
+  ].filter(Boolean).join('\n');
+}
+async function getGoogleTranscriptForSheet(sheet){
+  let bestText = '';
+  let bestView = '';
+  const notes = [];
+  let helperText = '';
+
+  const helperViews = sheet.views.filter(view => ['contrast_full','threshold_full','top_crop','bottom_crop'].includes(view.key)).slice(0, 3);
+  for(const view of helperViews){
+    try{
+      const helper = await runOcrHelperForView(view);
+      if(helper && helper.length > helperText.length){
+        helperText = helper;
+      }
+      notes.push(`OCR helper ${sheet.sourceName} ${view.label}: ${helper ? 'success' : 'empty'}.`);
+    }catch(_){
+      notes.push(`OCR helper ${sheet.sourceName} ${view.label}: failed.`);
+    }
+  }
+
+  for(const view of sheet.views){
+    try{
+      const response = await puter.ai.chat(buildViewReadPrompt(view, helperText), view.file, false, {
+        model: 'google/gemini-2.5-flash',
+        temperature: 0,
+        max_tokens: 2200
+      });
+      const textBlock = stripCodeFence(extractPuterText(response));
+      notes.push(`Gemini read ${sheet.sourceName} ${view.label}: ${textBlock ? 'success' : 'empty'}.`);
+      if(textBlock.length > bestText.length){
+        bestText = textBlock;
+        bestView = view.label;
+      }
+    }catch(_){
+      notes.push(`Gemini read ${sheet.sourceName} ${view.label}: failed.`);
+    }
+  }
+
+  return { transcript: bestText, helperText, notes, bestView };
+}
+async function auditTranscriptWithModels(transcript){
+  let bestTranscript = transcript || '';
+  const notes = [];
+  const audits = [];
+  const auditors = getModelPlan().filter(model => model !== 'google/gemini-2.5-flash');
+
+  for(const model of auditors){
+    try{
+      const response = await callPuterTextAudit(model, buildTranscriptCleanupPrompt(bestTranscript || transcript || ''));
+      const cleaned = stripCodeFence(extractPuterText(response));
+      notes.push(`${model} transcript audit: success.`);
+      audits.push({ model, output: cleaned });
+      if(cleaned.length > bestTranscript.length){
+        bestTranscript = cleaned;
+      }
+    }catch(_){
+      notes.push(`${model} transcript audit: failed.`);
+    }
+  }
+  return { transcript: bestTranscript, notes, audits };
+}
+async function getBestRowsForSheet(sheet, transcript){
+  let best = { rows: [], notes: [], questions: [], raw: '', model: '', pass: 1, view: '', mode: '' };
+  let bestScore = -999999;
+  const notes = [];
+
+  for(const view of sheet.views){
     for(const passNumber of [1,2]){
       try{
-        const response = await puter.ai.chat(promptBuilder(passNumber), file, false, { model, temperature: 0.1, max_tokens: 2600 });
+        const response = await puter.ai.chat(buildRowsPromptForView(passNumber, view, transcript), view.file, false, {
+          model: 'google/gemini-2.5-flash',
+          temperature: 0,
+          max_tokens: 2600
+        });
         const raw = stripCodeFence(extractPuterText(response));
         const parsed = parseAiRows(raw);
-        modelNotes.push(`Tried ${model} pass ${passNumber}: ${parsed.rows.length} row(s).`);
-        if(parsed.rows.length > best.rows.length) best = { ...parsed, raw, model, pass: passNumber };
+        const score = scoreExtractionCandidate(parsed);
+        notes.push(`Gemini rows ${sheet.sourceName} ${view.label} pass ${passNumber}: ${parsed.rows.length} row(s), score ${score}.`);
+        if(score > bestScore){
+          best = { ...parsed, raw, model: 'google/gemini-2.5-flash', pass: passNumber, view: view.label, mode: 'direct image' };
+          bestScore = score;
+        }
       }catch(_){
-        modelNotes.push(`Tried ${model} pass ${passNumber}: failed.`);
+        notes.push(`Gemini rows ${sheet.sourceName} ${view.label} pass ${passNumber}: failed.`);
       }
     }
   }
-  return { best, modelNotes };
+
+  const auditors = getModelPlan().filter(model => model !== 'google/gemini-2.5-flash');
+  const currentRowsText = rowsToAuditText(best.rows);
+  for(const model of auditors){
+    for(const passNumber of [1,2]){
+      try{
+        const response = await callPuterTextAudit(model, buildRowsAuditPrompt(passNumber, transcript, currentRowsText));
+        const raw = stripCodeFence(extractPuterText(response));
+        const parsed = parseAiRows(raw);
+        const score = scoreExtractionCandidate(parsed);
+        notes.push(`${model} row audit pass ${passNumber}: ${parsed.rows.length} row(s), score ${score}.`);
+        if(score > bestScore){
+          best = { ...parsed, raw, model, pass: passNumber, view: 'Transcript audit', mode: 'text audit' };
+          bestScore = score;
+        }
+      }catch(_){
+        notes.push(`${model} row audit pass ${passNumber}: failed.`);
+      }
+    }
+  }
+
+  if(state.ollamaEnabled){
+    for(const view of sheet.views.filter(view => ['normalized_full','contrast_full','top_crop','bottom_crop'].includes(view.key))){
+      try{
+        const raw = await runOllamaVision(view, buildRowsPromptForView(2, view, transcript));
+        const parsed = parseAiRows(raw);
+        const score = scoreExtractionCandidate(parsed);
+        notes.push(`Ollama rows ${sheet.sourceName} ${view.label}: ${parsed.rows.length} row(s), score ${score}.`);
+        if(score > bestScore){
+          best = { ...parsed, raw, model: `Ollama ${state.ollamaModel}`, pass: 1, view: view.label, mode: 'local vision' };
+          bestScore = score;
+        }
+      }catch(_){
+        notes.push(`Ollama rows ${sheet.sourceName} ${view.label}: failed.`);
+      }
+    }
+  }
+
+  return { best, notes };
 }
 
 async function readSheetText(){
@@ -979,31 +1406,37 @@ async function readSheetText(){
   parseAliases();
   try{
     await ensurePuterSession('Read Sheet Text', { guestPreferred: true });
-    setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Reading the handwritten sheet text with the selected model strategy.']);
+    const preparedSheets = await ensurePreparedSheets();
+    setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Preparing transcript reads from the generated image views.']);
     state.betSheetFile = files;
-    const models = getModelPlan();
     let combinedText = '';
     const notes = [];
-    for(const file of files){
-      let bestText = '';
-      for(const model of models){
-        try{
-          const response = await puter.ai.chat(buildReadPrompt(), file, false, { model, temperature: 0.1, max_tokens: 2200 });
-          const textBlock = stripCodeFence(extractPuterText(response));
-          notes.push(`Read pass ${file.name || 'sheet'} with ${model}: success.`);
-          if(textBlock.length > bestText.length) bestText = textBlock;
-        }catch(_){
-          notes.push(`Read pass ${file.name || 'sheet'} with ${model}: failed.`);
-        }
-      }
-      if(bestText){
+    const audits = [];
+    const winners = [];
+
+    for(const sheet of preparedSheets){
+      const googleRead = await getGoogleTranscriptForSheet(sheet);
+      notes.push(...googleRead.notes);
+      let transcript = googleRead.transcript || googleRead.helperText || '';
+      const audited = await auditTranscriptWithModels(transcript);
+      transcript = audited.transcript || transcript;
+      notes.push(...audited.notes);
+      audits.push(...audited.audits.map(item => `${sheet.sourceName} - ${item.model}: ${item.output.slice(0, 300)}`));
+      winners.push(`${sheet.sourceName}: transcript winner ${googleRead.bestView || 'helper text'} via Gemini.`);
+      if(transcript){
         if(combinedText) combinedText += '\n\n===== NEXT SHEET =====\n\n';
-        combinedText += bestText;
+        combinedText += transcript;
       }
     }
+
     state.ocrText = combinedText;
-    state.aiNotes = [...notes];
-    setStatus('sheetPanel','sheetStatusList', combinedText ? 'ok' : 'warn','Bet sheet',[combinedText ? 'Sheet text was read.' : 'No useful sheet text came back.', notes.join(' ')]);
+    state.aiNotes = notes;
+    state.transcriptAudits = audits;
+    state.winnerNotes = winners;
+    setStatus('sheetPanel','sheetStatusList', combinedText ? 'ok' : 'warn','Bet sheet',[
+      combinedText ? 'Sheet text was read.' : 'No useful sheet text came back.',
+      'Gemini read the prepared image views first. Claude and GPT then audited the transcript in text mode.'
+    ]);
     saveState(); render();
   }catch(err){
     console.error(err);
@@ -1017,33 +1450,46 @@ async function buildRowsFromImage(){
   parseAliases();
   try{
     await ensurePuterSession('Build Rows from Image', { guestPreferred: true });
-    setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Reading the image line by line and building ordered best ball rows.']);
+    const preparedSheets = await ensurePreparedSheets();
+    setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Running multi-view row extraction across the prepared sheet images.']);
     state.betSheetFile = files;
 
     let combinedRows = [];
     let combinedQuestions = [];
     let combinedNotes = [];
     let runningOrder = 1;
+    let winnerNotes = [];
 
-    for(const file of files){
-      const result = await runPuterPromptWithFallback(buildRowsPrompt, file);
+    for(const sheet of preparedSheets){
+      const googleRead = await getGoogleTranscriptForSheet(sheet);
+      let transcript = googleRead.transcript || googleRead.helperText || '';
+      const auditedTranscript = await auditTranscriptWithModels(transcript);
+      transcript = auditedTranscript.transcript || transcript;
+
+      combinedNotes.push(...googleRead.notes, ...auditedTranscript.notes);
+
+      const result = await getBestRowsForSheet(sheet, transcript);
       const bestParsed = result.best;
-      combinedNotes.push(...result.modelNotes);
-      combinedNotes.push(...(bestParsed.notes || []));
-      combinedNotes.push(bestParsed.model ? `Best result for ${file.name || 'sheet'} came from ${bestParsed.model}, pass ${bestParsed.pass}.` : `No model returned usable rows for ${file.name || 'sheet'}.`);
+      combinedNotes.push(...result.notes);
+      winnerNotes.push(bestParsed.model ? `${sheet.sourceName}: ${bestParsed.model} won using ${bestParsed.view} (${bestParsed.mode}, pass ${bestParsed.pass}).` : `${sheet.sourceName}: no usable winner.`);
+
       combinedQuestions.push(...(bestParsed.questions || []));
       const sortedRows = (bestParsed.rows || []).slice().sort((a,b)=>a.order-b.order);
-      sortedRows.forEach(row => { combinedRows.push({ ...row, order: runningOrder++ }); });
+      sortedRows.forEach(row => {
+        combinedRows.push({ ...row, order: runningOrder++ });
+      });
     }
 
     state.sheetRows = combinedRows.length ? combinedRows : defaultRows();
     state.aiNotes = combinedNotes.length ? combinedNotes : ['No model returned usable rows.'];
     state.aiQuestions = combinedQuestions;
+    state.winnerNotes = winnerNotes;
 
     const ready = state.sheetRows.filter(row => row.left_players.length >= 2 && row.right_players.length >= 2).length;
     setStatus('sheetPanel','sheetStatusList', ready ? 'ok' : 'warn', 'Bet sheet', [
       combinedRows.length ? `Built ${combinedRows.length} ordered row(s) from ${files.length} uploaded sheet image(s).` : 'The AI could not confidently build enough rows from the uploaded sheet image(s).',
-      `${ready} row(s) currently have enough players to settle.`
+      `${ready} row(s) currently have enough players to settle.`,
+      'Gemini used multi-view image reads. Claude and GPT audited transcript and row extraction in text mode.'
     ]);
 
     saveState(); render();
@@ -1052,6 +1498,7 @@ async function buildRowsFromImage(){
     setStatus('sheetPanel','sheetStatusList','error','Bet sheet',[err.message || 'Could not build rows from the image.']);
   }
 }
+
 
 function addRow(){
   const nextOrder = (state.sheetRows.length ? Math.max(...state.sheetRows.map(r => Number(r.order) || 0)) : 0) + 1;
@@ -1520,6 +1967,9 @@ function render(){
   parseAliases();
   state.shotValue = Number($('shotValue').value || state.shotValue || 0);
   state.maxShots = Number($('maxShots').value || state.maxShots || 0);
+  state.ollamaEnabled = $('ollamaEnabled') ? $('ollamaEnabled').checked : !!state.ollamaEnabled;
+  state.ollamaEndpoint = $('ollamaEndpoint') ? $('ollamaEndpoint').value : state.ollamaEndpoint;
+  state.ollamaModel = $('ollamaModel') ? $('ollamaModel').value : state.ollamaModel;
   if(!Array.isArray(state.sheetRows) || !state.sheetRows.length) state.sheetRows = defaultRows();
   updateSummary();
   renderRows();
@@ -1528,6 +1978,10 @@ function render(){
   $('questionsPreview').textContent = state.aiQuestions.length ? state.aiQuestions.map(q => `- ${q.question}${q.options && q.options.length ? ` | Options: ${q.options.join(', ')}` : ''}`).join('\n') : 'No questions yet.';
   setPreview('ocrPreview', state.ocrText || 'No sheet text yet.');
   setPreview('aiNotesPreview', state.aiNotes.join('\n') || 'No AI notes yet.');
+  setPreview('winnerPreview', (state.winnerNotes || []).join('\n') || 'No winner chosen yet.');
+  setPreview('mergedRowsPreview', state.sheetRows.length ? state.sheetRows.map(row => `Row ${row.order}: ${(row.left_raw||[]).join(' / ') || '-'} vs ${(row.right_raw||[]).join(' / ') || '-'}`).join('\n') : 'No merged rows yet.');
+  renderPreparedSheetsPreview();
+  updateSelectedFilePreviews();
   setPreview('loadedPlayersPreview', state.rosterPlayers.join('\n') || 'No players loaded yet.');
   const scoreNames = Object.keys(state.scores || {}).sort((a,b)=>a.localeCompare(b));
   setPreview('loadedScoresPreview', scoreNames.map(name => `${name}: Shot ${playerGrossScore(name)}`).join('\n') || 'No scores loaded yet.');
@@ -1549,6 +2003,7 @@ $('loadScoresBtn').addEventListener('click', loadScores);
 $('clearRosterBtn').addEventListener('click', clearRoster);
 $('clearScoresBtn').addEventListener('click', clearScores);
 
+$('prepareViewsBtn').addEventListener('click', prepareImageViews);
 $('readSheetBtn').addEventListener('click', readSheetText);
 $('buildRowsBtn').addEventListener('click', buildRowsFromImage);
 $('clearSheetBtn').addEventListener('click', clearSheet);
@@ -1584,6 +2039,9 @@ $('exportAllCsvBtn').addEventListener('click', exportAllCsv);
 $('shotValue').addEventListener('input', () => { state.shotValue = Number($('shotValue').value || 0); saveState(); render(); });
 $('maxShots').addEventListener('input', () => { state.maxShots = Number($('maxShots').value || 0); saveState(); render(); });
 $('aliasInput').addEventListener('input', () => { parseAliases(); saveState(); });
+$('ollamaEnabled').addEventListener('change', () => { state.ollamaEnabled = $('ollamaEnabled').checked; saveState(); });
+$('ollamaEndpoint').addEventListener('input', () => { state.ollamaEndpoint = $('ollamaEndpoint').value; saveState(); });
+$('ollamaModel').addEventListener('input', () => { state.ollamaModel = $('ollamaModel').value; saveState(); });
 
 $('aliasInput').value = DEFAULT_ALIASES;
 loadState();
@@ -1592,6 +2050,9 @@ if(!Array.isArray(state.sheetRows) || !state.sheetRows.length) state.sheetRows =
 $('shotValue').value = state.shotValue ?? 3;
 $('maxShots').value = state.maxShots ?? 7;
 if(!$('modelSelect').value) $('modelSelect').value='auto';
+if($('ollamaEnabled')) $('ollamaEnabled').checked = !!state.ollamaEnabled;
+if($('ollamaEndpoint')) $('ollamaEndpoint').value = state.ollamaEndpoint || 'http://localhost:11434/api/generate';
+if($('ollamaModel')) $('ollamaModel').value = state.ollamaModel || 'llava';
 initBetSheetUploader();
 refreshAuthStatus();
 render();
