@@ -776,8 +776,7 @@ function buildTextAssistReadPrompt(seedText, model){
     '',
     'OCR text:',
     seedText
-  ].join('
-');
+  ].join('\\n');
 }
 function buildRowsTextAssistPrompt(passNumber, focus, expectedCount, seedText){
   return [
@@ -789,8 +788,7 @@ function buildRowsTextAssistPrompt(passNumber, focus, expectedCount, seedText){
     'Pay extra attention to the very first and very last visible rows.',
     '',
     seedText || 'No OCR transcript available.'
-  ].join('
-');
+  ].join('\\n');
 }
 async function callPuterVision(model, prompt, file, maxTokens){
   return await puter.ai.chat(prompt, file, false, {
