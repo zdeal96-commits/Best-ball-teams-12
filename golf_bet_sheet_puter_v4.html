@@ -1,9 +1,9 @@
-<!doctype html>
+a<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Golf Best Ball Sheet with Puter</title>
+  <title>Golf Best Ball Sheet with Puter - Stable Restore</title>
   <script src="https://js.puter.com/v2/"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -126,7 +126,7 @@
     <div class="heroTop">
       <div>
         <h1>Golf Best Ball Sheet with Puter</h1>
-        <p>This version follows the sheet order from top to bottom. It treats each row as one best ball matchup between two teams, not as holes. It fills rows the AI is confident about, keeps unclear rows in place for you to review, supports uneven team sizes like 2v3, supports multiple bet sheet images, and now gives Google, Claude, and GPT repeated full image, top focus, bottom focus, and audit passes. Claude and GPT also fall back to transcript audit mode when Puter direct image vision is unavailable.</p>
+        <p>This version follows the sheet order from top to bottom. It treats each row as one best ball matchup between two teams, not as holes. It fills rows the AI is confident about, keeps unclear rows in place for you to review, supports uneven team sizes like 2v3, supports multiple bet sheet images, and uses dollars per shot plus max shots like the wheel tool.</p>
       </div>
       <div class="btnRow">
         <button class="btn btnRed" id="resetToolBtn" type="button">Reset This Tool</button>
@@ -726,191 +726,6 @@ function stripCodeFence(text){
   const match = raw.match(/```(?:[\w-]+)?\s*([\s\S]*?)```/i);
   return match ? match[1].trim() : raw;
 }
-function buildReadPromptsForModel(model){
-  const common = [
-    'Transcribe this handwritten golf best ball bet sheet as plain text.',
-    'Keep the order from top to bottom.',
-    'Keep line breaks.',
-    'Do not summarize.',
-    'If something is unclear, write ? instead of inventing it.'
-  ].join('\n');
-
-  const prompts = [common];
-
-  if(String(model).includes('claude')){
-    prompts.push([
-      'Read this handwritten golf bet sheet carefully.',
-      'Return plain text only.',
-      'Preserve each visible line in order from top to bottom.',
-      'Do not explain your answer.',
-      'Use ? for unclear handwriting.'
-    ].join('\n'));
-  } else if(String(model).includes('gpt')){
-    prompts.push([
-      'Read this handwritten golf best ball sheet.',
-      'Return plain text only with one sheet line per output line.',
-      'Preserve order.',
-      'No markdown.',
-      'Use ? for any unclear text.'
-    ].join('\n'));
-  } else {
-    prompts.push([
-      'Read this handwritten golf best ball sheet line by line.',
-      'Return plain text only.',
-      'Preserve order and line breaks.',
-      'Use ? for unclear text.'
-    ].join('\n'));
-  }
-
-  return prompts;
-}
-function buildTextAssistReadPrompt(seedText, model){
-  return [
-    'This is OCR text from the same handwritten golf bet sheet image.',
-    'Clean it up into the best plain text transcript you can.',
-    'Keep the order from top to bottom.',
-    'Keep line breaks.',
-    'Do not summarize.',
-    'Do not invent names.',
-    'Use ? for unclear spots.',
-    '',
-    'OCR text:',
-    seedText
-  ].join('\\n');
-}
-function buildRowsTextAssistPrompt(passNumber, focus, expectedCount, seedText){
-  return [
-    buildRowsPrompt(passNumber, focus, expectedCount),
-    '',
-    'Fallback mode:',
-    'Use the following OCR transcript from the same sheet as supporting text if direct image reading failed.',
-    'Still preserve row order and every visible matchup row.',
-    'Pay extra attention to the very first and very last visible rows.',
-    '',
-    seedText || 'No OCR transcript available.'
-  ].join('\\n');
-}
-async function callPuterVision(model, prompt, file, maxTokens){
-  return await puter.ai.chat(prompt, file, false, {
-    model,
-    temperature: 0,
-    max_tokens: maxTokens
-  });
-}
-async function callPuterText(model, prompt, maxTokens){
-  try{
-    return await puter.ai.chat(prompt, null, false, {
-      model,
-      temperature: 0,
-      max_tokens: maxTokens
-    });
-  }catch(_){
-    return await puter.ai.chat(prompt, undefined, false, {
-      model,
-      temperature: 0,
-      max_tokens: maxTokens
-    });
-  }
-}
-function scoreParsedRows(parsed){
-  const rows = Array.isArray(parsed?.rows) ? parsed.rows : [];
-  const complete = rows.filter(row => (row.left_players || []).length >= 2 && (row.right_players || []).length >= 2).length;
-  const avgConfidence = rows.length ? rows.reduce((sum, row) => sum + Number(row.confidence || 0), 0) / rows.length : 0;
-  const questions = Array.isArray(parsed?.questions) ? parsed.questions.length : 0;
-  return (rows.length * 100) + (complete * 25) + Math.round(avgConfidence * 20) - (questions * 5);
-}
-function parseSingleNumber(text){
-  const match = String(text || '').match(/\b(\d{1,3})\b/);
-  if(!match) return null;
-  const num = Number(match[1]);
-  return Number.isFinite(num) ? num : null;
-}
-async function estimateVisibleRows(file){
-  const models = getModelPlan();
-  const guesses = [];
-  for(const model of models){
-    for(const focus of ['full','top','bottom']){
-      try{
-        const response = await puter.ai.chat(buildRowCountPrompt(focus), file, false, {
-          model,
-          temperature: 0,
-          max_tokens: 60
-        });
-        const guess = parseSingleNumber(stripCodeFence(extractPuterText(response)));
-        if(guess && guess > 0 && guess < 100) guesses.push(guess);
-      }catch(_){}
-    }
-  }
-  if(!guesses.length) return null;
-  return Math.max(...guesses);
-}
-async function tryReadWithModel(file, model, seedText){
-  let bestText = '';
-  const notes = [];
-
-  for(const prompt of buildReadPromptsForModel(model)){
-    try{
-      const response = await callPuterVision(model, prompt, file, 1600);
-      const textBlock = stripCodeFence(extractPuterText(response));
-      if(textBlock.length > bestText.length) bestText = textBlock;
-      notes.push(`Read pass ${file.name || 'sheet'} with ${model}: direct image success.`);
-      if(bestText.length > 120) break;
-    }catch(_){
-      notes.push(`Read pass ${file.name || 'sheet'} with ${model}: direct image unavailable.`);
-    }
-  }
-
-  if(seedText){
-    try{
-      const response = await callPuterText(model, buildTextAssistReadPrompt(seedText, model), 1600);
-      const textBlock = stripCodeFence(extractPuterText(response));
-      if(textBlock.length > bestText.length) bestText = textBlock;
-      notes.push(`Read pass ${file.name || 'sheet'} with ${model}: transcript cleanup success.`);
-    }catch(_){
-      notes.push(`Read pass ${file.name || 'sheet'} with ${model}: transcript cleanup failed.`);
-    }
-  }
-
-  return { text: bestText, notes };
-}
-async function runPuterPromptWithFallback(promptBuilder, file, seedText, expectedCount){
-  const models = getModelPlan();
-  const focusModes = ['full','top','bottom','audit'];
-  let best = { rows: [], notes: [], questions: [], raw: '', model: '', pass: 1, score: -999999, mode: '', focus: '' };
-  const modelNotes = [];
-
-  for(const model of models){
-    for(const focus of focusModes){
-      for(const passNumber of [1,2]){
-        try{
-          const response = await callPuterVision(model, promptBuilder(passNumber, focus, expectedCount), file, 2600);
-          const raw = stripCodeFence(extractPuterText(response));
-          const parsed = parseAiRows(raw);
-          const score = scoreParsedRows(parsed) + (expectedCount ? Math.min(parsed.rows.length, expectedCount) * 2 : 0);
-          modelNotes.push(`Tried ${model} ${focus} pass ${passNumber}: direct image ${parsed.rows.length} row(s), score ${score}.`);
-          if(score > best.score) best = { ...parsed, raw, model, pass: passNumber, score, mode: 'direct image', focus };
-        }catch(_){
-          modelNotes.push(`Tried ${model} ${focus} pass ${passNumber}: direct image unavailable.`);
-        }
-
-        if(seedText){
-          try{
-            const response = await callPuterText(model, buildRowsTextAssistPrompt(passNumber, focus, expectedCount, seedText), 2200);
-            const raw = stripCodeFence(extractPuterText(response));
-            const parsed = parseAiRows(raw);
-            const score = scoreParsedRows(parsed) + (expectedCount ? Math.min(parsed.rows.length, expectedCount) * 2 : 0);
-            modelNotes.push(`Tried ${model} ${focus} pass ${passNumber}: transcript audit ${parsed.rows.length} row(s), score ${score}.`);
-            if(score > best.score) best = { ...parsed, raw, model, pass: passNumber, score, mode: 'transcript audit', focus };
-          }catch(_){
-            modelNotes.push(`Tried ${model} ${focus} pass ${passNumber}: transcript audit failed.`);
-          }
-        }
-      }
-    }
-  }
-
-  return { best, modelNotes };
-}
 
 async function loadRoster(){
   const file = $('rosterInput').files && $('rosterInput').files[0];
@@ -961,46 +776,24 @@ function buildReadPrompt(){
     'If something is unclear, write ? instead of inventing it.'
   ].join('\n');
 }
-function buildRowCountPrompt(focus){
-  const focusText = focus === 'top'
-    ? 'Look closely at the top half of the full sheet.'
-    : focus === 'bottom'
-      ? 'Look closely at the bottom half of the full sheet.'
-      : 'Look at the full sheet from top to bottom.';
-  return [
-    'You are counting visible matchup rows on a handwritten golf best ball bet sheet.',
-    focusText,
-    'Count every row that has names, ditto marks, quote marks, or carry-down lines that indicate a bet row.',
-    'Return only a single number.',
-    'Do not explain.'
-  ].join('\n');
-}
-function buildRowsPrompt(passNumber, focus, expectedCount){
+function buildRowsPrompt(passNumber){
   const players = state.rosterPlayers.join(', ') || 'None';
   const aliases = JSON.stringify(state.aliases || {});
   const ocrHint = state.ocrText ? `Weak OCR hint:\n${state.ocrText}` : 'No OCR hint.';
   const strictLine = passNumber === 2
-    ? 'Second pass: go line by line and do not skip short rows, ditto rows, rows with one carried anchor, or partially blank rows if any name or carry line is visible.'
-    : 'First pass: go line by line in the same visual order as the sheet.';
-  const focusText = focus === 'top'
-    ? 'Look closely at the top of the full sheet and make sure no early rows are skipped.'
-    : focus === 'bottom'
-      ? 'Look closely at the bottom of the full sheet and make sure no later rows are skipped.'
-      : focus === 'audit'
-        ? 'Audit the full sheet from top to bottom and make sure every visible row is accounted for.'
-        : 'Use the full sheet from top to bottom.';
+    ? 'Second pass: go line by line and do not skip short rows, ditto rows, or partially blank rows if there are names on either side.'
+    : 'Go line by line in the same visual order as the sheet.';
   return [
     'You are reading a handwritten golf best ball bet sheet.',
     'This is NOT hole by hole scoring.',
     'Each visible row is one matchup between a left team and a right team.',
     strictLine,
-    focusText,
-    expectedCount ? `The sheet likely has about ${expectedCount} visible matchup rows. Do your best to capture all of them.` : 'There is no fixed number of rows. Count every visible matchup row with names, ditto marks, or carry lines.',
+    'There is no fixed number of rows. Count every visible matchup row with names, ditto marks, or carry lines.',
     'Keep the row order exactly as it appears from top to bottom on the sheet.',
+    'The right-most numbers are row order markers only.',
     'A vertical line drawn downward from a player means that same player continues on the rows below until the line ends.',
-    'Ditto marks, quote marks, SAME, or vertical carry marks can mean use the same player or same side as the row above.',
     'If one carried player stays the same and only the partner changes, keep the anchor and change only the partner.',
-    'Pay extra attention to the very first rows at the top and the last rows at the bottom.',
+    'Ditto marks, quote marks, SAME, or vertical carry marks can mean use the same player or same side as the row above.',
     'Return ONLY plain text lines with no markdown and no extra commentary.',
     'Use these line types only:',
     'ROW|order|left players raw comma separated|right players raw comma separated|confidence|notes',
@@ -1096,6 +889,26 @@ function parseAiRows(text){
   return { rows, notes, questions: [...questions, ...unknownAliasQuestions] };
 }
 
+async function runPuterPromptWithFallback(promptBuilder, file){
+  const models = getModelPlan();
+  let best = { rows: [], notes: [], questions: [], raw: '', model: '', pass: 1 };
+  const modelNotes = [];
+  for(const model of models){
+    for(const passNumber of [1,2]){
+      try{
+        const response = await puter.ai.chat(promptBuilder(passNumber), file, false, { model, temperature: 0.1, max_tokens: 2600 });
+        const raw = stripCodeFence(extractPuterText(response));
+        const parsed = parseAiRows(raw);
+        modelNotes.push(`Tried ${model} pass ${passNumber}: ${parsed.rows.length} row(s).`);
+        if(parsed.rows.length > best.rows.length) best = { ...parsed, raw, model, pass: passNumber };
+      }catch(_){
+        modelNotes.push(`Tried ${model} pass ${passNumber}: failed.`);
+      }
+    }
+  }
+  return { best, modelNotes };
+}
+
 async function readSheetText(){
   const files = Array.from(($('betSheetInput').files || []));
   if(!files.length){ setStatus('sheetPanel','sheetStatusList','error','Bet sheet',['Choose at least one bet sheet image first.']); return; }
@@ -1104,46 +917,29 @@ async function readSheetText(){
     await ensurePuterSession('Read Sheet Text', { guestPreferred: true });
     setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Reading the handwritten sheet text with the selected model strategy.']);
     state.betSheetFile = files;
-
     const models = getModelPlan();
     let combinedText = '';
     const notes = [];
-
     for(const file of files){
-      let baseSeed = '';
-      // Force a strong Google seed first because it has been the best vision reader here
-      for(const prompt of buildReadPromptsForModel('google/gemini-2.5-flash')){
-        try{
-          const response = await callPuterVision('google/gemini-2.5-flash', prompt, file, 1600);
-          const textBlock = stripCodeFence(extractPuterText(response));
-          if(textBlock.length > baseSeed.length) baseSeed = textBlock;
-        }catch(_){}
-      }
-
-      let bestText = baseSeed;
-
+      let bestText = '';
       for(const model of models){
-        const result = await tryReadWithModel(file, model, bestText || baseSeed);
-        notes.push(...result.notes);
-        if(result.text.length > bestText.length) bestText = result.text;
+        try{
+          const response = await puter.ai.chat(buildReadPrompt(), file, false, { model, temperature: 0.1, max_tokens: 2200 });
+          const textBlock = stripCodeFence(extractPuterText(response));
+          notes.push(`Read pass ${file.name || 'sheet'} with ${model}: success.`);
+          if(textBlock.length > bestText.length) bestText = textBlock;
+        }catch(_){
+          notes.push(`Read pass ${file.name || 'sheet'} with ${model}: failed.`);
+        }
       }
-
       if(bestText){
-        if(combinedText) combinedText += '
-
-===== NEXT SHEET =====
-
-';
+        if(combinedText) combinedText += '\n\n===== NEXT SHEET =====\n\n';
         combinedText += bestText;
       }
     }
-
     state.ocrText = combinedText;
     state.aiNotes = [...notes];
-    setStatus('sheetPanel','sheetStatusList', combinedText ? 'ok' : 'warn','Bet sheet',[
-      combinedText ? 'Sheet text was read.' : 'No useful sheet text came back.',
-      'The reader now forces a strong Google transcript first, then lets Claude and GPT clean up and audit that transcript so they can still help even when direct image vision is unavailable.'
-    ]);
+    setStatus('sheetPanel','sheetStatusList', combinedText ? 'ok' : 'warn','Bet sheet',[combinedText ? 'Sheet text was read.' : 'No useful sheet text came back.', notes.join(' ')]);
     saveState(); render();
   }catch(err){
     console.error(err);
@@ -1166,29 +962,24 @@ async function buildRowsFromImage(){
     let runningOrder = 1;
 
     for(const file of files){
-      const estimatedRows = await estimateVisibleRows(file);
-      const result = await runPuterPromptWithFallback(buildRowsPrompt, file, state.ocrText || '', estimatedRows);
+      const result = await runPuterPromptWithFallback(buildRowsPrompt, file);
       const bestParsed = result.best;
       combinedNotes.push(...result.modelNotes);
       combinedNotes.push(...(bestParsed.notes || []));
-      if(estimatedRows) combinedNotes.push(`Estimated visible rows for ${file.name || 'sheet'}: about ${estimatedRows}.`);
-      combinedNotes.push(bestParsed.model ? `Best result for ${file.name || 'sheet'} came from ${bestParsed.model}, ${bestParsed.focus} focus, pass ${bestParsed.pass}, using ${bestParsed.mode}.` : `No model returned usable rows for ${file.name || 'sheet'}.`);
+      combinedNotes.push(bestParsed.model ? `Best result for ${file.name || 'sheet'} came from ${bestParsed.model}, pass ${bestParsed.pass}.` : `No model returned usable rows for ${file.name || 'sheet'}.`);
       combinedQuestions.push(...(bestParsed.questions || []));
       const sortedRows = (bestParsed.rows || []).slice().sort((a,b)=>a.order-b.order);
-      sortedRows.forEach(row => {
-        combinedRows.push({ ...row, order: runningOrder++ });
-      });
+      sortedRows.forEach(row => { combinedRows.push({ ...row, order: runningOrder++ }); });
     }
 
-    state.sheetRows = combinedRows.length ? combinedRows : defaultRows(1);
+    state.sheetRows = combinedRows.length ? combinedRows : defaultRows();
     state.aiNotes = combinedNotes.length ? combinedNotes : ['No model returned usable rows.'];
     state.aiQuestions = combinedQuestions;
 
     const ready = state.sheetRows.filter(row => row.left_players.length >= 2 && row.right_players.length >= 2).length;
     setStatus('sheetPanel','sheetStatusList', ready ? 'ok' : 'warn', 'Bet sheet', [
       combinedRows.length ? `Built ${combinedRows.length} ordered row(s) from ${files.length} uploaded sheet image(s).` : 'The AI could not confidently build enough rows from the uploaded sheet image(s).',
-      `${ready} row(s) currently have enough players to settle.`,
-      'Each model now gets repeated full image passes plus top, bottom, and audit passes. If direct image fails, Claude and GPT switch to transcript audit mode so they can still help compare rows.'
+      `${ready} row(s) currently have enough players to settle.`
     ]);
 
     saveState(); render();
