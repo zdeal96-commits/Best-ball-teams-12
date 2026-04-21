@@ -1,10 +1,17 @@
-a<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Golf Best Ball Sheet with Puter - Stable Restore</title>
   <script src="https://js.puter.com/v2/"></script>
+  <link href="https://unpkg.com/filepond/dist/filepond.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.js"></script>
+  <script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.min.js"></script>
+  <script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.min.js"></script>
+  <script src="https://unpkg.com/filepond-plugin-image-exif-orientation/dist/filepond-plugin-image-exif-orientation.min.js"></script>
+  <script src="https://unpkg.com/filepond/dist/filepond.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root{
@@ -117,6 +124,9 @@ a<!doctype html>
     .breakdownText{font-size:15px;line-height:1.45;color:#111827;word-break:break-word}
     .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #bbf7d0;font-size:12px;font-weight:900}
     .rowEditors textarea{min-height:80px;font-size:14px}
+    .filepond--root{margin-top:8px}
+    .filepond--panel-root{border-radius:16px}
+    .pondNote{margin-top:8px;font-size:12px;color:#64748b;line-height:1.45}
     @media (min-width:900px){.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4,.summaryGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   </style>
 </head>
@@ -194,7 +204,9 @@ a<!doctype html>
           <div class="previewLabel">Suggested aliases</div>
           <div class="previewText" id="aliasSuggestionsPreview">No alias suggestions yet.</div>
         </div>
-        <div class="grid2" style="margin-top:12px;">
+        
+    <div class="previewBox" style="margin-bottom:12px;"><div class="previewLabel">Selected upload files</div><div class="previewText" id="selectedUploadsPreview">No bet sheet images selected yet.</div></div>
+<div class="grid2" style="margin-top:12px;">
           <div class="field">
             <label for="shotValue">Dollars per shot</label>
             <input class="input" id="shotValue" type="number" min="0" step="1" value="3" />
@@ -207,7 +219,7 @@ a<!doctype html>
         <div class="warn">For normal 2v2 rows, the losing side pays the winning side the same way as the wheel tool. For uneven rows like 2v3, this version keeps the same total team value based on the smaller side and splits that amount evenly across the losing and winning players.</div>
       </div>
       <div>
-        <div class="field"><label for="betSheetInput">Bet sheet image(s)</label><input class="input" id="betSheetInput" type="file" accept="image/*" multiple /></div>
+        <div class="field"><label for="betSheetInput">Bet sheet image(s)</label><input class="input" id="betSheetInput" type="file" accept="image/*" multiple /><div class="pondNote">Drag files in or tap browse. The uploader previews images, keeps the original file, and passes the selected files into the existing Puter flow.</div></div>
         <div class="field" style="margin-top:12px;">
           <label for="modelSelect">Puter model strategy</label>
           <select class="select" id="modelSelect">
@@ -331,6 +343,56 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 
+let betSheetPond = null;
+
+function initBetSheetUploader(){
+  if(!window.FilePond) return;
+  FilePond.registerPlugin(
+    FilePondPluginImageExifOrientation,
+    FilePondPluginImagePreview,
+    FilePondPluginFileValidateType,
+    FilePondPluginFileValidateSize
+  );
+
+  const input = $('betSheetInput');
+  if(!input) return;
+
+  betSheetPond = FilePond.create(input, {
+    allowMultiple: true,
+    allowReorder: true,
+    acceptedFileTypes: ['image/png','image/jpeg','image/webp','image/heic','image/heif'],
+    fileValidateTypeDetectType: (source, type) => new Promise(resolve => resolve(type)),
+    maxFiles: 15,
+    maxFileSize: '25MB',
+    storeAsFile: true,
+    imagePreviewHeight: 180,
+    itemInsertLocation: 'after',
+    credits: false,
+    labelIdle: 'Drop bet sheet images here or <span class="filepond--label-action">Browse</span>'
+  });
+
+  const updatePreview = () => {
+    const files = getSelectedBetSheetFiles();
+    $('selectedUploadsPreview').textContent = files.length
+      ? files.map((file, i) => `${i + 1}. ${file.name} (${Math.round(file.size / 1024)} KB)`).join('\n')
+      : 'No bet sheet images selected yet.';
+  };
+
+  betSheetPond.on('addfile', updatePreview);
+  betSheetPond.on('removefile', updatePreview);
+  betSheetPond.on('reorderfiles', updatePreview);
+  updatePreview();
+}
+
+function getSelectedBetSheetFiles(){
+  if (betSheetPond) {
+    return betSheetPond.getFiles()
+      .map(item => item.file)
+      .filter(Boolean);
+  }
+  return Array.from(($('betSheetInput').files || []));
+}
+
 function defaultRows(){
   return Array.from({ length: 1 }, (_, idx) => ({
     order: idx + 1,
@@ -448,7 +510,8 @@ function resetTool(){
   state.maxShots = 7;
 
   $('aliasInput').value = DEFAULT_ALIASES;
-  $('betSheetInput').value = '';
+  if (betSheetPond) betSheetPond.removeFiles();
+  else $('betSheetInput').value = '';
   $('modelSelect').value = 'auto';
   $('rosterInput').value = '';
   $('scoresInput').value = '';
@@ -761,7 +824,8 @@ function clearSheet(){
   state.aiNotes = [];
   state.aiQuestions = [];
   state.sheetRows = defaultRows();
-  $('betSheetInput').value = '';
+  if (betSheetPond) betSheetPond.removeFiles();
+  else $('betSheetInput').value = '';
   $('modelSelect').value = 'auto';
   setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Bet sheet data cleared. Start with one blank row again.']);
   saveState(); render();
@@ -910,7 +974,7 @@ async function runPuterPromptWithFallback(promptBuilder, file){
 }
 
 async function readSheetText(){
-  const files = Array.from(($('betSheetInput').files || []));
+  const files = getSelectedBetSheetFiles();
   if(!files.length){ setStatus('sheetPanel','sheetStatusList','error','Bet sheet',['Choose at least one bet sheet image first.']); return; }
   parseAliases();
   try{
@@ -948,7 +1012,7 @@ async function readSheetText(){
 }
 
 async function buildRowsFromImage(){
-  const files = Array.from(($('betSheetInput').files || []));
+  const files = getSelectedBetSheetFiles();
   if(!files.length){ setStatus('sheetPanel','sheetStatusList','error','Bet sheet',['Choose at least one bet sheet image first.']); return; }
   parseAliases();
   try{
@@ -1528,6 +1592,7 @@ if(!Array.isArray(state.sheetRows) || !state.sheetRows.length) state.sheetRows =
 $('shotValue').value = state.shotValue ?? 3;
 $('maxShots').value = state.maxShots ?? 7;
 if(!$('modelSelect').value) $('modelSelect').value='auto';
+initBetSheetUploader();
 refreshAuthStatus();
 render();
 </script>
