@@ -229,21 +229,7 @@
             <option value="google/gemini-2.5-flash">Gemini only</option>
           </select>
         </div>
-        <div class="tiny" style="margin-top:8px;">Gemini is the primary image reader. Claude and GPT audit the transcript and extracted rows in text mode.</div>
-        <div class="grid2" style="margin-top:12px;">
-          <div class="field">
-            <label><input id="ollamaEnabled" type="checkbox" /> Enable Ollama fallback</label>
-            <div class="tiny">Optional home server fallback for local vision review.</div>
-          </div>
-          <div class="field">
-            <label for="ollamaModel">Ollama model</label>
-            <input class="input" id="ollamaModel" type="text" value="llava" />
-          </div>
-        </div>
-        <div class="field" style="margin-top:12px;">
-          <label for="ollamaEndpoint">Ollama endpoint</label>
-          <input class="input" id="ollamaEndpoint" type="text" value="http://localhost:11434/api/generate" />
-        </div>
+        <div class="tiny" style="margin-top:8px;">Gemini is the primary image reader. Claude and GPT audit the transcript and extracted rows in text mode. Blank continuation rows should still count as bets.</div>
         <div class="btnRow" style="margin-top:12px;">
           <button class="btn btnBlue" id="prepareViewsBtn" type="button">Prepare Image Views</button>
           <button class="btn btnBlue" id="readSheetBtn" type="button">Read Sheet Text</button>
@@ -269,7 +255,7 @@
 
   <section class="card">
     <h2 class="sectionTitle">4) Ordered Best Ball Rows</h2>
-    <div class="sectionSub">Each row below is one matchup in the same order as the sheet. The AI goes line by line, fills what it is sure about, carries names downward when it sees vertical lines or ditto marks, and keeps uncertain rows in place so you can fix them.</div>
+    <div class="sectionSub">Each row below is one matchup in the same order as the sheet. The AI goes line by line, fills what it is sure about, carries names downward when it sees vertical lines or ditto marks, treats blank continuation rows as real bet rows, and keeps uncertain rows in place so you can fix them.</div>
     <div class="previewBox" style="margin-bottom:12px;"><div class="previewLabel">Questions</div><div class="previewText" id="questionsPreview">No questions yet.</div></div>
     <div class="btnRow" style="margin-bottom:12px;">
       <button class="btn btnGreen" id="addRowBtn" type="button">Add Row</button>
@@ -364,8 +350,8 @@ const state = {
   winnerNotes: [],
   transcriptAudits: [],
   ollamaEnabled: false,
-  ollamaEndpoint: 'http://localhost:11434/api/generate',
-  ollamaModel: 'llava',
+  ollamaEndpoint: '',
+  ollamaModel: '',
   shotValue: 3,
   maxShots: 7
 };
@@ -521,11 +507,11 @@ async function createPreparedViewsForFile(file){
   const originalDataUrl = await fileToDataUrl(file);
   const img = await loadImageElement(file);
   const normalized = drawNormalizedCanvas(img, 2600);
-  const contrast = applyContrastBrightness(normalized, 1.24, 8);
-  const threshold = applyThreshold(contrast, 168);
-  const top = cropVerticalWindow(contrast, 0.00, 0.46);
-  const middle = cropVerticalWindow(contrast, 0.27, 0.73);
-  const bottom = cropVerticalWindow(contrast, 0.54, 1.00);
+  const contrast = applyContrastBrightness(normalized, 1.32, 10);
+  const threshold = applyThreshold(contrast, 176);
+  const top = cropVerticalWindow(contrast, 0.00, 0.54);
+  const middle = cropVerticalWindow(contrast, 0.22, 0.82);
+  const bottom = cropVerticalWindow(contrast, 0.44, 1.00);
 
   const views = [];
   views.push({ key:'original_full', label:'Original full', dataUrl: originalDataUrl, file, width: img.width, height: img.height });
@@ -592,24 +578,7 @@ async function runOcrHelperForView(view){
     return '';
   }
 }
-async function runOllamaVision(view, prompt){
-  if(!state.ollamaEnabled || !state.ollamaEndpoint) throw new Error('Ollama disabled.');
-  const base64 = String(view.dataUrl || '').split(',')[1] || '';
-  const payload = {
-    model: state.ollamaModel || 'llava',
-    prompt,
-    images: [base64],
-    stream: false
-  };
-  const res = await fetch(state.ollamaEndpoint, {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body: JSON.stringify(payload)
-  });
-  if(!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
-  const json = await res.json();
-  return String(json.response || json.message?.content || '').trim();
-}
+
 async function callPuterTextAudit(model, prompt){
   try{
     return await puter.ai.chat(prompt, null, false, { model, temperature: 0.1, max_tokens: 2200 });
@@ -651,7 +620,10 @@ function buildRowsAuditPrompt(passNumber, transcript, currentRowsText=''){
     buildRowsPrompt(passNumber),
     '',
     'Audit the transcript and current extracted rows.',
-    'Use the transcript to improve row order, keep vertical carry-down players, and do not skip top or bottom rows.',
+    'Use the transcript to improve row order, keep vertical carry-down players, keep blank continuation rows, and do not skip top or bottom rows.',
+    'Prefer one ROW line for every visible numbered row marker on the sheet.',
+    'If a row only shows one new name under a carried player, keep the carried anchor and treat the visible name as the partner.',
+    'Do not confuse ditto marks with a handwritten W in WAT.',
     '',
     'Transcript:',
     transcript || 'No transcript available.',
@@ -783,9 +755,6 @@ function resetTool(){
   state.transcriptAudits = [];
   state.settlements = [];
   state.playerLedgers = [];
-  state.ollamaEnabled = false;
-  state.ollamaEndpoint = 'http://localhost:11434/api/generate';
-  state.ollamaModel = 'llava';
   state.shotValue = 3;
   state.maxShots = 7;
 
@@ -793,9 +762,6 @@ function resetTool(){
   if (betSheetPond) betSheetPond.removeFiles();
   else $('betSheetInput').value = '';
   $('modelSelect').value = 'auto';
-  if($('ollamaEnabled')) $('ollamaEnabled').checked = false;
-  if($('ollamaEndpoint')) $('ollamaEndpoint').value = state.ollamaEndpoint;
-  if($('ollamaModel')) $('ollamaModel').value = state.ollamaModel;
   $('rosterInput').value = '';
   $('scoresInput').value = '';
   $('shotValue').value = '3';
@@ -1145,12 +1111,15 @@ ${state.ocrText}` : 'No OCR hint.';
     'This is NOT hole by hole scoring.',
     'Each visible row is one matchup between a left team and a right team.',
     strictLine,
-    'There is no fixed number of rows. Count every visible matchup row with names, ditto marks, or carry lines.',
+    'There is no fixed number of rows. Count every visible matchup row with names, ditto marks, quote marks, carry lines, or a visible numbered row marker on the right side.',
     'Keep the row order exactly as it appears from top to bottom on the sheet.',
-    'The right-most numbers are row order markers only.',
+    'Use the right-most numbered markers as row guides. If rows 1 through 15 are visible, aim to output 15 ROW lines in that order.',
     'A vertical line drawn downward from a player means that same player continues on the rows below until the line ends.',
+    'If a row looks blank except for a continuation line or ditto marks, it is still a real bet row and should be output.',
     'If one carried player stays the same and only the partner changes, keep the anchor and change only the partner.',
     'Ditto marks, quote marks, SAME, or vertical carry marks can mean use the same player or same side as the row above.',
+    'If a single partner name is written under a carried anchor player, keep the anchor from above and treat the new written name as the partner.',
+    'If you are unsure whether a mark is a ditto mark or a handwritten W in WAT, prefer WAT when there is a visible W shape and only use ditto when there is no actual letter.',
     'Pay extra attention to the first few rows at the top and the last few rows at the bottom.',
     'Return ONLY plain text lines with no markdown and no extra commentary.',
     'Use these line types only:',
@@ -1193,6 +1162,52 @@ function applyCarryForward(tokens, prevTokens){
     }
   }
   return out.filter(Boolean);
+}
+
+function isDittoToken(token){
+  const t = normalizeSpace(token);
+  return !t || t.toUpperCase() === 'SAME' || t === '"' || t === "''" || t === '""' || t === '“' || t === '”';
+}
+function maybeTreatAsPartnerChange(tokens, prevTokens){
+  const clean = (tokens || []).map(normalizeSpace).filter(Boolean);
+  const prev = (prevTokens || []).map(normalizeSpace).filter(Boolean);
+  if(!clean.length) return [];
+  if(clean.length >= 2) return clean;
+  const token = clean[0];
+  if(isDittoToken(token)) return prev.slice();
+  if(prev.length >= 2){
+    if(token.toLowerCase() === prev[0].toLowerCase()) return prev.slice();
+    return [prev[0], token];
+  }
+  return clean;
+}
+function normalizeRowTeams(rows){
+  let prevLeft = [];
+  let prevRight = [];
+  return (rows || []).map(row => {
+    let leftRaw = maybeTreatAsPartnerChange(row.left_raw || [], prevLeft);
+    let rightRaw = maybeTreatAsPartnerChange(row.right_raw || [], prevRight);
+
+    if(!leftRaw.length && prevLeft.length) leftRaw = prevLeft.slice();
+    if(!rightRaw.length && prevRight.length) rightRaw = prevRight.slice();
+
+    // If right side shows only a new partner but prior right anchor exists, keep the anchor.
+    if(rightRaw.length === 1 && prevRight.length >= 2 && rightRaw[0].toLowerCase() !== prevRight[0].toLowerCase()){
+      rightRaw = [prevRight[0], rightRaw[0]];
+    }
+    // If left side shows only a new partner but prior left anchor exists, keep the anchor.
+    if(leftRaw.length === 1 && prevLeft.length >= 2 && leftRaw[0].toLowerCase() !== prevLeft[0].toLowerCase()){
+      leftRaw = [prevLeft[0], leftRaw[0]];
+    }
+
+    const leftPlayers = leftRaw.map(token => resolveAliasMeta(token).player).filter(Boolean);
+    const rightPlayers = rightRaw.map(token => resolveAliasMeta(token).player).filter(Boolean);
+
+    prevLeft = leftRaw.slice();
+    prevRight = rightRaw.slice();
+
+    return { ...row, left_raw:leftRaw, right_raw:rightRaw, left_players:leftPlayers, right_players:rightPlayers };
+  });
 }
 function parseAiRows(text){
   const rawLines = stripCodeFence(text).split(/\r?\n/).map(line => line.trim()).filter(Boolean);
@@ -1244,7 +1259,8 @@ function parseAiRows(text){
     fallbackOrder = Math.max(fallbackOrder, order + 1);
   });
 
-  return { rows, notes, questions: [...questions, ...unknownAliasQuestions] };
+  const normalizedRows = normalizeRowTeams(rows);
+  return { rows: normalizedRows, notes, questions: [...questions, ...unknownAliasQuestions] };
 }
 
 
@@ -1279,7 +1295,7 @@ async function getGoogleTranscriptForSheet(sheet){
   const notes = [];
   let helperText = '';
 
-  const helperViews = sheet.views.filter(view => ['contrast_full','threshold_full','top_crop','bottom_crop'].includes(view.key)).slice(0, 3);
+  const helperViews = sheet.views.filter(view => ['contrast_full','threshold_full','top_crop','middle_crop','bottom_crop'].includes(view.key)).slice(0, 5);
   for(const view of helperViews){
     try{
       const helper = await runOcrHelperForView(view);
@@ -1379,24 +1395,6 @@ async function getBestRowsForSheet(sheet, transcript){
       }
     }
   }
-
-  if(state.ollamaEnabled){
-    for(const view of sheet.views.filter(view => ['normalized_full','contrast_full','top_crop','bottom_crop'].includes(view.key))){
-      try{
-        const raw = await runOllamaVision(view, buildRowsPromptForView(2, view, transcript));
-        const parsed = parseAiRows(raw);
-        const score = scoreExtractionCandidate(parsed);
-        notes.push(`Ollama rows ${sheet.sourceName} ${view.label}: ${parsed.rows.length} row(s), score ${score}.`);
-        if(score > bestScore){
-          best = { ...parsed, raw, model: `Ollama ${state.ollamaModel}`, pass: 1, view: view.label, mode: 'local vision' };
-          bestScore = score;
-        }
-      }catch(_){
-        notes.push(`Ollama rows ${sheet.sourceName} ${view.label}: failed.`);
-      }
-    }
-  }
-
   return { best, notes };
 }
 
@@ -1967,9 +1965,6 @@ function render(){
   parseAliases();
   state.shotValue = Number($('shotValue').value || state.shotValue || 0);
   state.maxShots = Number($('maxShots').value || state.maxShots || 0);
-  state.ollamaEnabled = $('ollamaEnabled') ? $('ollamaEnabled').checked : !!state.ollamaEnabled;
-  state.ollamaEndpoint = $('ollamaEndpoint') ? $('ollamaEndpoint').value : state.ollamaEndpoint;
-  state.ollamaModel = $('ollamaModel') ? $('ollamaModel').value : state.ollamaModel;
   if(!Array.isArray(state.sheetRows) || !state.sheetRows.length) state.sheetRows = defaultRows();
   updateSummary();
   renderRows();
@@ -2039,9 +2034,9 @@ $('exportAllCsvBtn').addEventListener('click', exportAllCsv);
 $('shotValue').addEventListener('input', () => { state.shotValue = Number($('shotValue').value || 0); saveState(); render(); });
 $('maxShots').addEventListener('input', () => { state.maxShots = Number($('maxShots').value || 0); saveState(); render(); });
 $('aliasInput').addEventListener('input', () => { parseAliases(); saveState(); });
-$('ollamaEnabled').addEventListener('change', () => { state.ollamaEnabled = $('ollamaEnabled').checked; saveState(); });
-$('ollamaEndpoint').addEventListener('input', () => { state.ollamaEndpoint = $('ollamaEndpoint').value; saveState(); });
-$('ollamaModel').addEventListener('input', () => { state.ollamaModel = $('ollamaModel').value; saveState(); });
+if($('ollamaEnabled')) $('ollamaEnabled').addEventListener('change', () => { state.ollamaEnabled = $('ollamaEnabled').checked; saveState(); });
+if($('ollamaEndpoint')) $('ollamaEndpoint').addEventListener('input', () => { state.ollamaEndpoint = $('ollamaEndpoint').value; saveState(); });
+if($('ollamaModel')) $('ollamaModel').addEventListener('input', () => { state.ollamaModel = $('ollamaModel').value; saveState(); });
 
 $('aliasInput').value = DEFAULT_ALIASES;
 loadState();
@@ -2050,9 +2045,6 @@ if(!Array.isArray(state.sheetRows) || !state.sheetRows.length) state.sheetRows =
 $('shotValue').value = state.shotValue ?? 3;
 $('maxShots').value = state.maxShots ?? 7;
 if(!$('modelSelect').value) $('modelSelect').value='auto';
-if($('ollamaEnabled')) $('ollamaEnabled').checked = !!state.ollamaEnabled;
-if($('ollamaEndpoint')) $('ollamaEndpoint').value = state.ollamaEndpoint || 'http://localhost:11434/api/generate';
-if($('ollamaModel')) $('ollamaModel').value = state.ollamaModel || 'llava';
 initBetSheetUploader();
 refreshAuthStatus();
 render();
