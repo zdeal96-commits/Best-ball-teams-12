@@ -230,11 +230,21 @@
           </select>
         </div>
         <div class="tiny" style="margin-top:8px;">Gemini is the primary image reader. Claude and GPT audit the transcript and extracted rows in text mode. Blank continuation rows should still count as bets.</div>
-        <div class="btnRow" style="margin-top:12px;">
-          <button class="btn btnBlue" id="prepareViewsBtn" type="button">Prepare Image Views</button>
-          <button class="btn btnBlue" id="readSheetBtn" type="button">Read Sheet Text</button>
-          <button class="btn btnGreen" id="buildRowsBtn" type="button">Build Rows from Image</button>
-          <button class="btn btnGray" id="clearSheetBtn" type="button">Clear Sheet</button>
+        <div class="grid2" style="margin-top:12px;">
+          <div class="field">
+            <label><input id="fastModeToggle" type="checkbox" checked /> Fast Mode</label>
+            <div class="tiny">Fast Mode uses fewer image views and fewer AI calls on the first pass, then retries deeper only if needed.</div>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <div class="btnRow">
+              <button class="btn btnBlue" id="prepareViewsBtn" type="button">Prepare Image Views</button>
+              <button class="btn btnBlue" id="readSheetBtn" type="button">Read Sheet Text</button>
+              <button class="btn btnGreen" id="buildRowsBtn" type="button">Build Rows from Image</button>
+              <button class="btn btnBlue" id="deepRetryBtn" type="button">Deep Retry</button>
+              <button class="btn btnGray" id="clearSheetBtn" type="button">Clear Sheet</button>
+            </div>
+          </div>
         </div>
         <div id="sheetPanel" class="statusPanel info"><div class="statusTitle">Bet sheet</div><ul class="statusList" id="sheetStatusList"><li>No image analyzed yet.</li></ul></div>
       </div>
@@ -250,6 +260,10 @@
     <div class="grid2" style="margin-top:12px;">
       <div class="previewBox"><div class="previewLabel">Merged row extraction</div><div class="previewText" id="mergedRowsPreview">No merged rows yet.</div></div>
       <div class="previewBox"><div class="previewLabel">Original files</div><div class="previewText" id="originalFilesPreview">No bet sheet images selected yet.</div></div>
+    </div>
+    <div class="grid2" style="margin-top:12px;">
+      <div class="previewBox"><div class="previewLabel">Processing progress</div><div class="previewText" id="progressPreview">No processing run yet.</div></div>
+      <div class="previewBox"><div class="previewLabel">Speed summary</div><div class="previewText" id="speedSummaryPreview">No speed summary yet.</div></div>
     </div>
   </section>
 
@@ -352,6 +366,13 @@ const state = {
   ollamaEnabled: false,
   ollamaEndpoint: '',
   ollamaModel: '',
+  fastMode: true,
+  retryModeUsed: false,
+  weakResult: false,
+  currentStage: 'Idle',
+  progressLines: [],
+  cacheHits: 0,
+  cacheMisses: 0,
   shotValue: 3,
   maxShots: 7
 };
@@ -360,6 +381,64 @@ const $ = (id) => document.getElementById(id);
 
 
 let betSheetPond = null;
+const runtimeCache = {
+  prepared: new Map(),
+  ocr: new Map(),
+  transcript: new Map(),
+  rows: new Map()
+};
+
+function fileSignature(file){
+  return [file.name || '', file.size || 0, file.lastModified || 0].join('::');
+}
+function recordCacheHit(){
+  state.cacheHits = Number(state.cacheHits || 0) + 1;
+}
+function recordCacheMiss(){
+  state.cacheMisses = Number(state.cacheMisses || 0) + 1;
+}
+function resetRunStats(){
+  state.retryModeUsed = false;
+  state.weakResult = false;
+  state.currentStage = 'Idle';
+  state.progressLines = [];
+  state.cacheHits = 0;
+  state.cacheMisses = 0;
+}
+function addProgressLine(line){
+  state.progressLines = [...(state.progressLines || []), line];
+  if(state.progressLines.length > 50) state.progressLines = state.progressLines.slice(-50);
+  if($('progressPreview')) $('progressPreview').textContent = state.progressLines.join('\n') || 'No processing run yet.';
+}
+function setProcessingStage(stage, detail=''){
+  state.currentStage = stage;
+  addProgressLine(detail ? `${stage}: ${detail}` : stage);
+}
+function simpleHash(text){
+  const s = String(text || '');
+  let h = 0;
+  for(let i=0;i<s.length;i++) h = ((h << 5) - h) + s.charCodeAt(i);
+  return String(h >>> 0);
+}
+function shouldDeepRetryFromRows(rows, questions){
+  const count = (rows || []).length;
+  const ready = (rows || []).filter(row => (row.left_players || []).length >= 2 && (row.right_players || []).length >= 2).length;
+  const flagged = (questions || []).length;
+  return count < 10 || ready < Math.max(6, count - 3) || flagged > 3;
+}
+function updateSpeedSummary(){
+  const lines = [
+    `Current stage: ${state.currentStage || 'Idle'}`,
+    `Fast Mode: ${state.fastMode ? 'On' : 'Off'}`,
+    `Retry mode used: ${state.retryModeUsed ? 'Yes' : 'No'}`,
+    `Weak result detected: ${state.weakResult ? 'Yes' : 'No'}`,
+    `Cache hits: ${state.cacheHits || 0}`,
+    `Cache misses: ${state.cacheMisses || 0}`,
+    `Rows found: ${(state.sheetRows || []).length || 0}`,
+    `Rows flagged for review: ${(state.aiQuestions || []).length || 0}`
+  ];
+  if($('speedSummaryPreview')) $('speedSummaryPreview').textContent = lines.join('\n');
+}
 
 function updateSelectedFilePreviews(){
   const files = getSelectedBetSheetFiles();
@@ -431,6 +510,11 @@ async function fileToDataUrl(file){
   });
 }
 async function loadImageElement(file){
+  if(window.createImageBitmap){
+    try{
+      return await createImageBitmap(file);
+    }catch(_){}
+  }
   const url = URL.createObjectURL(file);
   try{
     const img = await new Promise((resolve, reject) => {
@@ -503,33 +587,42 @@ function cropVerticalWindow(canvas, startRatio, endRatio){
   ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
   return out;
 }
-async function createPreparedViewsForFile(file){
+async function createPreparedViewsForFile(file, mode='fast'){
+  const cacheKey = `${fileSignature(file)}::prepared::${mode}`;
+  if(runtimeCache.prepared.has(cacheKey)){
+    recordCacheHit();
+    return runtimeCache.prepared.get(cacheKey);
+  }
+  recordCacheMiss();
   const originalDataUrl = await fileToDataUrl(file);
   const img = await loadImageElement(file);
-  const normalized = drawNormalizedCanvas(img, 2600);
-  const contrast = applyContrastBrightness(normalized, 1.32, 10);
-  const threshold = applyThreshold(contrast, 176);
-  const top = cropVerticalWindow(contrast, 0.00, 0.54);
-  const middle = cropVerticalWindow(contrast, 0.22, 0.82);
-  const bottom = cropVerticalWindow(contrast, 0.44, 1.00);
+  const normalized = drawNormalizedCanvas(img, mode === 'deep' ? 2300 : 1900);
+  const contrast = applyContrastBrightness(normalized, 1.30, 9);
 
   const views = [];
   views.push({ key:'original_full', label:'Original full', dataUrl: originalDataUrl, file, width: img.width, height: img.height });
-  const normalizedDataUrl = canvasToDataUrl(normalized, 'image/jpeg', 0.96);
-  const contrastDataUrl = canvasToDataUrl(contrast, 'image/jpeg', 0.96);
-  const thresholdDataUrl = canvasToDataUrl(threshold, 'image/png', 1);
-  const topDataUrl = canvasToDataUrl(top, 'image/jpeg', 0.96);
-  const middleDataUrl = canvasToDataUrl(middle, 'image/jpeg', 0.96);
-  const bottomDataUrl = canvasToDataUrl(bottom, 'image/jpeg', 0.96);
-
-  views.push({ key:'normalized_full', label:'Normalized full', dataUrl: normalizedDataUrl, file: await dataUrlToFile(normalizedDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_normalized.jpg`, 'image/jpeg'), width: normalized.width, height: normalized.height });
+  const contrastDataUrl = canvasToDataUrl(contrast, 'image/jpeg', 0.94);
   views.push({ key:'contrast_full', label:'Higher contrast full', dataUrl: contrastDataUrl, file: await dataUrlToFile(contrastDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_contrast.jpg`, 'image/jpeg'), width: contrast.width, height: contrast.height });
-  views.push({ key:'top_crop', label:'Top focus', dataUrl: topDataUrl, file: await dataUrlToFile(topDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_top.jpg`, 'image/jpeg'), width: top.width, height: top.height });
-  views.push({ key:'middle_crop', label:'Middle focus', dataUrl: middleDataUrl, file: await dataUrlToFile(middleDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_middle.jpg`, 'image/jpeg'), width: middle.width, height: middle.height });
-  views.push({ key:'bottom_crop', label:'Bottom focus', dataUrl: bottomDataUrl, file: await dataUrlToFile(bottomDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_bottom.jpg`, 'image/jpeg'), width: bottom.width, height: bottom.height });
-  views.push({ key:'threshold_full', label:'Threshold full', dataUrl: thresholdDataUrl, file: await dataUrlToFile(thresholdDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_threshold.png`, 'image/png'), width: threshold.width, height: threshold.height });
 
-  return { sourceName: file.name, originalFile: file, views };
+  const top = cropVerticalWindow(contrast, 0.00, 0.56);
+  const bottom = cropVerticalWindow(contrast, 0.44, 1.00);
+  const topDataUrl = canvasToDataUrl(top, 'image/jpeg', 0.94);
+  const bottomDataUrl = canvasToDataUrl(bottom, 'image/jpeg', 0.94);
+  views.push({ key:'top_crop', label:'Top focus', dataUrl: topDataUrl, file: await dataUrlToFile(topDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_top.jpg`, 'image/jpeg'), width: top.width, height: top.height });
+  views.push({ key:'bottom_crop', label:'Bottom focus', dataUrl: bottomDataUrl, file: await dataUrlToFile(bottomDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_bottom.jpg`, 'image/jpeg'), width: bottom.width, height: bottom.height });
+
+  if(mode === 'deep'){
+    const middle = cropVerticalWindow(contrast, 0.22, 0.82);
+    const threshold = applyThreshold(contrast, 176);
+    const middleDataUrl = canvasToDataUrl(middle, 'image/jpeg', 0.94);
+    const thresholdDataUrl = canvasToDataUrl(threshold, 'image/png', 1);
+    views.push({ key:'middle_crop', label:'Middle focus', dataUrl: middleDataUrl, file: await dataUrlToFile(middleDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_middle.jpg`, 'image/jpeg'), width: middle.width, height: middle.height });
+    views.push({ key:'threshold_full', label:'Threshold full', dataUrl: thresholdDataUrl, file: await dataUrlToFile(thresholdDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_threshold.png`, 'image/png'), width: threshold.width, height: threshold.height });
+  }
+
+  const prepared = { sourceName: file.name, originalFile: file, signature: fileSignature(file), mode, views };
+  runtimeCache.prepared.set(cacheKey, prepared);
+  return prepared;
 }
 function renderPreparedSheetsPreview(){
   if(!state.preparedSheets || !state.preparedSheets.length){
@@ -538,7 +631,7 @@ function renderPreparedSheetsPreview(){
   }
   const lines = [];
   state.preparedSheets.forEach((sheet, idx) => {
-    lines.push(`Sheet ${idx + 1}: ${sheet.sourceName}`);
+    lines.push(`Sheet ${idx + 1}: ${sheet.sourceName} (${sheet.mode || state.preparedMode || 'fast'})`);
     sheet.views.forEach((view, viewIdx) => {
       lines.push(`  ${viewIdx + 1}. ${view.label} - ${view.width}x${view.height}`);
     });
@@ -546,35 +639,54 @@ function renderPreparedSheetsPreview(){
   });
   setPreview('preparedViewsPreview', lines.join('\n').trim());
 }
-async function prepareImageViews(){
+async function prepareImageViews(mode = (state.fastMode ? 'fast' : 'deep')){
   const files = getSelectedBetSheetFiles();
   if(!files.length){
     setStatus('sheetPanel','sheetStatusList','error','Bet sheet',['Choose at least one bet sheet image first.']);
     return [];
   }
-  setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Preparing multiple image views for analysis.']);
+  setProcessingStage('preparing views', `mode ${mode}`);
   const prepared = [];
   for(const file of files){
-    prepared.push(await createPreparedViewsForFile(file));
+    prepared.push(await createPreparedViewsForFile(file, mode));
   }
   state.preparedSheets = prepared;
+  state.preparedMode = mode;
   renderPreparedSheetsPreview();
   saveState();
   setStatus('sheetPanel','sheetStatusList','ok','Bet sheet',[`Prepared ${prepared.reduce((sum, item) => sum + item.views.length, 0)} analysis view(s) from ${prepared.length} uploaded sheet image(s).`]);
   return prepared;
 }
-async function ensurePreparedSheets(){
-  if(state.preparedSheets && state.preparedSheets.length && getSelectedBetSheetFiles().length === state.preparedSheets.length){
-    return state.preparedSheets;
+async function ensurePreparedSheets(mode = (state.fastMode ? 'fast' : 'deep')){
+  const files = getSelectedBetSheetFiles();
+  const sameCount = state.preparedSheets && state.preparedSheets.length === files.length;
+  if(sameCount && state.preparedMode === mode){
+    const sigA = (state.preparedSheets || []).map(item => item.signature).join('|');
+    const sigB = files.map(fileSignature).join('|');
+    if(sigA === sigB){
+      recordCacheHit();
+      setProcessingStage('preparing views', `cache hit (${mode})`);
+      return state.preparedSheets;
+    }
   }
-  return await prepareImageViews();
+  recordCacheMiss();
+  return await prepareImageViews(mode);
 }
 async function runOcrHelperForView(view){
   if(!window.Tesseract) return '';
+  const cacheKey = `${view.file.name}::${view.key}::ocr`;
+  if(runtimeCache.ocr.has(cacheKey)){
+    recordCacheHit();
+    return runtimeCache.ocr.get(cacheKey);
+  }
+  recordCacheMiss();
   try{
     const result = await Tesseract.recognize(view.dataUrl, 'eng', { logger: () => {} });
-    return normalizeSpace(result?.data?.text || '');
+    const text = normalizeSpace(result?.data?.text || '');
+    runtimeCache.ocr.set(cacheKey, text);
+    return text;
   }catch(_){
+    runtimeCache.ocr.set(cacheKey, '');
     return '';
   }
 }
@@ -726,6 +838,7 @@ function saveState(){
     ollamaEnabled: $('ollamaEnabled') ? $('ollamaEnabled').checked : false,
     ollamaEndpoint: $('ollamaEndpoint') ? $('ollamaEndpoint').value : state.ollamaEndpoint,
     ollamaModel: $('ollamaModel') ? $('ollamaModel').value : state.ollamaModel,
+    fastMode: $('fastModeToggle') ? $('fastModeToggle').checked : state.fastMode,
     shotValue: state.shotValue,
     maxShots: state.maxShots,
     aliasText: $('aliasInput').value
@@ -738,7 +851,12 @@ function loadState(){
     const parsed = JSON.parse(raw) || {};
     Object.assign(state, parsed);
     state.preparedSheets = [];
+    state.progressLines = [];
+    state.currentStage = 'Idle';
+    state.cacheHits = 0;
+    state.cacheMisses = 0;
     if(parsed.aliasText) $('aliasInput').value = parsed.aliasText;
+    if($('fastModeToggle')) $('fastModeToggle').checked = parsed.fastMode !== false;
   }catch(err){ console.error(err); }
 }
 function resetTool(){
@@ -756,6 +874,13 @@ function resetTool(){
   state.transcriptAudits = [];
   state.settlements = [];
   state.playerLedgers = [];
+  state.fastMode = true;
+  state.retryModeUsed = false;
+  state.weakResult = false;
+  state.currentStage = 'Idle';
+  state.progressLines = [];
+  state.cacheHits = 0;
+  state.cacheMisses = 0;
   state.shotValue = 3;
   state.maxShots = 7;
 
@@ -763,6 +888,7 @@ function resetTool(){
   if (betSheetPond) betSheetPond.removeFiles();
   else $('betSheetInput').value = '';
   $('modelSelect').value = 'auto';
+  if($('fastModeToggle')) $('fastModeToggle').checked = true;
   $('rosterInput').value = '';
   $('scoresInput').value = '';
   $('shotValue').value = '3';
@@ -777,6 +903,8 @@ function resetTool(){
   setPreview('winnerPreview','No winner chosen yet.');
   setPreview('mergedRowsPreview','No merged rows yet.');
   setPreview('originalFilesPreview','No bet sheet images selected yet.');
+  setPreview('progressPreview','No processing run yet.');
+  setPreview('speedSummaryPreview','No speed summary yet.');
   refreshAuthStatus();
   render();
 }
@@ -1325,31 +1453,44 @@ function buildRowsPromptForView(passNumber, view, transcript=''){
 ${transcript}` : ''
   ].filter(Boolean).join('\n');
 }
-async function getGoogleTranscriptForSheet(sheet){
+async function getGoogleTranscriptForSheet(sheet, mode='fast'){
+  const cacheKey = `${sheet.signature}::${mode}::googleTranscript`;
+  if(runtimeCache.transcript.has(cacheKey)){
+    recordCacheHit();
+    const cached = runtimeCache.transcript.get(cacheKey);
+    return { ...cached, notes: [...(cached.notes || []), `Gemini transcript ${sheet.sourceName}: cache hit.`] };
+  }
+  recordCacheMiss();
+  setProcessingStage('Gemini transcript', `${sheet.sourceName} (${mode})`);
   let bestText = '';
   let bestView = '';
   const notes = [];
   let helperText = '';
 
-  const helperViews = sheet.views.filter(view => ['contrast_full','threshold_full','top_crop','middle_crop','bottom_crop'].includes(view.key)).slice(0, 5);
+  const helperViews = mode === 'deep'
+    ? sheet.views.filter(view => ['contrast_full','threshold_full','top_crop','middle_crop','bottom_crop'].includes(view.key))
+    : sheet.views.filter(view => view.key === 'contrast_full').slice(0, 1);
+
   for(const view of helperViews){
     try{
       const helper = await runOcrHelperForView(view);
-      if(helper && helper.length > helperText.length){
-        helperText = helper;
-      }
+      if(helper && helper.length > helperText.length) helperText = helper;
       notes.push(`OCR helper ${sheet.sourceName} ${view.label}: ${helper ? 'success' : 'empty'}.`);
     }catch(_){
       notes.push(`OCR helper ${sheet.sourceName} ${view.label}: failed.`);
     }
   }
 
-  for(const view of sheet.views){
+  const transcriptViews = mode === 'deep'
+    ? sheet.views
+    : sheet.views.filter(view => ['original_full','contrast_full','top_crop','bottom_crop'].includes(view.key));
+
+  for(const view of transcriptViews){
     try{
       const response = await puter.ai.chat(buildViewReadPrompt(view, helperText), view.file, false, {
         model: 'google/gemini-2.5-flash',
         temperature: 0,
-        max_tokens: 2200
+        max_tokens: 1800
       });
       const textBlock = stripCodeFence(extractPuterText(response));
       notes.push(`Gemini read ${sheet.sourceName} ${view.label}: ${textBlock ? 'success' : 'empty'}.`);
@@ -1357,12 +1498,15 @@ async function getGoogleTranscriptForSheet(sheet){
         bestText = textBlock;
         bestView = view.label;
       }
+      if(mode === 'fast' && bestText.length > 500 && view.key === 'contrast_full') break;
     }catch(_){
       notes.push(`Gemini read ${sheet.sourceName} ${view.label}: failed.`);
     }
   }
 
-  return { transcript: bestText, helperText, notes, bestView };
+  const result = { transcript: bestText, helperText, notes, bestView };
+  runtimeCache.transcript.set(cacheKey, result);
+  return result;
 }
 async function auditTranscriptWithModels(transcript){
   let bestTranscript = transcript || '';
@@ -1385,18 +1529,31 @@ async function auditTranscriptWithModels(transcript){
   }
   return { transcript: bestTranscript, notes, audits };
 }
-async function getBestRowsForSheet(sheet, transcript){
+async function getBestRowsForSheet(sheet, transcript, mode='fast'){
+  const cacheKey = `${sheet.signature}::${mode}::rows::${simpleHash(transcript)}`;
+  if(runtimeCache.rows.has(cacheKey)){
+    recordCacheHit();
+    const cached = runtimeCache.rows.get(cacheKey);
+    return { best: cached.best, notes: [...(cached.notes || []), `Row extraction ${sheet.sourceName}: cache hit.`] };
+  }
+  recordCacheMiss();
+  setProcessingStage('Gemini rows', `${sheet.sourceName} (${mode})`);
   let best = { rows: [], notes: [], questions: [], raw: '', model: '', pass: 1, view: '', mode: '' };
   let bestScore = -999999;
   const notes = [];
 
-  for(const view of sheet.views){
-    for(const passNumber of [1,2]){
+  const directViews = mode === 'deep'
+    ? sheet.views
+    : sheet.views.filter(view => ['contrast_full','top_crop','bottom_crop','original_full'].includes(view.key));
+
+  for(const view of directViews){
+    const passes = mode === 'deep' ? [1,2] : [1];
+    for(const passNumber of passes){
       try{
         const response = await puter.ai.chat(buildRowsPromptForView(passNumber, view, transcript), view.file, false, {
           model: 'google/gemini-2.5-flash',
           temperature: 0,
-          max_tokens: 2600
+          max_tokens: 2200
         });
         const raw = stripCodeFence(extractPuterText(response));
         const parsed = parseAiRows(raw);
@@ -1406,32 +1563,40 @@ async function getBestRowsForSheet(sheet, transcript){
           best = { ...parsed, raw, model: 'google/gemini-2.5-flash', pass: passNumber, view: view.label, mode: 'direct image' };
           bestScore = score;
         }
+        if(mode === 'fast' && best.rows.length >= 12) break;
       }catch(_){
         notes.push(`Gemini rows ${sheet.sourceName} ${view.label} pass ${passNumber}: failed.`);
       }
     }
   }
 
-  const auditors = getModelPlan().filter(model => model !== 'google/gemini-2.5-flash');
-  const currentRowsText = rowsToAuditText(best.rows);
-  for(const model of auditors){
-    for(const passNumber of [1,2]){
-      try{
-        const response = await callPuterTextAudit(model, buildRowsAuditPrompt(passNumber, transcript, currentRowsText));
-        const raw = stripCodeFence(extractPuterText(response));
-        const parsed = parseAiRows(raw);
-        const score = scoreExtractionCandidate(parsed);
-        notes.push(`${model} row audit pass ${passNumber}: ${parsed.rows.length} row(s), score ${score}.`);
-        if(score > bestScore){
-          best = { ...parsed, raw, model, pass: passNumber, view: 'Transcript audit', mode: 'text audit' };
-          bestScore = score;
+  const shouldAudit = mode === 'deep' || shouldDeepRetryFromRows(best.rows, best.questions);
+  if(shouldAudit){
+    setProcessingStage('transcript audit', `${sheet.sourceName} (${mode})`);
+    const auditors = getModelPlan().filter(model => model !== 'google/gemini-2.5-flash');
+    const currentRowsText = rowsToAuditText(best.rows);
+    for(const model of auditors){
+      for(const passNumber of [1,2]){
+        try{
+          const response = await callPuterTextAudit(model, buildRowsAuditPrompt(passNumber, transcript, currentRowsText));
+          const raw = stripCodeFence(extractPuterText(response));
+          const parsed = parseAiRows(raw);
+          const score = scoreExtractionCandidate(parsed);
+          notes.push(`${model} row audit pass ${passNumber}: ${parsed.rows.length} row(s), score ${score}.`);
+          if(score > bestScore){
+            best = { ...parsed, raw, model, pass: passNumber, view: 'Transcript audit', mode: 'text audit' };
+            bestScore = score;
+          }
+        }catch(_){
+          notes.push(`${model} row audit pass ${passNumber}: failed.`);
         }
-      }catch(_){
-        notes.push(`${model} row audit pass ${passNumber}: failed.`);
       }
     }
   }
-  return { best, notes };
+
+  const result = { best, notes };
+  runtimeCache.rows.set(cacheKey, result);
+  return result;
 }
 
 async function readSheetText(){
@@ -1439,24 +1604,23 @@ async function readSheetText(){
   if(!files.length){ setStatus('sheetPanel','sheetStatusList','error','Bet sheet',['Choose at least one bet sheet image first.']); return; }
   parseAliases();
   try{
+    resetRunStats();
     await ensurePuterSession('Read Sheet Text', { guestPreferred: true });
-    const preparedSheets = await ensurePreparedSheets();
-    setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Preparing transcript reads from the generated image views.']);
+    const mode = state.fastMode ? 'fast' : 'deep';
+    const preparedSheets = await ensurePreparedSheets(mode);
     state.betSheetFile = files;
     let combinedText = '';
     const notes = [];
-    const audits = [];
-    const winners = [];
 
     for(const sheet of preparedSheets){
-      const googleRead = await getGoogleTranscriptForSheet(sheet);
-      notes.push(...googleRead.notes);
+      const googleRead = await getGoogleTranscriptForSheet(sheet, mode);
       let transcript = googleRead.transcript || googleRead.helperText || '';
-      const audited = await auditTranscriptWithModels(transcript);
-      transcript = audited.transcript || transcript;
-      notes.push(...audited.notes);
-      audits.push(...audited.audits.map(item => `${sheet.sourceName} - ${item.model}: ${item.output.slice(0, 300)}`));
-      winners.push(`${sheet.sourceName}: transcript winner ${googleRead.bestView || 'helper text'} via Gemini.`);
+      notes.push(...googleRead.notes);
+      if(mode === 'deep' || !transcript || transcript.length < 200){
+        const auditedTranscript = await auditTranscriptWithModels(transcript);
+        transcript = auditedTranscript.transcript || transcript;
+        notes.push(...auditedTranscript.notes);
+      }
       if(transcript){
         if(combinedText) combinedText += '\n\n===== NEXT SHEET =====\n\n';
         combinedText += transcript;
@@ -1464,12 +1628,11 @@ async function readSheetText(){
     }
 
     state.ocrText = combinedText;
-    state.aiNotes = notes;
-    state.transcriptAudits = audits;
-    state.winnerNotes = winners;
+    state.aiNotes = [...notes];
+    setProcessingStage('complete', 'Read sheet text finished');
     setStatus('sheetPanel','sheetStatusList', combinedText ? 'ok' : 'warn','Bet sheet',[
       combinedText ? 'Sheet text was read.' : 'No useful sheet text came back.',
-      'Gemini read the prepared image views first. Claude and GPT then audited the transcript in text mode.'
+      mode === 'fast' ? 'Fast pass used minimal prepared views and fewer AI calls.' : 'Deep mode used expanded views and transcript audit.'
     ]);
     saveState(); render();
   }catch(err){
@@ -1478,14 +1641,17 @@ async function readSheetText(){
   }
 }
 
-async function buildRowsFromImage(){
+async function buildRowsFromImage(forceDeep=false){
   const files = getSelectedBetSheetFiles();
   if(!files.length){ setStatus('sheetPanel','sheetStatusList','error','Bet sheet',['Choose at least one bet sheet image first.']); return; }
   parseAliases();
   try{
+    resetRunStats();
     await ensurePuterSession('Build Rows from Image', { guestPreferred: true });
-    const preparedSheets = await ensurePreparedSheets();
-    setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Running multi-view row extraction across the prepared sheet images.']);
+    const mode = (state.fastMode && !forceDeep) ? 'fast' : 'deep';
+    if(forceDeep) state.retryModeUsed = true;
+    const preparedSheets = await ensurePreparedSheets(mode);
+    setStatus('sheetPanel','sheetStatusList','info','Bet sheet',[`Running ${mode === 'fast' ? 'fast' : 'deep'} multi-view row extraction across the prepared sheet images.`]);
     state.betSheetFile = files;
 
     let combinedRows = [];
@@ -1495,23 +1661,24 @@ async function buildRowsFromImage(){
     let winnerNotes = [];
 
     for(const sheet of preparedSheets){
-      const googleRead = await getGoogleTranscriptForSheet(sheet);
+      const googleRead = await getGoogleTranscriptForSheet(sheet, mode);
       let transcript = googleRead.transcript || googleRead.helperText || '';
-      const auditedTranscript = await auditTranscriptWithModels(transcript);
-      transcript = auditedTranscript.transcript || transcript;
+      combinedNotes.push(...googleRead.notes);
 
-      combinedNotes.push(...googleRead.notes, ...auditedTranscript.notes);
+      if(mode === 'deep' || !transcript || transcript.length < 200){
+        const auditedTranscript = await auditTranscriptWithModels(transcript);
+        transcript = auditedTranscript.transcript || transcript;
+        combinedNotes.push(...auditedTranscript.notes);
+      }
 
-      const result = await getBestRowsForSheet(sheet, transcript);
+      const result = await getBestRowsForSheet(sheet, transcript, mode);
       const bestParsed = result.best;
       combinedNotes.push(...result.notes);
       winnerNotes.push(bestParsed.model ? `${sheet.sourceName}: ${bestParsed.model} won using ${bestParsed.view} (${bestParsed.mode}, pass ${bestParsed.pass}).` : `${sheet.sourceName}: no usable winner.`);
 
       combinedQuestions.push(...(bestParsed.questions || []));
       const sortedRows = (bestParsed.rows || []).slice().sort((a,b)=>a.order-b.order);
-      sortedRows.forEach(row => {
-        combinedRows.push({ ...row, order: runningOrder++ });
-      });
+      sortedRows.forEach(row => { combinedRows.push({ ...row, order: runningOrder++ }); });
     }
 
     const guardedCombinedRows = combinedRows.length ? enforceNoConsecutiveDuplicateMatchups(combinedRows, combinedQuestions) : defaultRows();
@@ -1521,10 +1688,13 @@ async function buildRowsFromImage(){
     state.winnerNotes = winnerNotes;
 
     const ready = state.sheetRows.filter(row => row.left_players.length >= 2 && row.right_players.length >= 2).length;
+    state.weakResult = shouldDeepRetryFromRows(state.sheetRows, combinedQuestions) && mode === 'fast';
+    setProcessingStage('final merge', `${state.sheetRows.length} rows`);
     setStatus('sheetPanel','sheetStatusList', ready ? 'ok' : 'warn', 'Bet sheet', [
       combinedRows.length ? `Built ${combinedRows.length} ordered row(s) from ${files.length} uploaded sheet image(s).` : 'The AI could not confidently build enough rows from the uploaded sheet image(s).',
       `${ready} row(s) currently have enough players to settle.`,
-      'Gemini used multi-view image reads. Claude and GPT audited transcript and row extraction in text mode. Consecutive duplicate matchups are now flagged for review.'
+      mode === 'fast' ? 'Fast pass used fewer views and fewer AI calls.' : 'Deep mode used expanded views and transcript audits.',
+      state.weakResult ? 'Fast pass looks incomplete. Use Deep Retry.' : 'Fast pass looks strong enough.'
     ]);
 
     saveState(); render();
@@ -2014,6 +2184,8 @@ function render(){
   setPreview('mergedRowsPreview', state.sheetRows.length ? state.sheetRows.map(row => `Row ${row.order}: ${(row.left_raw||[]).join(' / ') || '-'} vs ${(row.right_raw||[]).join(' / ') || '-'}`).join('\n') : 'No merged rows yet.');
   renderPreparedSheetsPreview();
   updateSelectedFilePreviews();
+  if($('progressPreview')) $('progressPreview').textContent = (state.progressLines || []).join('\n') || 'No processing run yet.';
+  updateSpeedSummary();
   setPreview('loadedPlayersPreview', state.rosterPlayers.join('\n') || 'No players loaded yet.');
   const scoreNames = Object.keys(state.scores || {}).sort((a,b)=>a.localeCompare(b));
   setPreview('loadedScoresPreview', scoreNames.map(name => `${name}: Shot ${playerGrossScore(name)}`).join('\n') || 'No scores loaded yet.');
@@ -2035,9 +2207,10 @@ $('loadScoresBtn').addEventListener('click', loadScores);
 $('clearRosterBtn').addEventListener('click', clearRoster);
 $('clearScoresBtn').addEventListener('click', clearScores);
 
-$('prepareViewsBtn').addEventListener('click', prepareImageViews);
+$('prepareViewsBtn').addEventListener('click', () => prepareImageViews(state.fastMode ? 'fast' : 'deep'));
 $('readSheetBtn').addEventListener('click', readSheetText);
-$('buildRowsBtn').addEventListener('click', buildRowsFromImage);
+$('buildRowsBtn').addEventListener('click', () => buildRowsFromImage(false));
+$('deepRetryBtn').addEventListener('click', () => buildRowsFromImage(true));
 $('clearSheetBtn').addEventListener('click', clearSheet);
 
 $('addRowBtn').addEventListener('click', addRow);
@@ -2071,6 +2244,7 @@ $('exportAllCsvBtn').addEventListener('click', exportAllCsv);
 $('shotValue').addEventListener('input', () => { state.shotValue = Number($('shotValue').value || 0); saveState(); render(); });
 $('maxShots').addEventListener('input', () => { state.maxShots = Number($('maxShots').value || 0); saveState(); render(); });
 $('aliasInput').addEventListener('input', () => { parseAliases(); saveState(); });
+$('fastModeToggle').addEventListener('change', () => { state.fastMode = $('fastModeToggle').checked; saveState(); updateSpeedSummary(); });
 if($('ollamaEnabled')) $('ollamaEnabled').addEventListener('change', () => { state.ollamaEnabled = $('ollamaEnabled').checked; saveState(); });
 if($('ollamaEndpoint')) $('ollamaEndpoint').addEventListener('input', () => { state.ollamaEndpoint = $('ollamaEndpoint').value; saveState(); });
 if($('ollamaModel')) $('ollamaModel').addEventListener('input', () => { state.ollamaModel = $('ollamaModel').value; saveState(); });
@@ -2082,6 +2256,7 @@ if(!Array.isArray(state.sheetRows) || !state.sheetRows.length) state.sheetRows =
 $('shotValue').value = state.shotValue ?? 3;
 $('maxShots').value = state.maxShots ?? 7;
 if(!$('modelSelect').value) $('modelSelect').value='auto';
+if($('fastModeToggle')) $('fastModeToggle').checked = state.fastMode !== false;
 initBetSheetUploader();
 refreshAuthStatus();
 render();
