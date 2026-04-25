@@ -7,8 +7,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link href="https://unpkg.com/filepond/dist/filepond.min.css" rel="stylesheet">
-<script src="https://unpkg.com/filepond/dist/filepond.min.js"></script>
 <style>
 :root{
 --bg0:#07110d;
@@ -62,7 +60,9 @@ color:#eaf5ef;
 }
 .heroTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 h1{margin:0 0 8px;font-size:30px;line-height:1.05;font-weight:950}
-.hero p{margin:0;color:#d9f5e4;line-height:1.45;font-size:14px;max-width:980px}
+.hero h1{color:#eaf5ef !important;text-shadow:0 2px 12px rgba(0,0,0,.30)}
+.hero p{margin:0;color:#d9f5e4 !important;line-height:1.45;font-size:14px;max-width:980px;text-shadow:0 1px 8px
+rgba(0,0,0,.18)}
 .backBtn{
 display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.20);
 border-radius:999px;padding:10px 13px;color:#eaf5ef;background:rgba(255,255,255,.08);
@@ -136,8 +136,16 @@ tr:last-child td{border-bottom:0}
 .nameList{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .nameChip{border-radius:999px;background:#ecfdf5;border:1px solid #bbf7d0;padding:7px
 10px;color:#166534;font-size:12px;font-weight:900}
-.filepond--root{margin-top:8px;font-family:inherit}
-.filepond--panel-root{border-radius:16px}
+.fileInput{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.uploadBtn{
+display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;
+border-radius:16px;border:2px dashed #bbf7d0;background:#f0fdf4;color:#14532d;
+font-size:15px;font-weight:950;cursor:pointer;text-align:center;padding:12px 14px;
+touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.uploadBtn:active{transform:scale(.99)}
+.uploadBtn.blue{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
+.fileName{margin-top:8px;color:#64748b;font-size:12px;line-height:1.35;word-break:break-word}
 .footerNote{color:#64748b;font-size:12px;line-height:1.45;margin:12px 0 0}
 .netPositive{color:#166534;font-weight:950}
 .netNegative{color:#991b1b;font-weight:950}
@@ -176,20 +184,32 @@ id="summaryMoney">$0</div></div>
 Squabbit export format.</div>
 <div class="grid3">
 <div>
-<div class="field"><label for="betFile">Bet PDF / TXT / CSV</label><input id="betFile" type="file"
-accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv" /></div>
+<div class="field">
+<label>Bet PDF / TXT / CSV</label>
+<label class="uploadBtn" for="betFile">Choose Bet PDF / TXT / CSV</label>
+<input class="fileInput" id="betFile" type="file" accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv" />
+<div class="fileName" id="betFileName">No file selected.</div>
+</div>
 <div id="betPanel" class="statusPanel info"><div class="statusTitle">Bet Sheet</div><ul class="statusList"
 id="betStatusList"><li>No bet file loaded yet.</li></ul></div>
 </div>
 <div>
-<div class="field"><label for="preFile">Squabbit Pre-Round / Roster CSV</label><input id="preFile" type="file"
-accept=".csv,text/csv,text/plain" /></div>
+<div class="field">
+<label>Squabbit Pre-Round / Roster CSV</label>
+<label class="uploadBtn blue" for="preFile">Choose Pre-Round CSV</label>
+<input class="fileInput" id="preFile" type="file" accept=".csv,text/csv,text/plain" />
+<div class="fileName" id="preFileName">No file selected.</div>
+</div>
 <div id="prePanel" class="statusPanel info"><div class="statusTitle">Roster</div><ul class="statusList"
 id="preStatusList"><li>No roster loaded yet.</li></ul></div>
 </div>
 <div>
-<div class="field"><label for="postFile">Squabbit Completed Round CSV</label><input id="postFile" type="file"
-accept=".csv,text/csv,text/plain" /></div>
+<div class="field">
+<label>Squabbit Completed Round CSV</label>
+<label class="uploadBtn" for="postFile">Choose Completed Round CSV</label>
+<input class="fileInput" id="postFile" type="file" accept=".csv,text/csv,text/plain" />
+<div class="fileName" id="postFileName">No file selected.</div>
+</div>
 <div id="postPanel" class="statusPanel info"><div class="statusTitle">Scores</div><ul class="statusList"
 id="postStatusList"><li>No completed scores loaded yet.</li></ul></div>
 </div>
@@ -308,6 +328,8 @@ rawBetText:"", matchups:[], prePlayers:[], postPlayers:[], scoreMap:new Map(), a
 const els = {
 betFile:document.getElementById("betFile"), preFile:document.getElementById("preFile"),
 postFile:document.getElementById("postFile"),
+betFileName:document.getElementById("betFileName"), preFileName:document.getElementById("preFileName"),
+postFileName:document.getElementById("postFileName"),
 betPanel:document.getElementById("betPanel"), prePanel:document.getElementById("prePanel"),
 postPanel:document.getElementById("postPanel"),
 betStatusList:document.getElementById("betStatusList"), preStatusList:document.getElementById("preStatusList"),
@@ -331,23 +353,21 @@ summaryMoney:document.getElementById("summaryMoney")
 };
 let betPond=null, prePond=null, postPond=null;
 function initUploaders(){
-if(!window.FilePond){
-els.betFile.addEventListener("change", e => handleBetFile(e.target.files[0]));
-els.preFile.addEventListener("change", e => handlePreFile(e.target.files[0]));
-els.postFile.addEventListener("change", e => handlePostFile(e.target.files[0]));
-return;
-}
-const common = { allowMultiple:false, storeAsFile:true, credits:false, labelIdle:'Drop file here or <span
-class="filepond--label-action">Browse</span>' };
-betPond = FilePond.create(els.betFile, { ...common, labelIdle:'Drop bet PDF / TXT / CSV here or <span
-class="filepond--label-action">Browse</span>' });
-prePond = FilePond.create(els.preFile, { ...common, labelIdle:'Drop Squabbit pre-round CSV here or <span
-class="filepond--label-action">Browse</span>' });
-postPond = FilePond.create(els.postFile, { ...common, labelIdle:'Drop completed Squabbit CSV here or <span
-class="filepond--label-action">Browse</span>' });
-betPond.on("addfile", (err,item) => { if(!err && item && item.file) handleBetFile(item.file); });
-prePond.on("addfile", (err,item) => { if(!err && item && item.file) handlePreFile(item.file); });
-postPond.on("addfile", (err,item) => { if(!err && item && item.file) handlePostFile(item.file); });
+els.betFile.addEventListener("change", e => {
+const file = e.target.files && e.target.files[0];
+els.betFileName.textContent = file ? file.name : "No file selected.";
+handleBetFile(file);
+});
+els.preFile.addEventListener("change", e => {
+const file = e.target.files && e.target.files[0];
+els.preFileName.textContent = file ? file.name : "No file selected.";
+handlePreFile(file);
+});
+els.postFile.addEventListener("change", e => {
+const file = e.target.files && e.target.files[0];
+els.postFileName.textContent = file ? file.name : "No file selected.";
+handlePostFile(file);
+});
 }
 async function handleBetFile(file){
 if(!file) return;
@@ -950,9 +970,12 @@ function clearAll(){
 state.rawBetText = ""; state.matchups = []; state.prePlayers = []; state.postPlayers = []; state.scoreMap = new Map();
 state.aliases = new Map(); state.results = []; state.ledger = [];
 els.rawTextBox.value = ""; els.manualBetsBox.value = ""; els.aliasesBox.value = "";
-if(betPond) betPond.removeFiles(); else els.betFile.value = "";
-if(prePond) prePond.removeFiles(); else els.preFile.value = "";
-if(postPond) postPond.removeFiles(); else els.postFile.value = "";
+els.betFile.value = "";
+els.preFile.value = "";
+els.postFile.value = "";
+els.betFileName.textContent = "No file selected.";
+els.preFileName.textContent = "No file selected.";
+els.postFileName.textContent = "No file selected.";
 setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["No bet file loaded yet."]); setStatus(els.prePanel,
 els.preStatusList, "info", "Roster", ["No roster loaded yet."]); setStatus(els.postPanel, els.postStatusList, "info",
 "Scores", ["No completed scores loaded yet."]); reparseAll();
