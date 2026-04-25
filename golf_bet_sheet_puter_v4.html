@@ -1,2265 +1,1117 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Golf Best Ball Sheet with Puter v17</title>
-  <script src="https://js.puter.com/v2/"></script>
-  <link href="https://unpkg.com/filepond/dist/filepond.min.css" rel="stylesheet">
-  <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.js"></script>
-  <script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.min.js"></script>
-  <script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.min.js"></script>
-  <script src="https://unpkg.com/filepond-plugin-image-exif-orientation/dist/filepond-plugin-image-exif-orientation.min.js"></script>
-  <script src="https://unpkg.com/filepond/dist/filepond.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <style>
-    :root{
-      --bg0:#0a1b13;
-      --bg1:#113021;
-      --card:#ffffff;
-      --line:#e5e7eb;
-      --text:#111827;
-      --muted:#64748b;
-      --green1:#14532d;
-      --green2:#166534;
-      --green3:#22c55e;
-      --blue1:#2563eb;
-      --blue2:#38bdf8;
-      --warn:#92400e;
-      --warnBg:#fffbeb;
-      --warnBorder:#fde68a;
-      --bad:#991b1b;
-      --badBg:#fef2f2;
-      --badBorder:#fecaca;
-      --ok:#166534;
-      --okBg:#f0fdf4;
-      --okBorder:#bbf7d0;
-      --info:#1d4ed8;
-      --infoBg:#eff6ff;
-      --infoBorder:#bfdbfe;
-      --shadow:0 14px 45px rgba(0,0,0,.20);
-    }
-    *{box-sizing:border-box}
-    html,body{max-width:100%;overflow-x:hidden}
-    body{
-      margin:0;
-      min-height:100vh;
-      color:var(--text);
-      font-family:-apple-system,system-ui,Segoe UI,Roboto,Arial,sans-serif;
-      background:
-        radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
-        radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
-        linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #08140e);
-    }
-    .wrap{width:100%;max-width:1320px;margin:0 auto;padding:16px}
-    .hero{
-      background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.10));
-      border:1px solid rgba(255,255,255,.22);
-      border-radius:24px;
-      padding:18px;
-      box-shadow:var(--shadow);
-      margin-bottom:16px;
-      backdrop-filter:blur(10px);
-      color:#eaf5ef;
-    }
-    .heroTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .hero h1{margin:0 0 8px;font-size:30px;font-weight:950}
-    .hero p{margin:0;color:#d9f5e4;line-height:1.45;font-size:14px;max-width:980px}
-    .summaryGrid,.grid2,.grid3,.grid4{display:grid;grid-template-columns:1fr;gap:12px}
-    .card,.summaryCard{
-      background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:20px;
-      box-shadow:0 10px 28px rgba(0,0,0,.08)
-    }
-    .card{padding:18px;margin-bottom:16px}
-    .summaryCard{padding:16px}
-    .summaryLabel{font-size:12px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.05em}
-    .summaryValue{margin-top:6px;font-size:28px;font-weight:950;color:var(--green2)}
-    .sectionTitle{margin:0 0 6px;font-size:22px;font-weight:950;color:var(--green1)}
-    .sectionSub{color:var(--muted);font-size:14px;line-height:1.45;margin-bottom:14px}
-    .field label{display:block;font-size:13px;font-weight:800;color:#374151;margin-bottom:6px}
-    .input,.select,.textarea{
-      width:100%;border:1px solid #d1d5db;border-radius:14px;padding:12px;background:#fff;font-size:15px
-    }
-    .textarea{min-height:120px;resize:vertical;font-family:inherit}
-    .btnRow{display:flex;gap:10px;flex-wrap:wrap}
-    .btn{
-      border:0;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:950;cursor:pointer;white-space:nowrap
-    }
-    .btnGreen{background:linear-gradient(135deg,var(--green2),var(--green3));color:#fff}
-    .btnBlue{background:linear-gradient(135deg,var(--blue1),var(--blue2));color:#fff}
-    .btnGray{background:linear-gradient(135deg,#6b7280,#9ca3af);color:#fff}
-    .btnRed{background:linear-gradient(135deg,#ef4444,#f87171);color:#fff}
-    .pillWrap{display:flex;gap:8px;flex-wrap:wrap}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#dcfce7;color:#166534;font-size:12px;font-weight:800;border:1px solid #bbf7d0}
-    .pillMuted{background:#f3f4f6;color:#4b5563;border:1px solid #e5e7eb}
-    .statusPanel{margin-top:12px;border-radius:16px;padding:12px 14px;border:1px solid #d1d5db;background:#f8fafc}
-    .statusPanel.ok{background:var(--okBg);border-color:var(--okBorder)}
-    .statusPanel.warn{background:var(--warnBg);border-color:var(--warnBorder)}
-    .statusPanel.error{background:var(--badBg);border-color:var(--badBorder)}
-    .statusPanel.info{background:var(--infoBg);border-color:var(--infoBorder)}
-    .statusTitle{font-weight:900;margin-bottom:6px}
-    .statusList{margin:0;padding-left:18px;color:#374151;line-height:1.45}
-    .statusList li+li{margin-top:4px}
-    .warn{color:var(--warn);background:var(--warnBg);border:1px solid var(--warnBorder);border-radius:14px;padding:12px 14px;margin-top:14px;line-height:1.45}
-    .previewBox{border:1px solid #e5e7eb;background:#fff;border-radius:14px;padding:12px}
-    .previewLabel{font-size:12px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
-    .previewText{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;font-size:12px;color:#111827;max-height:280px;overflow:auto}
-    .tableWrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e7eb;border-radius:18px;background:#fff}
-    table{width:100%;min-width:1240px;border-collapse:collapse;background:#fff}
-    th,td{padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px;vertical-align:top}
-    th{background:#f8fafc;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:900;position:sticky;top:0;z-index:1}
-    tr:nth-child(even) td{background:#fcfcfd}
-    .tiny{font-size:12px;color:#64748b}
-    .playerCard{margin-bottom:12px;border:1px solid #e5e7eb;border-radius:18px;padding:14px;background:#fff}
-    .playerHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-    .playerName{font-size:20px;font-weight:950;color:#14532d;margin:0}
-    .playerNet{font-size:20px;font-weight:950}
-    .gain{color:#166534}
-    .loss{color:#b91c1c}
-    .breakdownList{border:1px solid #e5e7eb;border-radius:18px;background:#fff;overflow:hidden}
-    .breakdownItem{display:grid;grid-template-columns:52px 1fr;gap:12px;padding:14px 12px;border-bottom:1px solid #e5e7eb;align-items:start}
-    .breakdownItem:last-child{border-bottom:0}
-    .breakdownIndex{font-size:13px;font-weight:900;color:#475569}
-    .breakdownText{font-size:15px;line-height:1.45;color:#111827;word-break:break-word}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #bbf7d0;font-size:12px;font-weight:900}
-    .rowEditors textarea{min-height:80px;font-size:14px}
-    .filepond--root{margin-top:8px}
-    .filepond--panel-root{border-radius:16px}
-    .pondNote{margin-top:8px;font-size:12px;color:#64748b;line-height:1.45}
-    @media (min-width:900px){.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4,.summaryGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Golf Bet PDF + Squabbit Score Reader</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+--bg0:#07110d;
+--bg1:#0b1f16;
+--panel:#ffffff;
+--line:#e5e7eb;
+--text:#111827;
+--muted:#64748b;
+--green1:#14532d;
+--green2:#166534;
+--green3:#22c55e;
+--blue1:#2563eb;
+--blue2:#38bdf8;
+--red:#ef4444;
+--gold:#f59e0b;
+--warn:#92400e;
+--warnBg:#fffbeb;
+--warnBorder:#fde68a;
+--bad:#991b1b;
+--badBg:#fef2f2;
+--badBorder:#fecaca;
+--ok:#166534;
+--okBg:#f0fdf4;
+--okBorder:#bbf7d0;
+--info:#1d4ed8;
+--infoBg:#eff6ff;
+--infoBorder:#bfdbfe;
+--shadow:0 14px 45px rgba(0,0,0,.20);
+--radius:20px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+body{
+color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+background:
+radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
+radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
+linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #08140e);
+}
+.wrap{width:100%;max-width:1320px;margin:0 auto;padding:16px}
+.hero{
+background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.10));
+border:1px solid rgba(255,255,255,.22);
+border-radius:24px;
+padding:18px;
+box-shadow:var(--shadow);
+margin-bottom:16px;
+backdrop-filter:blur(10px);
+color:#eaf5ef;
+}
+.heroTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{margin:0 0 8px;font-size:30px;line-height:1.05;font-weight:950}
+.hero h1{color:#eaf5ef !important;text-shadow:0 2px 12px rgba(0,0,0,.30)}
+.hero p{margin:0;color:#d9f5e4 !important;line-height:1.45;font-size:14px;max-width:980px;text-shadow:0 1px 8px
+rgba(0,0,0,.18)}
+.backBtn{
+display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.20);
+border-radius:999px;padding:10px 13px;color:#eaf5ef;background:rgba(255,255,255,.08);
+text-decoration:none;font-weight:900;font-size:13px;white-space:nowrap;
+}
+.summaryGrid,.grid2,.grid3,.grid5{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:900px){
+.summaryGrid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.grid2{grid-template-columns:1fr 1fr}
+.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid5{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
+.card,.summaryCard{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:var(--radius);box-shadow:0 10px 28px
+rgba(0,0,0,.08)}
+.card{padding:18px;margin-bottom:16px}
+.summaryCard{padding:16px;margin-bottom:16px}
+.summaryLabel{font-size:12px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+.summaryValue{margin-top:6px;font-size:28px;font-weight:950;color:var(--green2);line-height:1}
+.summaryValue.money{font-size:24px}
+.sectionTitle{margin:0 0 6px;font-size:22px;font-weight:950;color:var(--green1)}
+.sectionSub{color:var(--muted);font-size:14px;line-height:1.45;margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:900;color:#374151;margin-bottom:6px}
+.input{
+width:100%;border:1px solid #d1d5db;border-radius:14px;padding:12px;background:#fff;font-size:15px;color:#111827;
+}
+.btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.btn{border:0;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:950;cursor:pointer;white-space:nowrap;touc
+h-action:manipulation;-webkit-tap-highlight-color:transparent}
+.btnGreen{background:linear-gradient(135deg,var(--green2),var(--green3));color:#fff}
+.btnBlue{background:linear-gradient(135deg,var(--blue1),var(--blue2));color:#fff}
+.btnGray{background:linear-gradient(135deg,#6b7280,#9ca3af);color:#fff}
+.btnRed{background:linear-gradient(135deg,#ef4444,#f87171);color:#fff}
+.btnGold{background:linear-gradient(135deg,#d97706,#fbbf24);color:#111827}
+.statusPanel{margin-top:12px;border-radius:16px;padding:12px 14px;border:1px solid #d1d5db;background:#f8fafc}
+.statusPanel.ok{background:var(--okBg);border-color:var(--okBorder)}
+.statusPanel.warn{background:var(--warnBg);border-color:var(--warnBorder)}
+.statusPanel.error{background:var(--badBg);border-color:var(--badBorder)}
+.statusPanel.info{background:var(--infoBg);border-color:var(--infoBorder)}
+.statusTitle{font-weight:950;margin-bottom:6px}
+.statusList{margin:0;padding-left:18px;color:#374151;line-height:1.45;font-size:14px}
+.previewBox{border:1px solid #e5e7eb;background:#fff;border-radius:14px;padding:12px;margin-top:12px}
+.previewLabel{font-size:12px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom
+:6px}
+.previewText{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;font-size:12px;color:
+#111827;max-height:280px;overflow:auto;line-height:1.45}
+.hint{color:#64748b;font-size:13px;line-height:1.4;margin:0 0 10px}
+details{margin-top:12px;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#f8fafc}
+summary{padding:12px;cursor:pointer;font-weight:900;color:#14532d}
+.detailsBody{padding:0 12px 12px}
+textarea{width:100%;min-height:110px;border-radius:14px;border:1px solid #d1d5db;background:#fff;color:#111827;padding:1
+2px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.4;resize:vertical;ou
+tline:none}
+textarea:focus,.input:focus{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.14);outline:none}
+.tableWrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid
+#e5e7eb;border-radius:18px;background:#fff}
+table{width:100%;min-width:1100px;border-collapse:collapse;background:#fff}
+th,td{padding:10px 12px;border-bottom:1px solid
+#e5e7eb;text-align:left;font-size:13px;vertical-align:top;line-height:1.35}
+th{background:#f8fafc;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:900;positio
+n:sticky;top:0;z-index:1}
+tr:nth-child(even) td{background:#fcfcfd}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-flex;align-items:center;padding:6px
+10px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid
+#e5e7eb;background:#f3f4f6;color:#374151;white-space:nowrap}
+.pill.ok{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.pill.warn{background:#fffbeb;color:#92400e;border-color:#fde68a}
+.pill.bad{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+.pill.info{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+.pill.money{background:#ecfdf5;color:#166534;border-color:#bbf7d0}
+.nameList{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.nameChip{border-radius:999px;background:#ecfdf5;border:1px solid #bbf7d0;padding:7px
+10px;color:#166534;font-size:12px;font-weight:900}
+.fileInput{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.uploadBtn{
+display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;
+border-radius:16px;border:2px dashed #bbf7d0;background:#f0fdf4;color:#14532d;
+font-size:15px;font-weight:950;cursor:pointer;text-align:center;padding:12px 14px;
+touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.uploadBtn:active{transform:scale(.99)}
+.uploadBtn.blue{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
+.fileName{margin-top:8px;color:#64748b;font-size:12px;line-height:1.35;word-break:break-word}
+.footerNote{color:#64748b;font-size:12px;line-height:1.45;margin:12px 0 0}
+.netPositive{color:#166534;font-weight:950}
+.netNegative{color:#991b1b;font-weight:950}
+.netZero{color:#475569;font-weight:950}
+/* Fixed mobile view: solid readable header and native file inputs that work on iPhone */
+.hero{
+background:#0b1f16 !important;
+border:1px solid rgba(255,255,255,.22) !important;
+}
+.hero,.hero *{
+color:#ffffff !important;
+opacity:1 !important;
+mix-blend-mode:normal !important;
+filter:none !important;
+}
+.hero p{color:#e5fff0 !important;}
+.backBtn{
+color:#ffffff !important;
+background:rgba(255,255,255,.16) !important;
+border-color:rgba(255,255,255,.35) !important;
+}
+.uploadBtn{display:none !important;}
+.fileInput{
+position:static !important;
+left:auto !important;
+width:100% !important;
+height:auto !important;
+opacity:1 !important;
+display:block !important;
+border:1px solid #d1d5db !important;
+border-radius:14px !important;
+background:#ffffff !important;
+color:#111827 !important;
+padding:12px !important;
+font-size:16px !important;
+line-height:1.3 !important;
+-webkit-appearance:none;
+appearance:none;
+}
+/* Upload format restored from the working Puter tool */
+.hero{background:#0a1b13 !important;border:1px solid rgba(255,255,255,.24) !important;}
+.hero h1{color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;text-shadow:0 2px 12px rgba(0,0,0,.35)
+!important;}
+.hero p{color:#e5fff0 !important;-webkit-text-fill-color:#e5fff0 !important;text-shadow:0 1px 8px rgba(0,0,0,.25)
+!important;}
+.hero .backBtn{color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;background:rgba(255,255,255,.16)
+!important;border-color:rgba(255,255,255,.35) !important;}
+input.input[type="file"]{display:block !important;width:100% !important;border:1px solid #d1d5db
+!important;border-radius:14px !important;background:#ffffff !important;color:#111827 !important;padding:12px
+!important;font-size:16px !important;line-height:1.3 !important;}
+</style>
 </head>
 <body>
 <div class="wrap">
-  <div class="hero">
-    <div class="heroTop">
-      <div>
-        <h1>Golf Best Ball Sheet with Puter v17</h1>
-        <p>This version follows the sheet order from top to bottom. It treats each row as one best ball matchup between two teams, not as holes. It fills rows the AI is confident about, keeps unclear rows in place for you to review, supports uneven team sizes like 2v3, supports multiple bet sheet images, and uses dollars per shot plus max shots like the wheel tool.</p>
-      </div>
-      <div class="btnRow">
-        <button class="btn btnRed" id="resetToolBtn" type="button">Reset This Tool</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="summaryGrid">
-    <div class="summaryCard"><div class="summaryLabel">Players Loaded</div><div class="summaryValue" id="summaryPlayers">0</div></div>
-    <div class="summaryCard"><div class="summaryLabel">Finished Scores</div><div class="summaryValue" id="summaryScores">0</div></div>
-    <div class="summaryCard"><div class="summaryLabel">Rows Ready</div><div class="summaryValue" id="summaryRows">0</div></div>
-    <div class="summaryCard"><div class="summaryLabel">Settlements</div><div class="summaryValue" id="summarySettlements">0</div></div>
-  </div>
-
-  <section class="card">
-    <h2 class="sectionTitle">1) Puter Access</h2>
-    <div class="sectionSub">Use Continue as Guest if normal Puter sign in hangs. Open this page from GitHub Pages, localhost, or another normal web address, not a local file.</div>
-    <div class="btnRow">
-      <button class="btn btnBlue" id="signInBtn" type="button">Continue with Puter</button>
-      <button class="btn btnGreen" id="guestSignInBtn" type="button">Continue as Guest</button>
-      <button class="btn btnGray" id="refreshAuthBtn" type="button">Refresh Status</button>
-      <button class="btn btnGray" id="signOutBtn" type="button">Sign Out</button>
-    </div>
-    <div id="authPanel" class="statusPanel info" style="margin-top:12px;">
-      <div class="statusTitle">Authentication</div>
-      <ul class="statusList" id="authStatusList"><li>Checking Puter availability.</li></ul>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2 class="sectionTitle">2) Squabbit Uploads</h2>
-    <div class="sectionSub">Load the player roster first, then the completed round scores so each best ball row can be settled automatically.</div>
-    <div class="grid2">
-      <div>
-        <div class="field"><label for="rosterInput">Pre round / roster CSV</label><input class="input" id="rosterInput" type="file" accept=".csv,text/csv,text/plain" /></div>
-        <div class="btnRow"><button class="btn btnGreen" id="loadRosterBtn" type="button">Load Roster</button><button class="btn btnGray" id="clearRosterBtn" type="button">Clear Roster</button></div>
-        <div id="rosterPanel" class="statusPanel info"><div class="statusTitle">Roster</div><ul class="statusList" id="rosterStatusList"><li>No roster loaded yet.</li></ul></div>
-        <div class="previewBox" style="margin-top:12px;"><div class="previewLabel">Loaded players</div><div class="previewText" id="loadedPlayersPreview">No players loaded yet.</div></div>
-      </div>
-      <div>
-        <div class="field"><label for="scoresInput">Completed round CSV</label><input class="input" id="scoresInput" type="file" accept=".csv,text/csv,text/plain" /></div>
-        <div class="btnRow"><button class="btn btnGreen" id="loadScoresBtn" type="button">Load Scores</button><button class="btn btnGray" id="clearScoresBtn" type="button">Clear Scores</button></div>
-        <div id="scoresPanel" class="statusPanel info"><div class="statusTitle">Scores</div><ul class="statusList" id="scoresStatusList"><li>No scores loaded yet.</li></ul></div>
-        <div class="previewBox" style="margin-top:12px;"><div class="previewLabel">Finished score rows</div><div class="previewText" id="loadedScoresPreview">No scores loaded yet.</div></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2 class="sectionTitle">3) Sheet Settings and Image</h2>
-    <div class="sectionSub">Adjust aliases, dollars per shot, and max shots, then upload the handwritten sheet. This version prepares multiple analysis views, uses Gemini as the primary image reader, and then lets Claude or GPT audit the transcript in text mode.</div>
-    <div class="grid2">
-      <div>
-        <div class="field">
-          <label for="aliasInput">Alias map</label>
-          <textarea class="textarea" id="aliasInput"></textarea>
-        </div>
-        <div class="btnRow" style="margin-top:10px;">
-          <button class="btn btnGreen" id="generateAliasBtn" type="button">Generate Alias Suggestions</button>
-          <button class="btn btnBlue" id="useDefaultAliasesBtn" type="button">Use Default Aliases</button>
-          <button class="btn btnGray" id="clearAliasesBtn" type="button">Clear Aliases</button>
-        </div>
-        <div class="tiny" style="margin-top:8px;">Example format: Deal=Brad Deal</div>
-        <div class="previewBox" style="margin-top:12px;">
-          <div class="previewLabel">Suggested aliases</div>
-          <div class="previewText" id="aliasSuggestionsPreview">No alias suggestions yet.</div>
-        </div>
-        
-    <div class="previewBox" style="margin-bottom:12px;"><div class="previewLabel">Selected upload files</div><div class="previewText" id="selectedUploadsPreview">No bet sheet images selected yet.</div></div>
-<div class="grid2" style="margin-top:12px;">
-          <div class="field">
-            <label for="shotValue">Dollars per shot</label>
-            <input class="input" id="shotValue" type="number" min="0" step="1" value="3" />
-          </div>
-          <div class="field">
-            <label for="maxShots">Max shots</label>
-            <input class="input" id="maxShots" type="number" min="0" step="1" value="7" />
-          </div>
-        </div>
-        <div class="warn">For normal 2v2 rows, the losing side pays the winning side the same way as the wheel tool. For uneven rows like 2v3, this version keeps the same total team value based on the smaller side and splits that amount evenly across the losing and winning players.</div>
-      </div>
-      <div>
-        <div class="field"><label for="betSheetInput">Bet sheet image(s)</label><input class="input" id="betSheetInput" type="file" accept="image/*" multiple /><div class="pondNote">Drag files in or tap browse. The uploader previews images, keeps the original files untouched, and creates multiple prepared analysis views before sending them into the reader pipeline.</div></div>
-        <div class="field" style="margin-top:12px;">
-          <label for="modelSelect">Reader strategy</label>
-          <select class="select" id="modelSelect">
-            <option value="auto">Gemini primary with transcript audit</option>
-            <option value="google/gemini-2.5-flash">Gemini only</option>
-          </select>
-        </div>
-        <div class="tiny" style="margin-top:8px;">Gemini is the primary image reader. Claude and GPT audit the transcript and extracted rows in text mode. Blank continuation rows should still count as bets.</div>
-        <div class="grid2" style="margin-top:12px;">
-          <div class="field">
-            <label><input id="fastModeToggle" type="checkbox" checked /> Fast Mode</label>
-            <div class="tiny">Fast Mode uses fewer image views and fewer AI calls on the first pass, then retries deeper only if needed.</div>
-          </div>
-          <div class="field">
-            <label>&nbsp;</label>
-            <div class="btnRow">
-              <button class="btn btnBlue" id="prepareViewsBtn" type="button">Prepare Image Views</button>
-              <button class="btn btnBlue" id="readSheetBtn" type="button">Read Sheet Text</button>
-              <button class="btn btnGreen" id="buildRowsBtn" type="button">Build Rows from Image</button>
-              <button class="btn btnBlue" id="deepRetryBtn" type="button">Deep Retry</button>
-              <button class="btn btnGray" id="clearSheetBtn" type="button">Clear Sheet</button>
-            </div>
-          </div>
-        </div>
-        <div id="sheetPanel" class="statusPanel info"><div class="statusTitle">Bet sheet</div><ul class="statusList" id="sheetStatusList"><li>No image analyzed yet.</li></ul></div>
-      </div>
-    </div>
-    <div class="grid2" style="margin-top:12px;">
-      <div class="previewBox"><div class="previewLabel">Read sheet text</div><div class="previewText" id="ocrPreview">No sheet text yet.</div></div>
-      <div class="previewBox"><div class="previewLabel">AI notes and questions</div><div class="previewText" id="aiNotesPreview">No AI notes yet.</div></div>
-    </div>
-    <div class="grid2" style="margin-top:12px;">
-      <div class="previewBox"><div class="previewLabel">Prepared analysis views</div><div class="previewText" id="preparedViewsPreview">No prepared image views yet.</div></div>
-      <div class="previewBox"><div class="previewLabel">Winning extraction per sheet</div><div class="previewText" id="winnerPreview">No winner chosen yet.</div></div>
-    </div>
-    <div class="grid2" style="margin-top:12px;">
-      <div class="previewBox"><div class="previewLabel">Merged row extraction</div><div class="previewText" id="mergedRowsPreview">No merged rows yet.</div></div>
-      <div class="previewBox"><div class="previewLabel">Original files</div><div class="previewText" id="originalFilesPreview">No bet sheet images selected yet.</div></div>
-    </div>
-    <div class="grid2" style="margin-top:12px;">
-      <div class="previewBox"><div class="previewLabel">Processing progress</div><div class="previewText" id="progressPreview">No processing run yet.</div></div>
-      <div class="previewBox"><div class="previewLabel">Speed summary</div><div class="previewText" id="speedSummaryPreview">No speed summary yet.</div></div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2 class="sectionTitle">4) Ordered Best Ball Rows</h2>
-    <div class="sectionSub">Each row below is one matchup in the same order as the sheet. The AI goes line by line, fills what it is sure about, carries names downward when it sees vertical lines or ditto marks, treats blank continuation rows as real bet rows, and keeps uncertain rows in place so you can fix them.</div>
-    <div class="previewBox" style="margin-bottom:12px;"><div class="previewLabel">Questions</div><div class="previewText" id="questionsPreview">No questions yet.</div></div>
-    <div class="btnRow" style="margin-bottom:12px;">
-      <button class="btn btnGreen" id="addRowBtn" type="button">Add Row</button>
-      <button class="btn btnGreen" id="addFiveRowsBtn" type="button">Add 5 Rows</button>
-      <button class="btn btnGreen" id="fillEmptyRowsBtn" type="button">Fill Empty from Row Above</button>
-      <button class="btn btnGray" id="clearRowsBtn" type="button">Clear All Rows</button>
-    </div>
-    <div class="tableWrap rowEditors">
-      <table>
-        <thead>
-          <tr>
-            <th>Order</th>
-            <th>Left Team</th>
-            <th>Right Team</th>
-            <th>Confidence</th>
-            <th>Notes</th>
-            <th>Left BB</th>
-            <th>Right BB</th>
-            <th>Winner</th>
-            <th>Margin</th>
-            <th>Counted</th>
-            <th>Per Person</th>
-            <th>Delete</th>
-          </tr>
-        </thead>
-        <tbody id="rowsTbody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2 class="sectionTitle">5) Calculate Settlements</h2>
-    <div class="sectionSub">This compares the full-round best ball total for each row using the completed Squabbit scores you loaded above.</div>
-    <div class="btnRow"><button class="btn btnBlue" id="calcBtn" type="button">Calculate Settlements</button></div>
-    <div id="calcPanel" class="statusPanel info"><div class="statusTitle">Calculation</div><ul class="statusList" id="calcStatusList"><li>No settlement run yet.</li></ul></div>
-    <div class="tableWrap" style="margin-top:12px;">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Row</th>
-            <th>Matchup</th>
-            <th>Winner</th>
-            <th>Transfer</th>
-            <th>Explanation</th>
-          </tr>
-        </thead>
-        <tbody id="settlementTbody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2 class="sectionTitle">6) Player Breakdowns</h2>
-    <div class="sectionSub">Each player gets a net total and a detailed line by line explanation. You can export one PDF per player.</div>
-    <div id="playerBreakdownList"></div>
-  </section>
-
-  <section class="card">
-    <h2 class="sectionTitle">7) Exports</h2>
-    <div class="sectionSub">Export the whole settlement sheet as a PDF or CSV.</div>
-    <div class="btnRow">
-      <button class="btn btnBlue" id="exportAllPdfBtn" type="button">Download All Results PDF</button>
-      <button class="btn btnGreen" id="exportAllCsvBtn" type="button">Download All Results CSV</button>
-    </div>
-  </section>
+<section class="hero">
+<div class="heroTop">
+<div>
+<p>
+<h1>Golf Bet PDF + Squabbit Score Reader</h1>
+Upload a golf bet PDF, then upload a Squabbit pre-round roster CSV and a completed post-round CSV.
+This version uses the same choose-file then Load-button upload format from your working golf tool, and also
+calculates best ball scores, money owed, net winnings/losses, and who pays who.
+</p>
 </div>
-
+</div>
+</section>
+<a class="backBtn" href="index.html">Back to Hub</a>
+<section class="summaryGrid">
+<div class="summaryCard"><div class="summaryLabel">PDF Matchups</div><div class="summaryValue"
+id="summaryMatchups">0</div></div>
+<div class="summaryCard"><div class="summaryLabel">Roster Players</div><div class="summaryValue"
+id="summaryRoster">0</div></div>
+<div class="summaryCard"><div class="summaryLabel">Finished Scores</div><div class="summaryValue"
+id="summaryScores">0</div></div>
+<div class="summaryCard"><div class="summaryLabel">Finished Bets</div><div class="summaryValue"
+id="summaryFinished">0</div></div>
+<div class="summaryCard"><div class="summaryLabel">Total Settled</div><div class="summaryValue money"
+id="summaryMoney">$0</div></div>
+</section>
+<section class="card">
+<h2 class="sectionTitle">1) Upload Files</h2>
+<div class="sectionSub">This uses the same upload style as your working golf tool: choose the file first, then tap the
+matching Load button.</div>
+<div class="grid3">
+<div>
+<div class="field">
+<label for="betFile">Bet PDF / TXT / CSV</label>
+<input class="input" id="betFile" type="file" accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv" />
+</div>
+<div class="btnRow">
+<button class="btn btnGreen" id="loadBetBtn" type="button">Load Bet File</button>
+<button class="btn btnGray" id="clearBetBtn" type="button">Clear Bet File</button>
+</div>
+<div id="betPanel" class="statusPanel info"><div class="statusTitle">Bet Sheet</div><ul class="statusList"
+id="betStatusList"><li>No bet file loaded yet.</li></ul></div>
+<div class="previewBox" style="margin-top:12px;"><div class="previewLabel">Selected bet file</div><div
+class="previewText" id="betFileName">No file selected.</div></div>
+</div>
+<div>
+<div class="field">
+<label for="preFile">Pre round / roster CSV</label>
+<input class="input" id="preFile" type="file" accept=".csv,text/csv,text/plain" />
+</div>
+<div class="btnRow">
+<button class="btn btnGreen" id="loadRosterBtn" type="button">Load Roster</button>
+<button class="btn btnGray" id="clearRosterBtn" type="button">Clear Roster</button>
+</div>
+<div id="prePanel" class="statusPanel info"><div class="statusTitle">Roster</div><ul class="statusList"
+id="preStatusList"><li>No roster loaded yet.</li></ul></div>
+<div class="previewBox" style="margin-top:12px;"><div class="previewLabel">Selected roster file</div><div
+class="previewText" id="preFileName">No file selected.</div></div>
+</div>
+<div>
+<div class="field">
+<label for="postFile">Completed round CSV</label>
+<input class="input" id="postFile" type="file" accept=".csv,text/csv,text/plain" />
+</div>
+<div class="btnRow">
+<button class="btn btnGreen" id="loadScoresBtn" type="button">Load Scores</button>
+<button class="btn btnGray" id="clearScoresBtn" type="button">Clear Scores</button>
+</div>
+<div id="postPanel" class="statusPanel info"><div class="statusTitle">Scores</div><ul class="statusList"
+id="postStatusList"><li>No completed scores loaded yet.</li></ul></div>
+<div class="previewBox" style="margin-top:12px;"><div class="previewLabel">Selected scores file</div><div
+class="previewText" id="postFileName">No file selected.</div></div>
+</div>
+</div>
+</section>
+<section class="card">
+<h2 class="sectionTitle">2) Money Settings</h2>
+<div class="sectionSub">Example: $3 per shot with a 7 shot max means each losing player can pay up to $21 for that
+matchup.</div>
+<div class="grid3">
+<div class="field"><label for="shotValue">Dollars per shot</label><input class="input" id="shotValue" type="number"
+min="0" step="1" value="3" /></div>
+<div class="field"><label for="maxShots">Max shots counted</label><input class="input" id="maxShots" type="number"
+min="0" step="1" value="7" /></div>
+<div class="field"><label for="pairMode">Payment pairing</label><input class="input" id="pairMode" value="Player 1
+pays Player 1, Player 2 pays Player 2" readonly /></div>
+</div>
+<div class="btnRow">
+<button class="btn btnBlue" id="recheckBtn" type="button">Recheck Everything</button>
+<button class="btn btnGreen" id="downloadResultsBtn" type="button">Download Results CSV</button>
+<button class="btn btnGold" id="downloadPdfBtn" type="button">Download Full Results PDF</button>
+<button class="btn btnGreen" id="downloadMatchupsBtn" type="button">Download Matchups CSV</button>
+<button class="btn btnRed" id="clearBtn" type="button">Clear All</button>
+</div>
+</section>
+<section class="card">
+<h2 class="sectionTitle">3) Checks and Manual Fixes</h2>
+<div class="grid3">
+<div class="previewBox"><div class="previewLabel">Bet Sheet Check</div><div class="previewText" id="betCheck">Waiting
+on bet file.</div></div>
+<div class="previewBox"><div class="previewLabel">Roster Check</div><div class="previewText" id="rosterCheck">Waiting
+on Squabbit CSV.</div></div>
+<div class="previewBox"><div class="previewLabel">Score Check</div><div class="previewText" id="scoreCheck">Waiting on
+completed scores.</div></div>
+</div>
+<details>
+<summary>Manual name aliases / fixes</summary>
+<div class="detailsBody">
+<p class="hint">Use this when a PDF name does not exactly match Squabbit. One per line.</p>
+<textarea id="aliasesBox" spellcheck="false" placeholder="K Waters = Keith Waters&#10;Dawson = Dawson
+Smith&#10;Bryon Ruben = Ruben Bryon"></textarea>
+<div class="btnRow"><button class="btn btnGray" id="applyAliasesBtn" type="button">Apply Aliases</button></div>
+</div>
+</details>
+<details>
+<summary>Manual matchup editor</summary>
+<div class="detailsBody">
+<p class="hint">Use this if the PDF reader misses anything. Examples: Clay / Zack vs Dawson / Dean or
+team1_player1,team1_player2,team2_player1,team2_player2</p>
+<textarea id="manualBetsBox" spellcheck="false" placeholder="Paste corrected matchups here if needed."></textarea>
+<div class="btnRow"><button class="btn btnGray" id="useManualBtn" type="button">Use Manual Matchups</button></div>
+</div>
+</details>
+<details>
+<summary>Extracted PDF text / raw file text</summary>
+<div class="detailsBody"><textarea id="rawTextBox" spellcheck="false" placeholder="Extracted PDF text will show here.
+You can edit it and click Recheck Everything."></textarea></div>
+</details>
+</section>
+<section class="card">
+<h2 class="sectionTitle">4) Loaded Players</h2>
+<div class="sectionSub">Players with a check mark have completed scores loaded.</div>
+<div id="playerChips" class="nameList"></div>
+<div class="grid2">
+<div class="previewBox"><div class="previewLabel">Roster players</div><div class="previewText" id="rosterPreview">No
+roster loaded yet.</div></div>
+<div class="previewBox"><div class="previewLabel">Score rows</div><div class="previewText" id="scorePreview">No
+completed scores loaded yet.</div></div>
+</div>
+</section>
+<section class="card">
+<h2 class="sectionTitle">5) Matchups</h2>
+<div class="tableWrap">
+<table id="matchupsTable">
+<thead><tr><th>#</th><th>Team 1</th><th>Team 2</th><th>Validation</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+<section class="card">
+<h2 class="sectionTitle">6) Full Results</h2>
+<div class="sectionSub">Best ball uses the lower score from each two-person team on every hole, then totals all 18
+holes.</div>
+<div class="tableWrap">
+<table id="resultsTable">
+<thead>
+<tr>
+<th>#</th><th>Team 1</th><th>Team 1 BB</th><th>Team 2</th><th>Team 2
+BB</th><th>Winner</th><th>Margin</th><th>Pay Per Person</th><th>Who Pays Who</th><th>Warnings</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+<p class="footerNote">Important: this does not perform OCR perfectly. If the PDF is a screenshot/photo inside a PDF, the
+OCR may need manual cleanup in the manual matchup editor.</p>
+</section>
+<section class="card">
+<h2 class="sectionTitle">7) Player Winnings / Losses</h2>
+<div class="sectionSub">This is the total net amount each person wins or loses across every finished bet.</div>
+<div class="tableWrap">
+<table id="ledgerTable">
+<thead><tr><th>Player</th><th>Gross Score</th><th>Net</th><th>Lines</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+</div>
 <script>
-const APP_KEY = 'golf_best_ball_sheet_v17';
-const DEFAULT_ALIASES = `Deal=Brad Deal
-ZD=Zack Deal
-Daw=Dawson
-CW=Clay Watkins
-KM=Keith Mcdaniel
-JH=Joey Hall
-Wat=K Waters
-Gilmer=Gilmer Hinshaw`;
-
+if(window.pdfjsLib){
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
 const state = {
-  rosterPlayers: [],
-  scores: {},
-  aliases: {},
-  betSheetFile: null,
-  ocrText: '',
-  aiNotes: [],
-  aiQuestions: [],
-  sheetRows: [],
-  settlements: [],
-  playerLedgers: [],
-  preparedSheets: [],
-  winnerNotes: [],
-  transcriptAudits: [],
-  ollamaEnabled: false,
-  ollamaEndpoint: '',
-  ollamaModel: '',
-  fastMode: true,
-  retryModeUsed: false,
-  weakResult: false,
-  currentStage: 'Idle',
-  progressLines: [],
-  cacheHits: 0,
-  cacheMisses: 0,
-  shotValue: 3,
-  maxShots: 7
+rawBetText:"", matchups:[], prePlayers:[], postPlayers:[], scoreMap:new Map(), aliases:new Map(), results:[], ledger:[]
 };
-
-const $ = (id) => document.getElementById(id);
-
-
-let betSheetPond = null;
-const runtimeCache = {
-  prepared: new Map(),
-  ocr: new Map(),
-  transcript: new Map(),
-  rows: new Map()
+const els = {
+betFile:document.getElementById("betFile"), preFile:document.getElementById("preFile"),
+postFile:document.getElementById("postFile"),
+betFileName:document.getElementById("betFileName"), preFileName:document.getElementById("preFileName"),
+postFileName:document.getElementById("postFileName"),
+betPanel:document.getElementById("betPanel"), prePanel:document.getElementById("prePanel"),
+postPanel:document.getElementById("postPanel"),
+betStatusList:document.getElementById("betStatusList"), preStatusList:document.getElementById("preStatusList"),
+postStatusList:document.getElementById("postStatusList"),
+betCheck:document.getElementById("betCheck"), rosterCheck:document.getElementById("rosterCheck"),
+scoreCheck:document.getElementById("scoreCheck"),
+rosterPreview:document.getElementById("rosterPreview"), scorePreview:document.getElementById("scorePreview"),
+rawTextBox:document.getElementById("rawTextBox"),
+aliasesBox:document.getElementById("aliasesBox"), manualBetsBox:document.getElementById("manualBetsBox"),
+playerChips:document.getElementById("playerChips"),
+matchupsBody:document.querySelector("#matchupsTable tbody"), resultsBody:document.querySelector("#resultsTable tbody"),
+ledgerBody:document.querySelector("#ledgerTable tbody"),
+loadBetBtn:document.getElementById("loadBetBtn"), loadRosterBtn:document.getElementById("loadRosterBtn"),
+loadScoresBtn:document.getElementById("loadScoresBtn"),
+clearBetBtn:document.getElementById("clearBetBtn"), clearRosterBtn:document.getElementById("clearRosterBtn"),
+clearScoresBtn:document.getElementById("clearScoresBtn"),
+recheckBtn:document.getElementById("recheckBtn"), downloadResultsBtn:document.getElementById("downloadResultsBtn"),
+downloadPdfBtn:document.getElementById("downloadPdfBtn"),
+downloadMatchupsBtn:document.getElementById("downloadMatchupsBtn"), clearBtn:document.getElementById("clearBtn"),
+applyAliasesBtn:document.getElementById("applyAliasesBtn"), useManualBtn:document.getElementById("useManualBtn"),
+shotValue:document.getElementById("shotValue"), maxShots:document.getElementById("maxShots"),
+summaryMatchups:document.getElementById("summaryMatchups"), summaryRoster:document.getElementById("summaryRoster"),
+summaryScores:document.getElementById("summaryScores"), summaryFinished:document.getElementById("summaryFinished"),
+summaryMoney:document.getElementById("summaryMoney")
 };
-
-function fileSignature(file){
-  return [file.name || '', file.size || 0, file.lastModified || 0].join('::');
+let betPond=null, prePond=null, postPond=null;
+function initUploaders(){
+els.betFile.addEventListener("change", () => {
+const file = els.betFile.files && els.betFile.files[0];
+els.betFileName.textContent = file ? file.name : "No file selected.";
+if(file) setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["Selected " + file.name + ".", "Tap Load Bet
+File to read it."]);
+});
+els.preFile.addEventListener("change", () => {
+const file = els.preFile.files && els.preFile.files[0];
+els.preFileName.textContent = file ? file.name : "No file selected.";
+if(file) setStatus(els.prePanel, els.preStatusList, "info", "Roster", ["Selected " + file.name + ".", "Tap Load Roster
+to read it."]);
+});
+els.postFile.addEventListener("change", () => {
+const file = els.postFile.files && els.postFile.files[0];
+els.postFileName.textContent = file ? file.name : "No file selected.";
+if(file) setStatus(els.postPanel, els.postStatusList, "info", "Scores", ["Selected " + file.name + ".", "Tap Load Scores
+to read it."]);
+});
 }
-function recordCacheHit(){
-  state.cacheHits = Number(state.cacheHits || 0) + 1;
+function loadSelectedBetFile(){
+const file = els.betFile.files && els.betFile.files[0];
+if(!file){ setStatus(els.betPanel, els.betStatusList, "error", "Bet Sheet", ["Choose a bet PDF, TXT, or CSV first."]);
+return; }
+handleBetFile(file);
 }
-function recordCacheMiss(){
-  state.cacheMisses = Number(state.cacheMisses || 0) + 1;
+function loadSelectedRosterFile(){
+const file = els.preFile.files && els.preFile.files[0];
+if(!file){ setStatus(els.prePanel, els.preStatusList, "error", "Roster", ["Choose a roster CSV first."]); return; }
+handlePreFile(file);
 }
-function resetRunStats(){
-  state.retryModeUsed = false;
-  state.weakResult = false;
-  state.currentStage = 'Idle';
-  state.progressLines = [];
-  state.cacheHits = 0;
-  state.cacheMisses = 0;
+function loadSelectedScoresFile(){
+const file = els.postFile.files && els.postFile.files[0];
+if(!file){ setStatus(els.postPanel, els.postStatusList, "error", "Scores", ["Choose a completed round CSV first."]);
+return; }
+handlePostFile(file);
 }
-function addProgressLine(line){
-  state.progressLines = [...(state.progressLines || []), line];
-  if(state.progressLines.length > 50) state.progressLines = state.progressLines.slice(-50);
-  if($('progressPreview')) $('progressPreview').textContent = state.progressLines.join('\n') || 'No processing run yet.';
+function clearBetFileOnly(){
+state.rawBetText = "";
+state.matchups = [];
+state.results = [];
+state.ledger = [];
+els.betFile.value = "";
+els.betFileName.textContent = "No file selected.";
+els.rawTextBox.value = "";
+setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["Bet file cleared."]);
+reparseAll();
 }
-function setProcessingStage(stage, detail=''){
-  state.currentStage = stage;
-  addProgressLine(detail ? `${stage}: ${detail}` : stage);
+function clearRosterOnly(){
+state.prePlayers = [];
+els.preFile.value = "";
+els.preFileName.textContent = "No file selected.";
+setStatus(els.prePanel, els.preStatusList, "info", "Roster", ["Roster cleared."]);
+reparseAll();
 }
-function simpleHash(text){
-  const s = String(text || '');
-  let h = 0;
-  for(let i=0;i<s.length;i++) h = ((h << 5) - h) + s.charCodeAt(i);
-  return String(h >>> 0);
+function clearScoresOnly(){
+state.postPlayers = [];
+state.scoreMap = new Map();
+els.postFile.value = "";
+els.postFileName.textContent = "No file selected.";
+setStatus(els.postPanel, els.postStatusList, "info", "Scores", ["Scores cleared."]);
+reparseAll();
 }
-function shouldDeepRetryFromRows(rows, questions){
-  const count = (rows || []).length;
-  const ready = (rows || []).filter(row => (row.left_players || []).length >= 2 && (row.right_players || []).length >= 2).length;
-  const flagged = (questions || []).length;
-  return count < 10 || ready < Math.max(6, count - 3) || flagged > 3;
+async function handleBetFile(file){
+if(!file) return;
+setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["Reading " + file.name + "..."]);
+try{
+let text = "";
+if(file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf") text = await extractPdfText(file);
+else text = await file.text();
+state.rawBetText = text;
+els.rawTextBox.value = text;
+state.matchups = parseMatchups(text);
+setStatus(els.betPanel, els.betStatusList, state.matchups.length ? "ok" : "error", "Bet Sheet", state.matchups.length ?
+["Loaded " + file.name + ".", "Found " + state.matchups.length + " matchup row(s)."] : ["Loaded " + file.name + ", but
+no 2v2 matchups were detected.", "Check the extracted text or use the manual matchup editor."]);
+reparseAll();
+}catch(err){ console.error(err); setStatus(els.betPanel, els.betStatusList, "error", "Bet Sheet", ["Could not read this
+bet file.", errorMessage(err)]); }
 }
-function updateSpeedSummary(){
-  const lines = [
-    `Current stage: ${state.currentStage || 'Idle'}`,
-    `Fast Mode: ${state.fastMode ? 'On' : 'Off'}`,
-    `Retry mode used: ${state.retryModeUsed ? 'Yes' : 'No'}`,
-    `Weak result detected: ${state.weakResult ? 'Yes' : 'No'}`,
-    `Cache hits: ${state.cacheHits || 0}`,
-    `Cache misses: ${state.cacheMisses || 0}`,
-    `Rows found: ${(state.sheetRows || []).length || 0}`,
-    `Rows flagged for review: ${(state.aiQuestions || []).length || 0}`
-  ];
-  if($('speedSummaryPreview')) $('speedSummaryPreview').textContent = lines.join('\n');
+async function handlePreFile(file){
+if(!file) return;
+setStatus(els.prePanel, els.preStatusList, "info", "Roster", ["Reading " + file.name + "..."]);
+try{
+const names = squabbitAnalyzeRosterCSV(await file.text());
+state.prePlayers = names.map(name => ({ name, scores:[], raw:[] }));
+setStatus(els.prePanel, els.preStatusList, state.prePlayers.length ? "ok" : "error", "Roster", state.prePlayers.length ?
+["Loaded " + file.name + ".", "Found " + state.prePlayers.length + " roster player(s)."] : ["Loaded " + file.name +
+", but no players were detected.", "Make sure this is the Squabbit pre-round / roster CSV."]);
+reparseAll();
+}catch(err){ console.error(err); setStatus(els.prePanel, els.preStatusList, "error", "Roster", ["Could not read this
+pre-round CSV.", errorMessage(err)]); }
 }
-
-function updateSelectedFilePreviews(){
-  const files = getSelectedBetSheetFiles();
-  const text = files.length
-    ? files.map((file, i) => `${i + 1}. ${file.name} (${Math.round(file.size / 1024)} KB)`).join('\n')
-    : 'No bet sheet images selected yet.';
-  if($('selectedUploadsPreview')) $('selectedUploadsPreview').textContent = text;
-  if($('originalFilesPreview')) $('originalFilesPreview').textContent = text;
+async function handlePostFile(file){
+if(!file) return;
+setStatus(els.postPanel, els.postStatusList, "info", "Scores", ["Reading " + file.name + "..."]);
+try{
+const scoreObject = squabbitAnalyzeScoresCSV(await file.text());
+const scoreNames = Object.keys(scoreObject).sort((a,b) => a.localeCompare(b));
+state.postPlayers = scoreNames.map(name => ({ name, scores:scoreObject[name], raw:[] }));
+state.scoreMap = new Map();
+for(const player of state.postPlayers){
+if(player.scores && player.scores.filter(Number.isFinite).length === 18)
+state.scoreMap.set(normalizeName(player.name), player);
 }
-
-function initBetSheetUploader(){
-  if(!window.FilePond) return;
-  FilePond.registerPlugin(
-    FilePondPluginImageExifOrientation,
-    FilePondPluginImagePreview,
-    FilePondPluginFileValidateType,
-    FilePondPluginFileValidateSize
-  );
-
-  const input = $('betSheetInput');
-  if(!input) return;
-
-  betSheetPond = FilePond.create(input, {
-    allowMultiple: true,
-    allowReorder: true,
-    acceptedFileTypes: ['image/png','image/jpeg','image/webp','image/heic','image/heif'],
-    fileValidateTypeDetectType: (source, type) => new Promise(resolve => resolve(type)),
-    maxFiles: 20,
-    maxFileSize: '25MB',
-    storeAsFile: true,
-    imagePreviewHeight: 180,
-    itemInsertLocation: 'after',
-    credits: false,
-    labelIdle: 'Drop bet sheet images here or <span class="filepond--label-action">Browse</span>'
-  });
-
-  const onChange = () => {
-    updateSelectedFilePreviews();
-    state.preparedSheets = [];
-    state.winnerNotes = [];
-    state.transcriptAudits = [];
-    setPreview('preparedViewsPreview','No prepared image views yet.');
-    setPreview('winnerPreview','No winner chosen yet.');
-    setPreview('mergedRowsPreview', state.sheetRows.length ? state.sheetRows.map(row => `Row ${row.order}: ${(row.left_players||[]).join(' & ')} vs ${(row.right_players||[]).join(' & ')}`).join('\n') : 'No merged rows yet.');
-    saveState();
-  };
-
-  betSheetPond.on('addfile', onChange);
-  betSheetPond.on('removefile', onChange);
-  betSheetPond.on('reorderfiles', onChange);
-  onChange();
+setStatus(els.postPanel, els.postStatusList, scoreNames.length ? "ok" : "error", "Scores", scoreNames.length ? ["Loaded
+" + file.name + ".", "Found " + scoreNames.length + " completed 18-hole score row(s)."] : ["Loaded " + file.name + ",
+but no completed 18-hole score rows were detected.", "Make sure this is the completed Squabbit post-round CSV."]);
+reparseAll();
+}catch(err){ console.error(err); setStatus(els.postPanel, els.postStatusList, "error", "Scores", ["Could not read this
+post-round CSV.", errorMessage(err)]); }
 }
-
-function getSelectedBetSheetFiles(){
-  if (betSheetPond) {
-    return betSheetPond.getFiles()
-      .map(item => item.file)
-      .filter(Boolean);
-  }
-  return Array.from(($('betSheetInput').files || []));
+async function extractPdfText(file){
+if(!window.pdfjsLib) throw new Error("PDF.js did not load. Make sure this page has internet access.");
+const data = new Uint8Array(await file.arrayBuffer());
+const pdf = await pdfjsLib.getDocument({ data }).promise;
+const pageTexts = [];
+for(let pageNumber=1; pageNumber<=pdf.numPages; pageNumber++){
+const page = await pdf.getPage(pageNumber);
+const content = await page.getTextContent();
+const textLayerText = groupPdfItemsIntoLines(content.items).join("\n").trim();
+if(pdfTextLooksUsable(textLayerText)) pageTexts.push(textLayerText);
+else {
+if(!window.Tesseract) throw new Error("PDF text is unreadable and OCR did not load.");
+setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["PDF text layer was unreadable.", "Running OCR on
+page " + pageNumber + "..."]);
+pageTexts.push(await ocrPdfPage(pdf, pageNumber));
 }
-
-async function fileToDataUrl(file){
-  return await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
-async function loadImageElement(file){
-  if(window.createImageBitmap){
-    try{
-      return await createImageBitmap(file);
-    }catch(_){}
-  }
-  const url = URL.createObjectURL(file);
-  try{
-    const img = await new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = reject;
-      image.src = url;
-    });
-    return img;
-  } finally {
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
+const combined = pageTexts.join("\n").trim();
+if(!combined) throw new Error("No readable text was found in this PDF.");
+return combined;
 }
-function makeCanvas(width, height){
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.max(1, Math.round(width));
-  canvas.height = Math.max(1, Math.round(height));
-  return canvas;
+function pdfTextLooksUsable(text){
+const s = String(text || "").trim();
+if(s.length < 20) return false;
+const badChars = (s.match(/[■■■\u0000-\u0008\u000B\u000C\u000E-\u001F]/g) || []).length;
+const letters = (s.match(/[A-Za-z]/g) || []).length;
+const readable = (s.match(/[A-Za-z0-9\s.,:/+&()#'"-]/g) || []).length;
+if(badChars > 3) return false;
+if(letters < 8) return false;
+if(readable / s.length < 0.70) return false;
+return true;
 }
-function canvasToDataUrl(canvas, type='image/png', quality=0.95){
-  return canvas.toDataURL(type, quality);
+async function ocrPdfPage(pdf, pageNumber){
+const page = await pdf.getPage(pageNumber);
+const viewport = page.getViewport({ scale:2.5 });
+const canvas = document.createElement("canvas");
+const context = canvas.getContext("2d");
+canvas.width = Math.ceil(viewport.width);
+canvas.height = Math.ceil(viewport.height);
+await page.render({ canvasContext:context, viewport }).promise;
+const result = await Tesseract.recognize(canvas, "eng", { logger:() => {} });
+return String(result?.data?.text || "").trim();
 }
-async function dataUrlToFile(dataUrl, name, type='image/png'){
-  const res = await fetch(dataUrl);
-  const blob = await res.blob();
-  return new File([blob], name, { type: type || blob.type || 'image/png' });
+function groupPdfItemsIntoLines(items){
+const usable = items.filter(item => item.str && item.str.trim()).map(item => ({ text:item.str.trim(), x:item.transform[4],
+y:item.transform[5], width:item.width || 0 }));
+usable.sort((a,b) => Math.abs(b.y - a.y) > 3 ? b.y - a.y : a.x - b.x);
+const rows = [];
+for(const item of usable){
+let row = rows.find(r => Math.abs(r.y - item.y) <= 3);
+if(!row){ row = { y:item.y, items:[] }; rows.push(row); }
+row.items.push(item);
 }
-function drawNormalizedCanvas(img, maxHeight=2600){
-  const scale = Math.min(1, maxHeight / img.height);
-  const width = Math.max(1, Math.round(img.width * scale));
-  const height = Math.max(1, Math.round(img.height * scale));
-  const canvas = makeCanvas(width, height);
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, width, height);
-  return canvas;
+rows.sort((a,b) => b.y - a.y);
+return rows.map(row => {
+row.items.sort((a,b) => a.x - b.x);
+let line = ""; let lastEnd = null;
+for(const item of row.items){
+if(lastEnd !== null){ const gap = item.x - lastEnd; if(gap > 45) line += "\t"; else if(gap > 12) line += " "; else
+line += " "; }
+line += item.text; lastEnd = item.x + item.width;
 }
-function applyContrastBrightness(canvas, contrast=1.22, brightness=6){
-  const out = makeCanvas(canvas.width, canvas.height);
-  const ctx = out.getContext('2d');
-  ctx.drawImage(canvas, 0, 0);
-  const imgData = ctx.getImageData(0,0,out.width,out.height);
-  const d = imgData.data;
-  for(let i=0;i<d.length;i+=4){
-    d[i] = Math.max(0, Math.min(255, ((d[i]-128)*contrast)+128+brightness));
-    d[i+1] = Math.max(0, Math.min(255, ((d[i+1]-128)*contrast)+128+brightness));
-    d[i+2] = Math.max(0, Math.min(255, ((d[i+2]-128)*contrast)+128+brightness));
-  }
-  ctx.putImageData(imgData,0,0);
-  return out;
+return line.replace(/[ \t]+$/g, "");
+}).filter(Boolean);
 }
-function applyThreshold(canvas, threshold=165){
-  const out = makeCanvas(canvas.width, canvas.height);
-  const ctx = out.getContext('2d');
-  ctx.drawImage(canvas, 0, 0);
-  const imgData = ctx.getImageData(0,0,out.width,out.height);
-  const d = imgData.data;
-  for(let i=0;i<d.length;i+=4){
-    const gray = Math.round((d[i]*0.299) + (d[i+1]*0.587) + (d[i+2]*0.114));
-    const val = gray >= threshold ? 255 : 0;
-    d[i] = val; d[i+1] = val; d[i+2] = val;
-  }
-  ctx.putImageData(imgData,0,0);
-  return out;
+function parseMatchups(text){
+const cleanText = String(text || "").replace(/\r/g, "\n");
+let matchups = [];
+matchups = matchups.concat(parseMatchupsAsCsv(cleanText));
+matchups = matchups.concat(parseMatchupsFromLines(cleanText));
+const unique = []; const seen = new Set();
+for(const matchup of matchups){
+const cleaned = cleanMatchup(matchup); if(!cleaned) continue;
+const key = canonicalMatchupKey(cleaned); if(seen.has(key)) continue;
+seen.add(key); unique.push({ ...cleaned, source:matchup.source || "import" });
 }
-function cropVerticalWindow(canvas, startRatio, endRatio){
-  const y = Math.max(0, Math.floor(canvas.height * startRatio));
-  const h = Math.max(1, Math.min(canvas.height - y, Math.floor(canvas.height * (endRatio - startRatio))));
-  const out = makeCanvas(canvas.width, h);
-  const ctx = out.getContext('2d');
-  ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
-  return out;
+return unique.map((m,i) => ({ ...m, id:i+1 }));
 }
-async function createPreparedViewsForFile(file, mode='fast'){
-  const cacheKey = `${fileSignature(file)}::prepared::${mode}`;
-  if(runtimeCache.prepared.has(cacheKey)){
-    recordCacheHit();
-    return runtimeCache.prepared.get(cacheKey);
-  }
-  recordCacheMiss();
-  const originalDataUrl = await fileToDataUrl(file);
-  const img = await loadImageElement(file);
-  const normalized = drawNormalizedCanvas(img, mode === 'deep' ? 2300 : 1900);
-  const contrast = applyContrastBrightness(normalized, 1.30, 9);
-
-  const views = [];
-  views.push({ key:'original_full', label:'Original full', dataUrl: originalDataUrl, file, width: img.width, height: img.height });
-  const contrastDataUrl = canvasToDataUrl(contrast, 'image/jpeg', 0.94);
-  views.push({ key:'contrast_full', label:'Higher contrast full', dataUrl: contrastDataUrl, file: await dataUrlToFile(contrastDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_contrast.jpg`, 'image/jpeg'), width: contrast.width, height: contrast.height });
-
-  const top = cropVerticalWindow(contrast, 0.00, 0.56);
-  const bottom = cropVerticalWindow(contrast, 0.44, 1.00);
-  const topDataUrl = canvasToDataUrl(top, 'image/jpeg', 0.94);
-  const bottomDataUrl = canvasToDataUrl(bottom, 'image/jpeg', 0.94);
-  views.push({ key:'top_crop', label:'Top focus', dataUrl: topDataUrl, file: await dataUrlToFile(topDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_top.jpg`, 'image/jpeg'), width: top.width, height: top.height });
-  views.push({ key:'bottom_crop', label:'Bottom focus', dataUrl: bottomDataUrl, file: await dataUrlToFile(bottomDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_bottom.jpg`, 'image/jpeg'), width: bottom.width, height: bottom.height });
-
-  if(mode === 'deep'){
-    const middle = cropVerticalWindow(contrast, 0.22, 0.82);
-    const threshold = applyThreshold(contrast, 176);
-    const middleDataUrl = canvasToDataUrl(middle, 'image/jpeg', 0.94);
-    const thresholdDataUrl = canvasToDataUrl(threshold, 'image/png', 1);
-    views.push({ key:'middle_crop', label:'Middle focus', dataUrl: middleDataUrl, file: await dataUrlToFile(middleDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_middle.jpg`, 'image/jpeg'), width: middle.width, height: middle.height });
-    views.push({ key:'threshold_full', label:'Threshold full', dataUrl: thresholdDataUrl, file: await dataUrlToFile(thresholdDataUrl, `${file.name.replace(/\.[^.]+$/,'')}_threshold.png`, 'image/png'), width: threshold.width, height: threshold.height });
-  }
-
-  const prepared = { sourceName: file.name, originalFile: file, signature: fileSignature(file), mode, views };
-  runtimeCache.prepared.set(cacheKey, prepared);
-  return prepared;
+function parseMatchupsAsCsv(text){
+const rows = parseCsv(text); if(!rows.length) return [];
+const headerIndex = rows.findIndex(row => row.some(cell => /team\s*1/i.test(cell)) && row.some(cell =>
+/team\s*2/i.test(cell)));
+if(headerIndex === -1) return [];
+const headers = rows[headerIndex].map(h => normalizeHeader(h));
+const team1Index = headers.findIndex(h => h === "team1" || h === "team1team" || h === "team1name");
+const team2Index = headers.findIndex(h => h === "team2" || h === "team2team" || h === "team2name");
+const t1p1 = headers.findIndex(h => h === "team1player1" || h === "t1p1");
+const t1p2 = headers.findIndex(h => h === "team1player2" || h === "t1p2");
+const t2p1 = headers.findIndex(h => h === "team2player1" || h === "t2p1");
+const t2p2 = headers.findIndex(h => h === "team2player2" || h === "t2p2");
+const results = [];
+for(let i=headerIndex+1; i<rows.length; i++){
+const row = rows[i]; if(!row || !row.join("").trim()) continue;
+if(t1p1 >= 0 && t1p2 >= 0 && t2p1 >= 0 && t2p2 >= 0) results.push({ team1:[row[t1p1], row[t1p2]], team2:[row[t2p1],
+row[t2p2]], source:"csv" });
+else if(team1Index >= 0 && team2Index >= 0) results.push({ team1:splitTeamPlayers(row[team1Index]),
+team2:splitTeamPlayers(row[team2Index]), source:"csv" });
 }
-function renderPreparedSheetsPreview(){
-  if(!state.preparedSheets || !state.preparedSheets.length){
-    setPreview('preparedViewsPreview','No prepared image views yet.');
-    return;
-  }
-  const lines = [];
-  state.preparedSheets.forEach((sheet, idx) => {
-    lines.push(`Sheet ${idx + 1}: ${sheet.sourceName} (${sheet.mode || state.preparedMode || 'fast'})`);
-    sheet.views.forEach((view, viewIdx) => {
-      lines.push(`  ${viewIdx + 1}. ${view.label} - ${view.width}x${view.height}`);
-    });
-    lines.push('');
-  });
-  setPreview('preparedViewsPreview', lines.join('\n').trim());
+return results;
 }
-async function prepareImageViews(mode = (state.fastMode ? 'fast' : 'deep')){
-  const files = getSelectedBetSheetFiles();
-  if(!files.length){
-    setStatus('sheetPanel','sheetStatusList','error','Bet sheet',['Choose at least one bet sheet image first.']);
-    return [];
-  }
-  setProcessingStage('preparing views', `mode ${mode}`);
-  const prepared = [];
-  for(const file of files){
-    prepared.push(await createPreparedViewsForFile(file, mode));
-  }
-  state.preparedSheets = prepared;
-  state.preparedMode = mode;
-  renderPreparedSheetsPreview();
-  saveState();
-  setStatus('sheetPanel','sheetStatusList','ok','Bet sheet',[`Prepared ${prepared.reduce((sum, item) => sum + item.views.length, 0)} analysis view(s) from ${prepared.length} uploaded sheet image(s).`]);
-  return prepared;
+function parseMatchupsFromLines(text){
+const results = [];
+const lines = String(text || "").split(/\n+/).map(line => line.replace(/\u00a0/g, " ").trim()).filter(Boolean);
+for(const originalLine of lines){
+let line = originalLine.replace(/^\|+|\|+$/g, "").replace(/\s+\|\s+/g, "\t").replace(/[–—]/g, "-").trim();
+if(!line) continue;
+if(!pdfTextLooksUsable(line) && line.length > 20) continue;
+if(/^(best\s+ball|these\s+are|wheel\s+teams|website\s+import|#\s+team|team\s*1\s+team\s*2)/i.test(line)) continue;
+const knownPlayerMatchup = parseKnownPlayerMatchupFromLine(line);
+if(knownPlayerMatchup){ results.push(knownPlayerMatchup); continue; }
+const numbered = line.match(/^(\d{1,3})[\).:\-\s]+(.+)$/); if(numbered) line = numbered[2].trim();
+let parts = line.split(/\t+/).map(x => x.trim()).filter(Boolean);
+if(parts.length >= 3 && /^\d+$/.test(parts[0])) parts = parts.slice(1);
+if(parts.length >= 2 && looksLikeTeam(parts[0]) && looksLikeTeam(parts[1])){ results.push({
+team1:splitTeamPlayers(parts[0]), team2:splitTeamPlayers(parts[1]), source:"pdf-line" }); continue; }
+const vsParts = line.split(/\s+(?:vs\.?|v\.?|against)\s+/i).map(x => x.trim()).filter(Boolean);
+if(vsParts.length === 2){ results.push({ team1:splitTeamPlayers(vsParts[0]), team2:splitTeamPlayers(vsParts[1]),
+source:"text-vs" }); continue; }
+const wideParts = line.split(/\s{3,}/).map(x => x.trim()).filter(Boolean);
+if(wideParts.length >= 2 && looksLikeTeam(wideParts[0]) && looksLikeTeam(wideParts[1])) results.push({
+team1:splitTeamPlayers(wideParts[0]), team2:splitTeamPlayers(wideParts[1]), source:"wide-space" });
 }
-async function ensurePreparedSheets(mode = (state.fastMode ? 'fast' : 'deep')){
-  const files = getSelectedBetSheetFiles();
-  const sameCount = state.preparedSheets && state.preparedSheets.length === files.length;
-  if(sameCount && state.preparedMode === mode){
-    const sigA = (state.preparedSheets || []).map(item => item.signature).join('|');
-    const sigB = files.map(fileSignature).join('|');
-    if(sigA === sigB){
-      recordCacheHit();
-      setProcessingStage('preparing views', `cache hit (${mode})`);
-      return state.preparedSheets;
-    }
-  }
-  recordCacheMiss();
-  return await prepareImageViews(mode);
+return results;
 }
-async function runOcrHelperForView(view){
-  if(!window.Tesseract) return '';
-  const cacheKey = `${view.file.name}::${view.key}::ocr`;
-  if(runtimeCache.ocr.has(cacheKey)){
-    recordCacheHit();
-    return runtimeCache.ocr.get(cacheKey);
-  }
-  recordCacheMiss();
-  try{
-    const result = await Tesseract.recognize(view.dataUrl, 'eng', { logger: () => {} });
-    const text = normalizeSpace(result?.data?.text || '');
-    runtimeCache.ocr.set(cacheKey, text);
-    return text;
-  }catch(_){
-    runtimeCache.ocr.set(cacheKey, '');
-    return '';
-  }
+function parseKnownPlayerMatchupFromLine(line){
+const knownPlayers = allKnownPlayers(); const candidates = [];
+for(const player of knownPlayers){ const playerName = cleanName(player.name); const key = normalizeName(playerName);
+if(!key || key.length < 3) continue; addNameCandidate(candidates, line, key, playerName); }
+if(state.aliases && state.aliases.size){ for(const [aliasKey, playerName] of state.aliases.entries()){ if(aliasKey &&
+aliasKey.length >= 2 && playerName) addNameCandidate(candidates, line, aliasKey, cleanName(playerName)); } }
+if(!candidates.length) return null;
+candidates.sort((a,b) => b.len - a.len);
+const picked = [];
+for(const candidate of candidates){
+const overlaps = picked.some(existing => candidate.start < existing.end && candidate.end > existing.start);
+const duplicatePlayer = picked.some(existing => normalizeName(existing.name) === normalizeName(candidate.name));
+if(!overlaps && !duplicatePlayer) picked.push(candidate);
 }
-
-async function callPuterTextAudit(model, prompt){
-  try{
-    return await puter.ai.chat(prompt, null, false, { model, temperature: 0.1, max_tokens: 2200 });
-  }catch(_){
-    return await puter.ai.chat(prompt, undefined, false, { model, temperature: 0.1, max_tokens: 2200 });
-  }
+picked.sort((a,b) => a.start - b.start);
+if(picked.length < 4) return null;
+return { team1:[picked[0].name, picked[1].name], team2:[picked[2].name, picked[3].name], source:"known-player-line" };
 }
-function buildViewReadPrompt(view, ocrHint=''){
-  const focus = view.key.includes('top') ? 'Pay extra attention to the top of the sheet.' :
-    view.key.includes('bottom') ? 'Pay extra attention to the bottom of the sheet.' :
-    view.key.includes('middle') ? 'Pay extra attention to the middle of the sheet.' :
-    'Read the full sheet from top to bottom.';
-  return [
-    'Transcribe this handwritten golf best ball bet sheet as plain text.',
-    focus,
-    'Keep the order from top to bottom.',
-    'Keep line breaks.',
-    'Do not summarize.',
-    'If something is unclear, write ? instead of inventing it.',
-    ocrHint ? `OCR helper hint:\n${ocrHint}` : ''
-  ].filter(Boolean).join('\n');
+function addNameCandidate(candidates,line,key,playerName){
+const normalizedLine = normalizeName(line); let start = normalizedLine.indexOf(key);
+while(start >= 0){ candidates.push({ name:playerName, start, end:start + key.length, len:key.length }); start =
+normalizedLine.indexOf(key, start + key.length); }
 }
-function buildTranscriptCleanupPrompt(transcript){
-  return [
-    'You are cleaning up OCR style text from a handwritten golf best ball bet sheet.',
-    'Return plain text only.',
-    'Preserve order from top to bottom.',
-    'Keep line breaks.',
-    'Do not summarize.',
-    'Do not invent names.',
-    'Use ? for unclear parts.',
-    '',
-    'Text to clean:',
-    transcript || 'No transcript available.'
-  ].join('\n');
+function cleanMatchup(matchup){
+const t1 = (matchup.team1 || []).map(cleanName).filter(Boolean); const t2 = (matchup.team2 ||
+[]).map(cleanName).filter(Boolean);
+if(t1.length !== 2 || t2.length !== 2) return null;
+if(new Set([...t1, ...t2].map(normalizeName)).size !== 4) return null;
+return { team1:t1, team2:t2 };
 }
-function buildRowsAuditPrompt(passNumber, transcript, currentRowsText=''){
-  return [
-    buildRowsPrompt(passNumber),
-    '',
-    'Audit the transcript and current extracted rows.',
-    'Use the transcript to improve row order, keep vertical carry-down players, keep blank continuation rows, and do not skip top or bottom rows.',
-    'Prefer one ROW line for every visible numbered row marker on the sheet.',
-    'If a row only shows one new name under a carried player, keep the carried anchor and treat the visible name as the partner.',
-    'Do not confuse ditto marks with a handwritten W in WAT.',
-    'Do not accept the exact same matchup twice in a row unless the sheet clearly shows it again. If a consecutive duplicate appears, question it and re-check the sheet.',
-    '',
-    'Transcript:',
-    transcript || 'No transcript available.',
-    '',
-    'Current extracted rows:',
-    currentRowsText || 'No extracted rows yet.'
-  ].join('\n');
+function splitTeamPlayers(teamText){
+let s = String(teamText || "").replace(/\bTeam\s*[12]\b/ig, "").replace(/[()]/g, " ").replace(/\s+/g, " ").trim();
+s = s.replace(/\s+(?:vs\.?|v\.?|against)\s+.*$/i, "").trim();
+let parts = s.split(/\s*(?:\/|\+|&)\s*/).map(cleanName).filter(Boolean);
+if(parts.length !== 2) parts = s.split(/\s+\band\b\s+/i).map(cleanName).filter(Boolean);
+if(parts.length > 2) parts = [parts[0], parts.slice(1).join(" ")];
+return parts;
 }
-
-
-function defaultRows(){
-  return Array.from({ length: 1 }, (_, idx) => ({
-    order: idx + 1,
-    left_raw: [],
-    right_raw: [],
-    left_players: [],
-    right_players: [],
-    confidence: 0,
-    notes: ''
-  }));
+function looksLikeTeam(text){ const players = splitTeamPlayers(text); return players.length === 2 && players.every(p =>
+p.length >= 2); }
+function parseCsv(text){
+const rows = []; let row = []; let cell = ""; let inQuotes = false; const src = String(text || "").replace(/^\ufeff/, "");
+for(let i=0; i<src.length; i++){
+const ch = src[i]; const next = src[i+1];
+if(ch === '"'){ if(inQuotes && next === '"'){ cell += '"'; i++; } else inQuotes = !inQuotes; }
+else if(ch === "," && !inQuotes){ row.push(cell.trim()); cell = ""; }
+else if((ch === "\n" || ch === "\r") && !inQuotes){ if(ch === "\r" && next === "\n") i++; row.push(cell.trim());
+if(row.some(x => x !== "")) rows.push(row); row = []; cell = ""; }
+else cell += ch;
 }
-
-function normalizeSpace(value){ return String(value ?? '').replace(/\s+/g, ' ').trim(); }
-function normalizeName(value){
-  return normalizeSpace(value)
-    .split(' ')
-    .filter(Boolean)
-    .map(part => part.split('-').map(piece => piece ? piece.charAt(0).toUpperCase() + piece.slice(1).toLowerCase() : '').join('-'))
-    .join(' ')
-    .replace(/\s+\(.*?\)\s*$/,'')
-    .trim();
+row.push(cell.trim()); if(row.some(x => x !== "")) rows.push(row); return rows;
 }
-function toInt(v){ const s = normalizeSpace(v); return /^-?\d+$/.test(s) ? parseInt(s,10) : null; }
-function escapeHtml(s){ return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
-function friendlyMoney(v){ return `${v >= 0 ? '+' : '-'}$${Math.abs(Number(v || 0)).toFixed(2).replace(/\.00$/,'')}`; }
-function uniqueSortedNames(names){
-  return [...new Set((names||[]).map(normalizeName).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+function squabbitNormalizeSpace(value){ return String(value ?? "").replace(/\s+/g, " ").trim(); }
+function squabbitDisplayName(value){
+const cleaned = squabbitNormalizeSpace(value).replace(/\s+\(.*?\)\s*$/, "").trim(); if(!cleaned) return "";
+return cleaned.split(" ").filter(Boolean).map(part => part.split("-").map(piece => { if(!piece) return ""; if(piece.length
+<= 2 && piece === piece.toUpperCase()) return piece; return piece.charAt(0).toUpperCase() +
+piece.slice(1).toLowerCase(); }).join("-")).join(" ").trim();
 }
-
-function generateAliasSuggestions(){
-  const players = state.rosterPlayers || [];
-  if(!players.length){
-    setPreview('aliasSuggestionsPreview','Load the pre round roster first, then generate alias suggestions.');
-    return;
-  }
-  const candidateMap = new Map();
-  function addCandidate(alias, player){
-    const key = normalizeSpace(alias);
-    if(!key || key.length < 2) return;
-    const lower = key.toLowerCase();
-    if(!candidateMap.has(lower)) candidateMap.set(lower, { alias:key, players:new Set() });
-    candidateMap.get(lower).players.add(player);
-  }
-  players.forEach(player => {
-    const parts = normalizeName(player).split(' ').filter(Boolean);
-    const first = parts[0] || '';
-    const last = parts[parts.length - 1] || '';
-    const initials = `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
-    if(first) addCandidate(first, player);
-    if(first.length >= 3) addCandidate(first.slice(0,3), player);
-    if(last) addCandidate(last, player);
-    if(last.length >= 3) addCandidate(last.slice(0,3), player);
-    if(initials.length === 2) addCandidate(initials, player);
-  });
-  const currentLines = $('aliasInput').value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-  const currentKeys = new Set(currentLines.map(line => normalizeSpace((line.split('=')[0]||'')).toLowerCase()).filter(Boolean));
-  const added=[]; const ambiguous=[];
-  [...candidateMap.values()].sort((a,b)=>a.alias.localeCompare(b.alias)).forEach(entry => {
-    const names=[...entry.players];
-    if(names.length===1){
-      const line=`${entry.alias}=${names[0]}`;
-      const key=entry.alias.toLowerCase();
-      if(!currentKeys.has(key)){ currentLines.push(line); currentKeys.add(key); added.push(line); }
-    }else{ ambiguous.push(`${entry.alias} -> ${names.join(' OR ')}`); }
-  });
-  $('aliasInput').value = currentLines.join('\n');
-  setPreview('aliasSuggestionsPreview', [added.length ? 'Added suggestions:' : 'No unique alias suggestions could be added.', ...(added.length ? added : []), '', ambiguous.length ? 'Needs your choice:' : 'No ambiguous alias candidates found.', ...(ambiguous.length ? ambiguous : [])].join('\n'));
-  parseAliases();
-  saveState();
+function squabbitToInt(value){ const s = squabbitNormalizeSpace(value); return /^-?\d+$/.test(s) ? parseInt(s,10) : null; }
+function squabbitUniqueSortedNames(names){ return [...new Set((names ||
+[]).map(squabbitDisplayName).filter(Boolean))].sort((a,b) => a.localeCompare(b)); }
+function squabbitSniffDelimiter(text){
+const sample = String(text || "").split(/\r?\n/).slice(0,20).join("\n"); const candidates = [",",";","\t","|"]; let best =
+","; let bestScore = -1;
+candidates.forEach(delimiter => { const score = sample.split(/\r?\n/).reduce((sum,line) => { if(delimiter === "\t") return
+sum + ((line.match(/\t/g) || []).length); const escaped = delimiter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); const re =
+new RegExp(escaped,"g"); return sum + ((line.match(re) || []).length); }, 0); if(score > bestScore){ best = delimiter;
+bestScore = score; } });
+return best;
 }
-
-function getModelPlan(){
-  const selected = $('modelSelect').value;
-  if(selected === 'google/gemini-2.5-flash') return ['google/gemini-2.5-flash'];
-  return ['google/gemini-2.5-flash','claude-sonnet-4','gpt-5-nano'];
+function squabbitParseCSV(text, delimiter){
+const rows = []; let row = []; let cell = ""; let inQuotes = false; const src = String(text || "").replace(/^\uFEFF/, "");
+for(let i=0; i<src.length; i++){
+const char = src[i]; const next = src[i+1];
+if(char === '"'){ if(inQuotes && next === '"'){ cell += '"'; i++; } else inQuotes = !inQuotes; }
+else if(char === delimiter && !inQuotes){ row.push(cell.trim()); cell = ""; }
+else if((char === "\n" || char === "\r") && !inQuotes){ if(char === "\r" && next === "\n") i++; row.push(cell.trim());
+rows.push(row); row = []; cell = ""; }
+else cell += char;
 }
-
-function saveState(){
-  localStorage.setItem(APP_KEY, JSON.stringify({
-    rosterPlayers: state.rosterPlayers,
-    scores: state.scores,
-    aliases: state.aliases,
-    ocrText: state.ocrText,
-    aiNotes: state.aiNotes,
-    aiQuestions: state.aiQuestions,
-    sheetRows: state.sheetRows,
-    winnerNotes: state.winnerNotes,
-    transcriptAudits: state.transcriptAudits,
-    ollamaEnabled: $('ollamaEnabled') ? $('ollamaEnabled').checked : false,
-    ollamaEndpoint: $('ollamaEndpoint') ? $('ollamaEndpoint').value : state.ollamaEndpoint,
-    ollamaModel: $('ollamaModel') ? $('ollamaModel').value : state.ollamaModel,
-    fastMode: $('fastModeToggle') ? $('fastModeToggle').checked : state.fastMode,
-    shotValue: state.shotValue,
-    maxShots: state.maxShots,
-    aliasText: $('aliasInput').value
-  }));
+if(cell.length || row.length){ row.push(cell.trim()); rows.push(row); }
+return rows.filter(r => r.some(c => squabbitNormalizeSpace(c)));
 }
-function loadState(){
-  try{
-    const raw = localStorage.getItem(APP_KEY);
-    if(!raw) return;
-    const parsed = JSON.parse(raw) || {};
-    Object.assign(state, parsed);
-    state.preparedSheets = [];
-    state.progressLines = [];
-    state.currentStage = 'Idle';
-    state.cacheHits = 0;
-    state.cacheMisses = 0;
-    if(parsed.aliasText) $('aliasInput').value = parsed.aliasText;
-    if($('fastModeToggle')) $('fastModeToggle').checked = parsed.fastMode !== false;
-  }catch(err){ console.error(err); }
+function squabbitIsNonPlayerName(name){
+const s = squabbitNormalizeSpace(name).toLowerCase();
+return !s || ["player","players","name","golfer","team","teams","gross","net","total","out","in","front","back","par","s.i
+.","si","handicap","hdcp","score","scores","matchup","matchups","hole","holes","round","tee","skins","strokeplay","strok
+e play","twos club","best ball","games","summary","totals"].includes(s);
 }
-function resetTool(){
-  localStorage.removeItem(APP_KEY);
-  state.rosterPlayers = [];
-  state.scores = {};
-  state.aliases = {};
-  state.betSheetFile = null;
-  state.ocrText = '';
-  state.aiNotes = [];
-  state.aiQuestions = [];
-  state.sheetRows = defaultRows();
-  state.preparedSheets = [];
-  state.winnerNotes = [];
-  state.transcriptAudits = [];
-  state.settlements = [];
-  state.playerLedgers = [];
-  state.fastMode = true;
-  state.retryModeUsed = false;
-  state.weakResult = false;
-  state.currentStage = 'Idle';
-  state.progressLines = [];
-  state.cacheHits = 0;
-  state.cacheMisses = 0;
-  state.shotValue = 3;
-  state.maxShots = 7;
-
-  $('aliasInput').value = DEFAULT_ALIASES;
-  if (betSheetPond) betSheetPond.removeFiles();
-  else $('betSheetInput').value = '';
-  $('modelSelect').value = 'auto';
-  if($('fastModeToggle')) $('fastModeToggle').checked = true;
-  $('rosterInput').value = '';
-  $('scoresInput').value = '';
-  $('shotValue').value = '3';
-  $('maxShots').value = '7';
-
-  setStatus('rosterPanel','rosterStatusList','info','Roster',['No roster loaded yet.']);
-  setStatus('scoresPanel','scoresStatusList','info','Scores',['No scores loaded yet.']);
-  setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['No image analyzed yet.']);
-  setStatus('calcPanel','calcStatusList','info','Calculation',['No settlement run yet.']);
-  setPreview('aliasSuggestionsPreview','No alias suggestions yet.');
-  setPreview('preparedViewsPreview','No prepared image views yet.');
-  setPreview('winnerPreview','No winner chosen yet.');
-  setPreview('mergedRowsPreview','No merged rows yet.');
-  setPreview('originalFilesPreview','No bet sheet images selected yet.');
-  setPreview('progressPreview','No processing run yet.');
-  setPreview('speedSummaryPreview','No speed summary yet.');
-  refreshAuthStatus();
-  render();
+function squabbitRowLooksLikePlayerScoreRow(row){
+const clean = (row || []).map(squabbitNormalizeSpace); const lower = clean.map(c => c.toLowerCase()); const name =
+squabbitDisplayName(clean[0] || "");
+if(!name || squabbitIsNonPlayerName(name)) return false; const hasTee = lower.some(c => c.includes("tee")); const
+numericCount = clean.filter(c => /^-?\d+$/.test(c)).length; return hasTee || numericCount >= 9;
 }
-
-function setStatus(panelId, listId, tone, title, lines){
-  const panel = $(panelId), list = $(listId);
-  panel.className = `statusPanel ${tone}`;
-  panel.querySelector('.statusTitle').textContent = title;
-  list.innerHTML = (lines && lines.length ? lines : ['No details']).map(line => `<li>${escapeHtml(line)}</li>`).join('');
+function squabbitAnalyzeRosterCSV(text){
+const delimiter = squabbitSniffDelimiter(text); const rows = squabbitParseCSV(text, delimiter); const names = []; let
+playersRow = -1;
+for(let i=0; i<rows.length; i++){ if((rows[i] || []).some(c => squabbitNormalizeSpace(c).toLowerCase() === "players")){
+playersRow = i; break; } }
+if(playersRow >= 0){
+const headerRow = rows[playersRow + 1] || []; let nameCol = headerRow.findIndex(c =>
+squabbitNormalizeSpace(c).toLowerCase() === "name"); if(nameCol < 0) nameCol = 0;
+for(let i=playersRow + 2; i<rows.length; i++){
+const row = rows[i] || []; const first = squabbitNormalizeSpace(row.find(c => squabbitNormalizeSpace(c)) || "");
+if(!first) break;
+if(/^(skins|strokeplay|stroke play|twos club|best ball|games|summary|totals|round \d+)$/i.test(first)) break;
+const name = squabbitDisplayName(row[nameCol] || row[0] || ""); if(name && !squabbitIsNonPlayerName(name))
+names.push(name);
 }
-function setPreview(id, text){ $(id).textContent = text || 'Nothing to show.'; }
-
-function updateSummary(){
-  $('summaryPlayers').textContent = String(state.rosterPlayers.length || 0);
-  $('summaryScores').textContent = String(Object.keys(state.scores || {}).length || 0);
-  const readyRows = state.sheetRows.filter(row => row.left_players.filter(Boolean).length >= 2 && row.right_players.filter(Boolean).length >= 2).length;
-  $('summaryRows').textContent = String(readyRows);
-  $('summarySettlements').textContent = String(state.settlements.length || 0);
 }
-
-function sniffDelimiter(text){
-  const sample = String(text || '').split(/\r?\n/).slice(0,20).join('\n');
-  const candidates = [',',';','\t','|'];
-  let best = ','; let bestScore = -1;
-  candidates.forEach(delimiter => {
-    const score = sample.split(/\r?\n/).reduce((sum,line) => {
-      if(delimiter === '\t') return sum + ((line.match(/\t/g)||[]).length);
-      const re = new RegExp(`\\${delimiter}`,'g');
-      return sum + ((line.match(re)||[]).length);
-    },0);
-    if(score > bestScore){ best = delimiter; bestScore = score; }
-  });
-  return best;
+rows.forEach(row => { if(squabbitRowLooksLikePlayerScoreRow(row)){ const name = squabbitDisplayName(row[0] || ""); if(name
+&& !squabbitIsNonPlayerName(name)) names.push(name); } });
+if(!names.length){
+const headerIndex = rows.findIndex(row => row.some(c =>
+["name","player","golfer"].includes(squabbitNormalizeSpace(c).toLowerCase())));
+if(headerIndex >= 0){ const header = rows[headerIndex]; let nameCol = header.findIndex(c =>
+["name","player","golfer"].includes(squabbitNormalizeSpace(c).toLowerCase())); if(nameCol < 0) nameCol = 0; for(let
+i=headerIndex + 1; i<rows.length; i++){ const name = squabbitDisplayName(rows[i][nameCol] || ""); if(name &&
+!squabbitIsNonPlayerName(name)) names.push(name); } }
 }
-function parseCSV(text, delimiter){
-  const rows = []; let row = []; let cell = ''; let inQuotes = false;
-  const src = String(text || '').replace(/^\uFEFF/,'');
-  for(let i=0;i<src.length;i++){
-    const char = src[i], next = src[i+1];
-    if(char === '"'){
-      if(inQuotes && next === '"'){ cell += '"'; i++; }
-      else inQuotes = !inQuotes;
-    }else if(char === delimiter && !inQuotes){
-      row.push(cell.trim()); cell='';
-    }else if((char === '\n' || char === '\r') && !inQuotes){
-      if(char === '\r' && next === '\n') i++;
-      row.push(cell.trim()); rows.push(row); row=[]; cell='';
-    }else cell += char;
-  }
-  if(cell.length || row.length){ row.push(cell.trim()); rows.push(row); }
-  return rows.filter(r => r.some(c => normalizeSpace(c)));
+return squabbitUniqueSortedNames(names);
 }
-function rowLooksLikePlayerScoreRow(row){
-  const clean = (row||[]).map(normalizeSpace);
-  const lower = clean.map(c => c.toLowerCase());
-  const name = normalizeName(clean[0] || '');
-  if(!name || ['par','s.i.','si','name'].includes(name.toLowerCase())) return false;
-  const hasTee = lower.some(c => c.includes('tee'));
-  const numericCount = clean.filter(c => /^-?\d+$/.test(c)).length;
-  return hasTee || numericCount >= 9;
+function squabbitHoleIndexFromHeader(header){
+const h = squabbitNormalizeSpace(header).toLowerCase(); let m = h.match(/^(?:hole|h)\s*0?([1-9]|1[0-8])$/i); if(m) return
+Number(m[1]); m = h.match(/^0?([1-9]|1[0-8])$/); if(m) return Number(m[1]); m =
+h.match(/(?:hole|h)\s*0?([1-9]|1[0-8])\b/i); if(m) return Number(m[1]); return -1;
 }
-function analyzeRosterCSV(text){
-  const delimiter = sniffDelimiter(text);
-  const rows = parseCSV(text, delimiter);
-  const names = [];
-  let playersRow = -1;
-  for(let i=0;i<rows.length;i++){
-    if((rows[i]||[]).some(c => normalizeSpace(c).toLowerCase() === 'players')){ playersRow = i; break; }
-  }
-  if(playersRow >= 0){
-    const headerRow = rows[playersRow + 1] || [];
-    let nameCol = headerRow.findIndex(c => normalizeSpace(c).toLowerCase() === 'name');
-    if(nameCol < 0) nameCol = 0;
-    for(let i=playersRow + 2;i<rows.length;i++){
-      const row = rows[i] || [];
-      const first = normalizeSpace((row.find(c => normalizeSpace(c)) || ''));
-      if(!first) break;
-      if(/^(skins|strokeplay|stroke play|twos club|best ball|games|summary|totals|round \d+)$/i.test(first)) break;
-      const name = normalizeName(row[nameCol] || row[0] || '');
-      if(name) names.push(name);
-    }
-  }
-  rows.forEach(row => {
-    if(rowLooksLikePlayerScoreRow(row)){
-      const name = normalizeName(row[0] || '');
-      if(name) names.push(name);
-    }
-  });
-  return uniqueSortedNames(names);
+function squabbitBuildHoleIndex(row){ const index = {}; (row || []).forEach((cell,i) => { const hole =
+squabbitHoleIndexFromHeader(cell); if(hole >= 1 && hole <= 18 && index[hole] === undefined) index[hole] = i; }); return
+Object.keys(index).length ? index : null; }
+function squabbitFindNameColumn(headerRow){ const header = headerRow || []; const nameCol = header.findIndex(c => { const h
+= squabbitNormalizeSpace(c).toLowerCase(); return h === "name" || h === "player" || h === "golfer"; }); return nameCol >=
+0 ? nameCol : 0; }
+function squabbitAnalyzeScoresCSV(text){
+const delimiter = squabbitSniffDelimiter(text); const rows = squabbitParseCSV(text, delimiter); let headerIndex = -1; let
+holeIndex = null;
+for(let i=0; i<rows.length; i++){ const possibleHoleIndex = squabbitBuildHoleIndex(rows[i]); if(possibleHoleIndex &&
+Object.keys(possibleHoleIndex).length >= 9){ headerIndex = i; holeIndex = possibleHoleIndex; break; } }
+const scores = {}; if(headerIndex < 0 || !holeIndex) return scores; const nameCol =
+squabbitFindNameColumn(rows[headerIndex]);
+for(let i=headerIndex + 1; i<rows.length; i++){
+const row = rows[i] || []; const name = squabbitDisplayName(row[nameCol] || row[0] || ""); const rowText = row.map(c =>
+squabbitNormalizeSpace(c).toLowerCase());
+if(!name || squabbitIsNonPlayerName(name)) continue; const numericCount = row.filter(c =>
+/^-?\d+$/.test(squabbitNormalizeSpace(c))).length; const hasTee = rowText.some(c => c.includes("tee")); if(!hasTee &&
+numericCount < 9) continue;
+const strokes = [];
+for(let h=1; h<=18; h++){ const col = holeIndex[h]; const value = squabbitToInt(row[col]); if(value == null || value <=
+0 || value > 20){ strokes.length = 0; break; } strokes.push(value); }
+if(strokes.length === 18) scores[name] = strokes;
 }
-function buildHoleIndex(row){
-  const index = {};
-  (row||[]).forEach((cell,i) => {
-    const t = normalizeSpace(cell).toLowerCase();
-    for(let h=1;h<=18;h++) if(t === `hole ${h}` || t === `hole${h}` || t === `${h}`) index[h] = i;
-  });
-  return Object.keys(index).length ? index : null;
+return scores;
 }
-function analyzeScoresCSV(text){
-  const delimiter = sniffDelimiter(text);
-  const rows = parseCSV(text, delimiter);
-  let headerIndex = -1, holeIndex = null;
-  for(let i=0;i<rows.length;i++){
-    if((rows[i]||[]).some(c => /hole\s*1/i.test(c || ''))){ headerIndex = i; holeIndex = buildHoleIndex(rows[i]); break; }
-  }
-  const scores = {};
-  if(headerIndex < 0 || !holeIndex) return scores;
-  for(let i=headerIndex + 1;i<rows.length;i++){
-    const row = rows[i] || [];
-    const name = normalizeName(row[0] || '');
-    const rowText = row.map(c => normalizeSpace(c).toLowerCase());
-    if(!name) continue;
-    if(['par','s.i.','si','name'].includes(name.toLowerCase())) continue;
-    if(!rowText.some(c => c.includes('tee')) && row.filter(c => /^-?\d+$/.test(normalizeSpace(c))).length < 9) continue;
-    const strokes = [];
-    for(let h=1;h<=18;h++){
-      const value = toInt(row[holeIndex[h]]);
-      if(value == null){ strokes.length = 0; break; }
-      strokes.push(value);
-    }
-    if(strokes.length === 18) scores[name] = strokes;
-  }
-  return scores;
+function reparseAll(){
+parseAliases();
+const manualText = els.manualBetsBox.value.trim(); const rawText = els.rawTextBox.value.trim();
+if(manualText) state.matchups = parseMatchups(manualText);
+else if(rawText){ state.rawBetText = rawText; state.matchups = parseMatchups(rawText); }
+state.results = calculateResults(); state.ledger = buildLedger(state.results); renderAll();
+}
+function useManualBets(){
+const text = els.manualBetsBox.value.trim(); if(!text){ alert("Paste matchups in the manual matchup box first."); return;
+}
+state.matchups = parseMatchups(text);
+setStatus(els.betPanel, els.betStatusList, state.matchups.length ? "ok" : "error", "Manual Matchups",
+state.matchups.length ? ["Using manual matchups.", "Found " + state.matchups.length + " matchup row(s)."] : ["Manual
+text did not produce any valid 2v2 rows."]);
+reparseAll();
 }
 function parseAliases(){
-  const lines = $('aliasInput').value.split(/\r?\n/);
-  const map = {};
-  lines.forEach(line => {
-    const raw = line.trim();
-    if(!raw) return;
-    const parts = raw.split('=');
-    if(parts.length < 2) return;
-    const key = normalizeSpace(parts[0]);
-    const value = normalizeName(parts.slice(1).join('='));
-    if(key && value) map[key.toLowerCase()] = value;
-  });
-  state.aliases = map;
-  return map;
+state.aliases = new Map(); const lines = els.aliasesBox.value.split(/\n+/);
+for(const line of lines){ const trimmed = line.trim(); if(!trimmed || trimmed.startsWith("#")) continue; const parts =
+trimmed.split(/\s*=\s*/); if(parts.length !== 2) continue; const left = normalizeName(parts[0]); const right =
+cleanName(parts[1]); if(left && right) state.aliases.set(left, right); }
 }
-function resolveAliasMeta(rawName){
-  const raw = normalizeSpace(rawName);
-  if(!raw) return { player:'', matched:false };
-  const lower = raw.toLowerCase();
-  if(state.aliases[lower]) return { player: state.aliases[lower], matched:true };
-  const exact = state.rosterPlayers.find(p => p.toLowerCase() === lower);
-  if(exact) return { player: exact, matched:true };
-  const byLast = state.rosterPlayers.find(p => p.split(' ').slice(-1)[0].toLowerCase() === lower);
-  if(byLast) return { player: byLast, matched:true };
-  const partial = state.rosterPlayers.find(p => p.toLowerCase().includes(lower));
-  if(partial) return { player: partial, matched:true };
-  return { player: normalizeName(raw), matched:false };
+function getMoneySettings(){ return { shotValue:Math.max(0, Number(els.shotValue.value || 0)), maxShots:Math.max(0,
+Number(els.maxShots.value || 0)) }; }
+function calculateResults(){
+const results = []; const settings = getMoneySettings();
+for(const matchup of state.matchups){
+const resolution = resolveMatchup(matchup); const warnings = [...resolution.warnings];
+const result = { matchup, team1Players:resolution.team1, team2Players:resolution.team2, t1Total:null, t2Total:null,
+winner:"Waiting on scores", margin:null, countedShots:null, perPerson:0, teamTransfer:0, payments:[], warnings };
+if(!state.scoreMap.size){ results.push(result); continue; }
+if(!resolution.team1.every(Boolean) || !resolution.team2.every(Boolean)){ result.winner = "Missing player score";
+results.push(result); continue; }
+const t1Scores = resolution.team1.map(p => p.scores || []); const t2Scores = resolution.team2.map(p => p.scores || []);
+let t1Total = 0, t2Total = 0, holesCounted = 0;
+for(let h=0; h<18; h++){
+const t1Hole = [t1Scores[0][h], t1Scores[1][h]].filter(Number.isFinite); const t2Hole = [t2Scores[0][h],
+t2Scores[1][h]].filter(Number.isFinite);
+if(!t1Hole.length || !t2Hole.length){ warnings.push("Hole " + (h+1) + " missing score"); continue; }
+t1Total += Math.min(...t1Hole); t2Total += Math.min(...t2Hole); holesCounted++;
 }
-function resolveAlias(rawName){
-  return resolveAliasMeta(rawName).player;
+if(holesCounted < 18) warnings.push("Only counted " + holesCounted + " of 18 holes");
+result.t1Total = holesCounted ? t1Total : null; result.t2Total = holesCounted ? t2Total : null;
+if(!holesCounted){ result.winner = "No score"; results.push(result); continue; }
+if(t1Total === t2Total){ result.winner = "Push"; result.margin = 0; result.countedShots = 0; results.push(result);
+continue; }
+const team1Wins = t1Total < t2Total; const margin = Math.abs(t1Total - t2Total); const countedShots = Math.min(margin,
+settings.maxShots); const perPerson = countedShots * settings.shotValue;
+result.margin = margin; result.countedShots = countedShots; result.perPerson = perPerson; result.teamTransfer =
+perPerson * 2;
+const winners = team1Wins ? resolution.team1 : resolution.team2; const losers = team1Wins ? resolution.team2 :
+resolution.team1;
+result.winner = teamLabel(winners.map(p => p.name));
+for(let i=0; i<Math.min(winners.length, losers.length); i++){
+if(perPerson > 0) result.payments.push({ from:losers[i].name, to:winners[i].name, amount:perPerson });
 }
-function fileToText(file){ return file.text(); }
-function playerGrossScore(name){
-  const strokes = state.scores && state.scores[name];
-  if(!Array.isArray(strokes) || strokes.length !== 18) return null;
-  return strokes.reduce((sum, value) => sum + (Number(value) || 0), 0);
+results.push(result);
 }
-
-const AUTH_TIMEOUT_MS = 25000;
-function isFileProtocol(){ return window.location.protocol === 'file:'; }
-function isUnsafePuterEnvironment(){ return !!window.crossOriginIsolated; }
-function authStatusLines(baseLines){
-  const lines = [...baseLines];
-  if(isFileProtocol()) lines.push('This page is running from file://. Open it from http://localhost or a normal https page instead.');
-  if(isUnsafePuterEnvironment()) lines.push('This page is cross origin isolated. Puter popup login can fail in that mode.');
-  return lines;
+return results;
 }
-function withTimeout(promise, ms, message){
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
-  ]);
+function buildLedger(results){
+const ledger = new Map();
+for(const p of allKnownPlayers()){ ledger.set(p.name, { name:p.name, score:playerGrossScore(p.name), net:0, lines:[] }); }
+for(const result of results){
+for(const payment of result.payments || []){
+if(!ledger.has(payment.from)) ledger.set(payment.from, { name:payment.from, score:playerGrossScore(payment.from),
+net:0, lines:[] });
+if(!ledger.has(payment.to)) ledger.set(payment.to, { name:payment.to, score:playerGrossScore(payment.to), net:0,
+lines:[] });
+ledger.get(payment.from).net -= payment.amount; ledger.get(payment.to).net += payment.amount;
+const label = teamLabel(result.matchup.team1) + " vs " + teamLabel(result.matchup.team2);
+ledger.get(payment.from).lines.push("Pay " + payment.to + " " + money(payment.amount) + " - " + label);
+ledger.get(payment.to).lines.push("Collect " + money(payment.amount) + " from " + payment.from + " - " + label);
 }
-async function refreshAuthStatus(){
-  try{
-    if(!window.puter || !puter.ai || !puter.auth){
-      setStatus('authPanel','authStatusList','error','Authentication',['Puter.js did not load on this page.']);
-      return;
-    }
-    const signedIn = await Promise.resolve(puter.auth.isSignedIn());
-    if(!signedIn){
-      setStatus('authPanel','authStatusList','info','Authentication', authStatusLines([
-        'Puter is loaded in this page.',
-        'No Puter session is active yet.',
-        'Use Continue as Guest first if normal Puter sign in keeps spinning.'
-      ]));
-      return;
-    }
-    let userText = 'Signed in with Puter.';
-    try{
-      const user = await puter.auth.getUser();
-      if(user){
-        if(user.is_temp) userText = 'Signed in with a temporary Puter guest session.';
-        else if(user.username || user.email || user.name) userText = `Signed in as ${user.username || user.email || user.name}.`;
-      }
-    }catch(_){}
-    setStatus('authPanel','authStatusList','ok','Authentication', authStatusLines([
-      userText,
-      'Read Sheet Text and Build Rows from Image should run from this browser session.'
-    ]));
-  }catch(err){
-    setStatus('authPanel','authStatusList','warn','Authentication', authStatusLines([
-      err.message || 'Could not read auth status.',
-      'Try Continue as Guest, then try again.'
-    ]));
-  }
 }
-async function ensurePuterReady(){
-  if(!window.puter || !puter.ai || !puter.auth) throw new Error('Puter.js did not load.');
-  if(isFileProtocol()) throw new Error('This page is opened as a local file. Puter works better from http://localhost or a normal https page.');
-  if(isUnsafePuterEnvironment()) throw new Error('This page is cross origin isolated. Puter popup auth can fail in that mode.');
+return Array.from(ledger.values()).sort((a,b) => b.net - a.net || a.name.localeCompare(b.name));
 }
-async function ensurePuterSession(actionLabel, options = {}){
-  await ensurePuterReady();
-  const guestPreferred = options.guestPreferred !== false;
-  try{
-    const signedIn = await withTimeout(Promise.resolve(puter.auth.isSignedIn()), 5000, 'Timed out checking Puter session.');
-    if(signedIn){ await refreshAuthStatus(); return true; }
-  }catch(_){}
-
-  setStatus('authPanel','authStatusList','info','Authentication', authStatusLines([
-    `${actionLabel} is opening Puter sign in from this tap.`,
-    guestPreferred ? 'Trying guest session first.' : 'Trying normal Puter sign in first.',
-    'If a popup opens, finish it and return to this tab.'
-  ]));
-
-  const attempts = guestPreferred
-    ? [() => puter.auth.signIn({ attempt_temp_user_creation: true }), () => puter.auth.signIn()]
-    : [() => puter.auth.signIn(), () => puter.auth.signIn({ attempt_temp_user_creation: true })];
-
-  let lastError = null;
-  for(const attempt of attempts){
-    try{
-      await withTimeout(Promise.resolve(attempt()), AUTH_TIMEOUT_MS, 'Puter sign in did not complete. Check popup blocking or open this page from localhost instead of file://.');
-      const signedInAfter = await withTimeout(Promise.resolve(puter.auth.isSignedIn()), 6000, 'Timed out verifying Puter session after sign in.');
-      if(signedInAfter){ await refreshAuthStatus(); return true; }
-      lastError = new Error('Puter popup closed but no signed in session was detected.');
-    }catch(err){ lastError = err; }
-  }
-  throw lastError || new Error('Could not create a Puter session.');
+function resolveMatchup(matchup){ const warnings=[]; const team1 = matchup.team1.map(name => resolvePlayer(name,warnings));
+const team2 = matchup.team2.map(name => resolvePlayer(name,warnings)); return { team1, team2,
+warnings:uniqueList(warnings) }; }
+function resolvePlayer(inputName,warnings){
+const aliasTarget = state.aliases.get(normalizeName(inputName)); const wanted = aliasTarget || inputName; const key =
+normalizeName(wanted);
+if(state.scoreMap.has(key)) return state.scoreMap.get(key);
+const allPlayers = allKnownPlayers(); const exact = allPlayers.find(p => normalizeName(p.name) === key);
+if(exact && state.scoreMap.has(normalizeName(exact.name))) return state.scoreMap.get(normalizeName(exact.name));
+const candidates = allPlayers.filter(p => namesCouldMatch(wanted, p.name)); const scoredCandidates = candidates.filter(p
+=> state.scoreMap.has(normalizeName(p.name)));
+if(scoredCandidates.length === 1) return state.scoreMap.get(normalizeName(scoredCandidates[0].name));
+if(scoredCandidates.length > 1){ warnings.push("Ambiguous name: " + inputName + " could be " + scoredCandidates.map(p =>
+p.name).join(", ")); return null; }
+if(state.scoreMap.size) warnings.push("No score found for " + inputName); return null;
 }
-
-function extractPuterText(response){
-  if(response == null) return '';
-  if(typeof response === 'string') return response;
-  if(typeof response?.message?.content === 'string') return response.message.content;
-  if(Array.isArray(response?.message?.content)){
-    return response.message.content.map(part => {
-      if(typeof part === 'string') return part;
-      if(part?.text) return part.text;
-      if(part?.content) return part.content;
-      return '';
-    }).join('\n').trim();
-  }
-  if(response?.text) return response.text;
-  return JSON.stringify(response, null, 2);
+function allKnownPlayers(){ const map = new Map(); for(const p of [...state.prePlayers, ...state.postPlayers])
+map.set(normalizeName(p.name), p); return Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name)); }
+function namesCouldMatch(a,b){
+const na = normalizeName(a), nb = normalizeName(b); if(!na || !nb) return false; if(na === nb) return true; if(na.length
+>= 4 && nb.includes(na)) return true; if(nb.length >= 4 && na.includes(nb)) return true;
+const at = na.split(" ").filter(Boolean), bt = nb.split(" ").filter(Boolean); if(!at.length || !bt.length) return false;
+const aLast = at[at.length-1], bLast = bt[bt.length-1]; if(aLast.length >= 4 && aLast === bLast) return true;
+if(at.length === 1) return bt.some(token => token.length >= 4 && token === at[0]); if(bt.length === 1) return
+at.some(token => token.length >= 4 && token === bt[0]); return at[0][0] === bt[0][0] && aLast === bLast;
 }
-function stripCodeFence(text){
-  const raw = String(text || '').trim();
-  const match = raw.match(/```(?:[\w-]+)?\s*([\s\S]*?)```/i);
-  return match ? match[1].trim() : raw;
+function renderAll(){ renderSummary(); renderChecks(); renderPlayers(); renderMatchups(); renderResults(); renderLedger(); }
+function renderSummary(){
+els.summaryMatchups.textContent = String(state.matchups.length); els.summaryRoster.textContent =
+String(state.prePlayers.length); els.summaryScores.textContent = String(state.scoreMap.size);
+const finished = state.results.filter(r => Number.isFinite(r.t1Total) && Number.isFinite(r.t2Total)).length;
+els.summaryFinished.textContent = String(finished);
+const totalSettled = state.results.reduce((sum,r) => sum + (r.teamTransfer || 0), 0); els.summaryMoney.textContent =
+money(totalSettled);
 }
-
-async function loadRoster(){
-  const file = $('rosterInput').files && $('rosterInput').files[0];
-  if(!file){ setStatus('rosterPanel','rosterStatusList','error','Roster',['Choose a roster CSV first.']); return; }
-  try{
-    const text = await fileToText(file);
-    state.rosterPlayers = analyzeRosterCSV(text);
-    setStatus('rosterPanel','rosterStatusList', state.rosterPlayers.length ? 'ok' : 'error', 'Roster', [
-      state.rosterPlayers.length ? `Loaded ${state.rosterPlayers.length} players.` : 'No players found in this roster file.'
-    ]);
-    saveState(); render();
-  }catch(err){ setStatus('rosterPanel','rosterStatusList','error','Roster',[err.message || 'Could not load roster.']); }
+function renderChecks(){
+if(!state.matchups.length) els.betCheck.textContent = "No valid 2v2 matchups found yet.";
+else { const duplicateCount = findDuplicateMatchupKeys(state.matchups).size; els.betCheck.textContent = "Matchups found: "
++ state.matchups.length + "\nDuplicate matchup groups: " + duplicateCount; }
+if(!state.prePlayers.length && !state.postPlayers.length) els.rosterCheck.textContent = "No Squabbit roster loaded.";
+else { const warnings=[]; for(const matchup of state.matchups) resolveMatchup(matchup).warnings.forEach(w =>
+warnings.push(w)); const uniqueWarnings=uniqueList(warnings); els.rosterCheck.textContent = "Known players: " +
+allKnownPlayers().length + "\nRoster players: " + state.prePlayers.length + "\nScore players: " +
+state.postPlayers.length + "\nName warnings: " + uniqueWarnings.length + (uniqueWarnings.length ? "\n" +
+uniqueWarnings.slice(0,6).join("\n") : ""); }
+if(!state.scoreMap.size) els.scoreCheck.textContent = "No completed post-round scores loaded.";
+else { const complete = Array.from(state.scoreMap.values()).filter(p => scoreCompleteness(p) >= 18).length; const finished
+= state.results.filter(r => Number.isFinite(r.t1Total) && Number.isFinite(r.t2Total)).length;
+els.scoreCheck.textContent = "Players with completed scores: " + state.scoreMap.size + "\nComplete 18-hole scorecards: "
++ complete + "\nFinished matchups: " + finished + " of " + state.matchups.length; }
+els.rosterPreview.textContent = state.prePlayers.length ? state.prePlayers.map(p => p.name).join("\n") : "No roster loaded
+yet.";
+els.scorePreview.textContent = state.postPlayers.length ? state.postPlayers.map(p => p.name + ": " +
+sumScores(p.scores)).join("\n") : "No completed scores loaded yet.";
 }
-async function loadScores(){
-  const file = $('scoresInput').files && $('scoresInput').files[0];
-  if(!file){ setStatus('scoresPanel','scoresStatusList','error','Scores',['Choose a completed round CSV first.']); return; }
-  try{
-    const text = await fileToText(file);
-    state.scores = analyzeScoresCSV(text);
-    const scoreNames = Object.keys(state.scores).sort((a,b)=>a.localeCompare(b));
-    state.rosterPlayers = uniqueSortedNames([...(state.rosterPlayers || []), ...scoreNames]);
-    setStatus('scoresPanel','scoresStatusList', scoreNames.length ? 'ok' : 'error', 'Scores', [
-      scoreNames.length ? `Loaded ${scoreNames.length} completed score row(s).` : 'No completed 18 hole score rows found.'
-    ]);
-    saveState(); render();
-  }catch(err){ setStatus('scoresPanel','scoresStatusList','error','Scores',[err.message || 'Could not load scores.']); }
-}
-function clearRoster(){ state.rosterPlayers = []; saveState(); setStatus('rosterPanel','rosterStatusList','info','Roster',['Roster cleared.']); render(); }
-function clearScores(){ state.scores = {}; saveState(); setStatus('scoresPanel','scoresStatusList','info','Scores',['Scores cleared.']); render(); }
-function clearSheet(){
-  state.betSheetFile = null;
-  state.ocrText = '';
-  state.aiNotes = [];
-  state.aiQuestions = [];
-  state.preparedSheets = [];
-  state.winnerNotes = [];
-  state.transcriptAudits = [];
-  state.sheetRows = defaultRows();
-  if (betSheetPond) betSheetPond.removeFiles();
-  else $('betSheetInput').value = '';
-  $('modelSelect').value = 'auto';
-  setStatus('sheetPanel','sheetStatusList','info','Bet sheet',['Bet sheet data cleared. Start with one blank row again.']);
-  saveState(); render();
-}
-
-function buildReadPrompt(){
-  return [
-    'Transcribe this handwritten golf best ball bet sheet as plain text.',
-    'Read the full sheet from top to bottom.',
-    'Look carefully at the very top rows and the very bottom rows so no bets are missed.',
-    'Keep the order from top to bottom.',
-    'Keep line breaks.',
-    'Do not summarize.',
-    'If something is unclear, write ? instead of inventing it.'
-  ].join('\n');
-}
-function buildRowsPrompt(passNumber){
-  const players = state.rosterPlayers.join(', ') || 'None';
-  const aliases = JSON.stringify(state.aliases || {});
-  const ocrHint = state.ocrText ? `Weak OCR hint:
-${state.ocrText}` : 'No OCR hint.';
-  const strictLine = passNumber === 2
-    ? 'Second pass: go line by line and do not skip short rows, ditto rows, or partially blank rows if there are names on either side.'
-    : 'Go line by line in the same visual order as the sheet.';
-  return [
-    'You are reading a handwritten golf best ball bet sheet.',
-    'This is NOT hole by hole scoring.',
-    'Each visible row is one matchup between a left team and a right team.',
-    strictLine,
-    'There is no fixed number of rows. Count every visible matchup row with names, ditto marks, quote marks, carry lines, or a visible numbered row marker on the right side.',
-    'Keep the row order exactly as it appears from top to bottom on the sheet.',
-    'Use the right-most numbered markers as row guides. If rows 1 through 15 are visible, aim to output 15 ROW lines in that order.',
-    'A vertical line drawn downward from a player means that same player continues on the rows below until the line ends.',
-    'If a row looks blank except for a continuation line or ditto marks, it is still a real bet row and should be output.',
-    'If one carried player stays the same and only the partner changes, keep the anchor and change only the partner.',
-    'Ditto marks, quote marks, SAME, or vertical carry marks can mean use the same player or same side as the row above.',
-    'If a single partner name is written under a carried anchor player, keep the anchor from above and treat the new written name as the partner.',
-    'If you are unsure whether a mark is a ditto mark or a handwritten W in WAT, prefer WAT when there is a visible W shape and only use ditto when there is no actual letter.',
-    'Do not output the exact same matchup twice in a row unless the sheet clearly repeats it. If it looks duplicated, lower confidence and question it.',
-    'Pay extra attention to the first few rows at the top and the last few rows at the bottom.',
-    'Return ONLY plain text lines with no markdown and no extra commentary.',
-    'Use these line types only:',
-    'ROW|order|left players raw comma separated|right players raw comma separated|confidence|notes',
-    'QUESTION|text',
-    'NOTE|text',
-    'Rules:',
-    '1. For ROW lines, keep raw abbreviations in the player lists. Do not expand them there.',
-    '2. If a whole side repeats from the row above, output SAME for that side.',
-    '3. If one player repeats from above, output SAME in just that player position.',
-    '4. If unsure, use ? in that position and explain in notes.',
-    '5. Include every row you can see, even if part of it is uncertain.',
-    '6. Keep rows in visual order from the sheet.',
-    '7. Do not return JSON.',
-    `Known players: ${players}`,
-    `Alias map: ${aliases}`,
-    ocrHint
-  ].join('\n');
-}
-
-function parseTokenList(text){
-  const raw = normalizeSpace(text);
-  if(!raw) return [];
-  return raw.split(',').map(item => normalizeSpace(item)).filter(Boolean);
-}
-function applyCarryForward(tokens, prevTokens){
-  const clean = (tokens || []).map(t => normalizeSpace(t));
-  const prev = Array.isArray(prevTokens) ? prevTokens : [];
-  if(!clean.length) return [];
-  if(clean.length === 1 && clean[0].toUpperCase() === 'SAME') return prev.slice();
-  const out = [];
-  const maxLen = Math.max(clean.length, prev.length);
-  for(let i=0;i<maxLen;i++){
-    const token = normalizeSpace(clean[i] || '');
-    if(!token) continue;
-    if(token.toUpperCase() === 'SAME' || token === '"' || token === "''" || token === '""'){
-      if(prev[i]) out.push(prev[i]);
-    }else{
-      out.push(token);
-    }
-  }
-  return out.filter(Boolean);
-}
-
-function isDittoToken(token){
-  const t = normalizeSpace(token);
-  return !t || t.toUpperCase() === 'SAME' || t === '"' || t === "''" || t === '""' || t === '“' || t === '”';
-}
-function maybeTreatAsPartnerChange(tokens, prevTokens){
-  const clean = (tokens || []).map(normalizeSpace).filter(Boolean);
-  const prev = (prevTokens || []).map(normalizeSpace).filter(Boolean);
-  if(!clean.length) return [];
-  if(clean.length >= 2) return clean;
-  const token = clean[0];
-  if(isDittoToken(token)) return prev.slice();
-  if(prev.length >= 2){
-    if(token.toLowerCase() === prev[0].toLowerCase()) return prev.slice();
-    return [prev[0], token];
-  }
-  return clean;
-}
-function normalizeRowTeams(rows){
-  let prevLeft = [];
-  let prevRight = [];
-  return (rows || []).map(row => {
-    let leftRaw = maybeTreatAsPartnerChange(row.left_raw || [], prevLeft);
-    let rightRaw = maybeTreatAsPartnerChange(row.right_raw || [], prevRight);
-
-    if(!leftRaw.length && prevLeft.length) leftRaw = prevLeft.slice();
-    if(!rightRaw.length && prevRight.length) rightRaw = prevRight.slice();
-
-    // If right side shows only a new partner but prior right anchor exists, keep the anchor.
-    if(rightRaw.length === 1 && prevRight.length >= 2 && rightRaw[0].toLowerCase() !== prevRight[0].toLowerCase()){
-      rightRaw = [prevRight[0], rightRaw[0]];
-    }
-    // If left side shows only a new partner but prior left anchor exists, keep the anchor.
-    if(leftRaw.length === 1 && prevLeft.length >= 2 && leftRaw[0].toLowerCase() !== prevLeft[0].toLowerCase()){
-      leftRaw = [prevLeft[0], leftRaw[0]];
-    }
-
-    const leftPlayers = leftRaw.map(token => resolveAliasMeta(token).player).filter(Boolean);
-    const rightPlayers = rightRaw.map(token => resolveAliasMeta(token).player).filter(Boolean);
-
-    prevLeft = leftRaw.slice();
-    prevRight = rightRaw.slice();
-
-    return { ...row, left_raw:leftRaw, right_raw:rightRaw, left_players:leftPlayers, right_players:rightPlayers };
-  });
-}
-
-function canonicalTeamTokens(rawTokens, resolvedPlayers){
-  const source = (resolvedPlayers && resolvedPlayers.length ? resolvedPlayers : rawTokens || [])
-    .map(normalizeSpace)
-    .filter(Boolean)
-    .map(v => v.toLowerCase());
-  return [...new Set(source)].sort();
-}
-function matchupKeyFromRow(row){
-  const left = canonicalTeamTokens(row.left_raw || [], row.left_players || []);
-  const right = canonicalTeamTokens(row.right_raw || [], row.right_players || []);
-  return `${left.join(' / ')} || ${right.join(' / ')}`;
-}
-function enforceNoConsecutiveDuplicateMatchups(rows, questionList){
-  const out = [];
-  let prevKey = '';
-  (rows || []).forEach((row, idx) => {
-    const key = matchupKeyFromRow(row);
-    let nextRow = { ...row };
-    if(key && prevKey && key === prevKey){
-      nextRow.notes = [row.notes || '', 'Consecutive duplicate matchup detected. Review this row against the sheet before using it.'].filter(Boolean).join(' ');
-      nextRow.confidence = Math.min(Number(row.confidence || 0), 0.15);
-      questionList.push({
-        question: `Row ${nextRow.order || idx + 1} appears to repeat the exact same matchup as the row above. Confirm whether this row is really ${ (nextRow.left_raw || []).join(' / ') } vs ${ (nextRow.right_raw || []).join(' / ') } or correct it from the sheet.`,
-        options: []
-      });
-    }
-    out.push(nextRow);
-    prevKey = key || prevKey;
-  });
-  return out;
-}
-function parseAiRows(text){
-  const rawLines = stripCodeFence(text).split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-  const rows = [];
-  const notes = [];
-  const questions = [];
-  const unknownAliasQuestions = [];
-  const unknownSeen = new Set();
-  let prevLeft = [];
-  let prevRight = [];
-  let fallbackOrder = 1;
-
-  rawLines.forEach(line => {
-    const upper = line.toUpperCase();
-    if(upper.startsWith('QUESTION|')){
-      questions.push({ question: line.split('|').slice(1).join('|').trim(), options: [] });
-      return;
-    }
-    if(upper.startsWith('NOTE|')){
-      notes.push(line.split('|').slice(1).join('|').trim());
-      return;
-    }
-    if(!upper.startsWith('ROW|')) return;
-
-    const parts = line.split('|');
-    const order = Number(parts[1]) || fallbackOrder;
-    const leftRaw = parseTokenList(parts[2] || '');
-    const rightRaw = parseTokenList(parts[3] || '');
-    const confidence = Math.max(0, Math.min(1, Number(parts[4] || 0.5)));
-    const rowNotes = normalizeSpace(parts.slice(5).join('|'));
-
-    const carriedLeft = applyCarryForward(leftRaw, prevLeft);
-    const carriedRight = applyCarryForward(rightRaw, prevRight);
-
-    prevLeft = carriedLeft.slice();
-    prevRight = carriedRight.slice();
-
-    const leftPlayers = carriedLeft.map(token => { const meta = resolveAliasMeta(token); if(token && token !== '?' && !meta.matched && !unknownSeen.has(token.toLowerCase())){ unknownSeen.add(token.toLowerCase()); unknownAliasQuestions.push({ question: `Unknown alias from sheet: ${token}. Who is this player?`, options: state.rosterPlayers.slice() }); } return meta.player; }).filter(Boolean);
-    const rightPlayers = carriedRight.map(token => { const meta = resolveAliasMeta(token); if(token && token !== '?' && !meta.matched && !unknownSeen.has(token.toLowerCase())){ unknownSeen.add(token.toLowerCase()); unknownAliasQuestions.push({ question: `Unknown alias from sheet: ${token}. Who is this player?`, options: state.rosterPlayers.slice() }); } return meta.player; }).filter(Boolean);
-    rows.push({
-      order,
-      left_raw: carriedLeft,
-      right_raw: carriedRight,
-      left_players: leftPlayers,
-      right_players: rightPlayers,
-      confidence,
-      notes: rowNotes
-    });
-    fallbackOrder = Math.max(fallbackOrder, order + 1);
-  });
-
-  const allQuestions = [...questions, ...unknownAliasQuestions];
-  const normalizedRows = normalizeRowTeams(rows);
-  const guardedRows = enforceNoConsecutiveDuplicateMatchups(normalizedRows, allQuestions);
-  return { rows: guardedRows, notes, questions: allQuestions };
-}
-
-
-function rowsToAuditText(rows){
-  return (rows || []).map(row => `ROW|${row.order}|${(row.left_raw||[]).join(',')}|${(row.right_raw||[]).join(',')}|${Number(row.confidence||0).toFixed(2)}|${row.notes||''}`).join('\n');
-}
-function scoreExtractionCandidate(parsed){
-  const rows = Array.isArray(parsed?.rows) ? parsed.rows : [];
-  const complete = rows.filter(row => (row.left_players || []).length >= 2 && (row.right_players || []).length >= 2).length;
-  const avgConfidence = rows.length ? rows.reduce((sum, row) => sum + Number(row.confidence || 0), 0) / rows.length : 0;
-  const questions = Array.isArray(parsed?.questions) ? parsed.questions.length : 0;
-  return (rows.length * 100) + (complete * 35) + Math.round(avgConfidence * 25) - (questions * 5);
-}
-function buildRowsPromptForView(passNumber, view, transcript=''){
-  const focus = view.key.includes('top')
-    ? 'Focus on the top of the sheet.'
-    : view.key.includes('bottom')
-      ? 'Focus on the bottom of the sheet.'
-      : view.key.includes('middle')
-        ? 'Focus on the middle of the sheet.'
-        : 'Use the full sheet.';
-  return [
-    buildRowsPrompt(passNumber),
-    focus,
-    transcript ? `Transcript hint from OCR and prior reads:
-${transcript}` : ''
-  ].filter(Boolean).join('\n');
-}
-async function getGoogleTranscriptForSheet(sheet, mode='fast'){
-  const cacheKey = `${sheet.signature}::${mode}::googleTranscript`;
-  if(runtimeCache.transcript.has(cacheKey)){
-    recordCacheHit();
-    const cached = runtimeCache.transcript.get(cacheKey);
-    return { ...cached, notes: [...(cached.notes || []), `Gemini transcript ${sheet.sourceName}: cache hit.`] };
-  }
-  recordCacheMiss();
-  setProcessingStage('Gemini transcript', `${sheet.sourceName} (${mode})`);
-  let bestText = '';
-  let bestView = '';
-  const notes = [];
-  let helperText = '';
-
-  const helperViews = mode === 'deep'
-    ? sheet.views.filter(view => ['contrast_full','threshold_full','top_crop','middle_crop','bottom_crop'].includes(view.key))
-    : sheet.views.filter(view => view.key === 'contrast_full').slice(0, 1);
-
-  for(const view of helperViews){
-    try{
-      const helper = await runOcrHelperForView(view);
-      if(helper && helper.length > helperText.length) helperText = helper;
-      notes.push(`OCR helper ${sheet.sourceName} ${view.label}: ${helper ? 'success' : 'empty'}.`);
-    }catch(_){
-      notes.push(`OCR helper ${sheet.sourceName} ${view.label}: failed.`);
-    }
-  }
-
-  const transcriptViews = mode === 'deep'
-    ? sheet.views
-    : sheet.views.filter(view => ['original_full','contrast_full','top_crop','bottom_crop'].includes(view.key));
-
-  for(const view of transcriptViews){
-    try{
-      const response = await puter.ai.chat(buildViewReadPrompt(view, helperText), view.file, false, {
-        model: 'google/gemini-2.5-flash',
-        temperature: 0,
-        max_tokens: 1800
-      });
-      const textBlock = stripCodeFence(extractPuterText(response));
-      notes.push(`Gemini read ${sheet.sourceName} ${view.label}: ${textBlock ? 'success' : 'empty'}.`);
-      if(textBlock.length > bestText.length){
-        bestText = textBlock;
-        bestView = view.label;
-      }
-      if(mode === 'fast' && bestText.length > 500 && view.key === 'contrast_full') break;
-    }catch(_){
-      notes.push(`Gemini read ${sheet.sourceName} ${view.label}: failed.`);
-    }
-  }
-
-  const result = { transcript: bestText, helperText, notes, bestView };
-  runtimeCache.transcript.set(cacheKey, result);
-  return result;
-}
-async function auditTranscriptWithModels(transcript){
-  let bestTranscript = transcript || '';
-  const notes = [];
-  const audits = [];
-  const auditors = getModelPlan().filter(model => model !== 'google/gemini-2.5-flash');
-
-  for(const model of auditors){
-    try{
-      const response = await callPuterTextAudit(model, buildTranscriptCleanupPrompt(bestTranscript || transcript || ''));
-      const cleaned = stripCodeFence(extractPuterText(response));
-      notes.push(`${model} transcript audit: success.`);
-      audits.push({ model, output: cleaned });
-      if(cleaned.length > bestTranscript.length){
-        bestTranscript = cleaned;
-      }
-    }catch(_){
-      notes.push(`${model} transcript audit: failed.`);
-    }
-  }
-  return { transcript: bestTranscript, notes, audits };
-}
-async function getBestRowsForSheet(sheet, transcript, mode='fast'){
-  const cacheKey = `${sheet.signature}::${mode}::rows::${simpleHash(transcript)}`;
-  if(runtimeCache.rows.has(cacheKey)){
-    recordCacheHit();
-    const cached = runtimeCache.rows.get(cacheKey);
-    return { best: cached.best, notes: [...(cached.notes || []), `Row extraction ${sheet.sourceName}: cache hit.`] };
-  }
-  recordCacheMiss();
-  setProcessingStage('Gemini rows', `${sheet.sourceName} (${mode})`);
-  let best = { rows: [], notes: [], questions: [], raw: '', model: '', pass: 1, view: '', mode: '' };
-  let bestScore = -999999;
-  const notes = [];
-
-  const directViews = mode === 'deep'
-    ? sheet.views
-    : sheet.views.filter(view => ['contrast_full','top_crop','bottom_crop','original_full'].includes(view.key));
-
-  for(const view of directViews){
-    const passes = mode === 'deep' ? [1,2] : [1];
-    for(const passNumber of passes){
-      try{
-        const response = await puter.ai.chat(buildRowsPromptForView(passNumber, view, transcript), view.file, false, {
-          model: 'google/gemini-2.5-flash',
-          temperature: 0,
-          max_tokens: 2200
-        });
-        const raw = stripCodeFence(extractPuterText(response));
-        const parsed = parseAiRows(raw);
-        const score = scoreExtractionCandidate(parsed);
-        notes.push(`Gemini rows ${sheet.sourceName} ${view.label} pass ${passNumber}: ${parsed.rows.length} row(s), score ${score}.`);
-        if(score > bestScore){
-          best = { ...parsed, raw, model: 'google/gemini-2.5-flash', pass: passNumber, view: view.label, mode: 'direct image' };
-          bestScore = score;
-        }
-        if(mode === 'fast' && best.rows.length >= 12) break;
-      }catch(_){
-        notes.push(`Gemini rows ${sheet.sourceName} ${view.label} pass ${passNumber}: failed.`);
-      }
-    }
-  }
-
-  const shouldAudit = mode === 'deep' || shouldDeepRetryFromRows(best.rows, best.questions);
-  if(shouldAudit){
-    setProcessingStage('transcript audit', `${sheet.sourceName} (${mode})`);
-    const auditors = getModelPlan().filter(model => model !== 'google/gemini-2.5-flash');
-    const currentRowsText = rowsToAuditText(best.rows);
-    for(const model of auditors){
-      for(const passNumber of [1,2]){
-        try{
-          const response = await callPuterTextAudit(model, buildRowsAuditPrompt(passNumber, transcript, currentRowsText));
-          const raw = stripCodeFence(extractPuterText(response));
-          const parsed = parseAiRows(raw);
-          const score = scoreExtractionCandidate(parsed);
-          notes.push(`${model} row audit pass ${passNumber}: ${parsed.rows.length} row(s), score ${score}.`);
-          if(score > bestScore){
-            best = { ...parsed, raw, model, pass: passNumber, view: 'Transcript audit', mode: 'text audit' };
-            bestScore = score;
-          }
-        }catch(_){
-          notes.push(`${model} row audit pass ${passNumber}: failed.`);
-        }
-      }
-    }
-  }
-
-  const result = { best, notes };
-  runtimeCache.rows.set(cacheKey, result);
-  return result;
-}
-
-async function readSheetText(){
-  const files = getSelectedBetSheetFiles();
-  if(!files.length){ setStatus('sheetPanel','sheetStatusList','error','Bet sheet',['Choose at least one bet sheet image first.']); return; }
-  parseAliases();
-  try{
-    resetRunStats();
-    await ensurePuterSession('Read Sheet Text', { guestPreferred: true });
-    const mode = state.fastMode ? 'fast' : 'deep';
-    const preparedSheets = await ensurePreparedSheets(mode);
-    state.betSheetFile = files;
-    let combinedText = '';
-    const notes = [];
-
-    for(const sheet of preparedSheets){
-      const googleRead = await getGoogleTranscriptForSheet(sheet, mode);
-      let transcript = googleRead.transcript || googleRead.helperText || '';
-      notes.push(...googleRead.notes);
-      if(mode === 'deep' || !transcript || transcript.length < 200){
-        const auditedTranscript = await auditTranscriptWithModels(transcript);
-        transcript = auditedTranscript.transcript || transcript;
-        notes.push(...auditedTranscript.notes);
-      }
-      if(transcript){
-        if(combinedText) combinedText += '\n\n===== NEXT SHEET =====\n\n';
-        combinedText += transcript;
-      }
-    }
-
-    state.ocrText = combinedText;
-    state.aiNotes = [...notes];
-    setProcessingStage('complete', 'Read sheet text finished');
-    setStatus('sheetPanel','sheetStatusList', combinedText ? 'ok' : 'warn','Bet sheet',[
-      combinedText ? 'Sheet text was read.' : 'No useful sheet text came back.',
-      mode === 'fast' ? 'Fast pass used minimal prepared views and fewer AI calls.' : 'Deep mode used expanded views and transcript audit.'
-    ]);
-    saveState(); render();
-  }catch(err){
-    console.error(err);
-    setStatus('sheetPanel','sheetStatusList','error','Bet sheet',[err.message || 'Could not read the sheet text.']);
-  }
-}
-
-async function buildRowsFromImage(forceDeep=false){
-  const files = getSelectedBetSheetFiles();
-  if(!files.length){ setStatus('sheetPanel','sheetStatusList','error','Bet sheet',['Choose at least one bet sheet image first.']); return; }
-  parseAliases();
-  try{
-    resetRunStats();
-    await ensurePuterSession('Build Rows from Image', { guestPreferred: true });
-    const mode = (state.fastMode && !forceDeep) ? 'fast' : 'deep';
-    if(forceDeep) state.retryModeUsed = true;
-    const preparedSheets = await ensurePreparedSheets(mode);
-    setStatus('sheetPanel','sheetStatusList','info','Bet sheet',[`Running ${mode === 'fast' ? 'fast' : 'deep'} multi-view row extraction across the prepared sheet images.`]);
-    state.betSheetFile = files;
-
-    let combinedRows = [];
-    let combinedQuestions = [];
-    let combinedNotes = [];
-    let runningOrder = 1;
-    let winnerNotes = [];
-
-    for(const sheet of preparedSheets){
-      const googleRead = await getGoogleTranscriptForSheet(sheet, mode);
-      let transcript = googleRead.transcript || googleRead.helperText || '';
-      combinedNotes.push(...googleRead.notes);
-
-      if(mode === 'deep' || !transcript || transcript.length < 200){
-        const auditedTranscript = await auditTranscriptWithModels(transcript);
-        transcript = auditedTranscript.transcript || transcript;
-        combinedNotes.push(...auditedTranscript.notes);
-      }
-
-      const result = await getBestRowsForSheet(sheet, transcript, mode);
-      const bestParsed = result.best;
-      combinedNotes.push(...result.notes);
-      winnerNotes.push(bestParsed.model ? `${sheet.sourceName}: ${bestParsed.model} won using ${bestParsed.view} (${bestParsed.mode}, pass ${bestParsed.pass}).` : `${sheet.sourceName}: no usable winner.`);
-
-      combinedQuestions.push(...(bestParsed.questions || []));
-      const sortedRows = (bestParsed.rows || []).slice().sort((a,b)=>a.order-b.order);
-      sortedRows.forEach(row => { combinedRows.push({ ...row, order: runningOrder++ }); });
-    }
-
-    const guardedCombinedRows = combinedRows.length ? enforceNoConsecutiveDuplicateMatchups(combinedRows, combinedQuestions) : defaultRows();
-    state.sheetRows = guardedCombinedRows;
-    state.aiNotes = combinedNotes.length ? combinedNotes : ['No model returned usable rows.'];
-    state.aiQuestions = combinedQuestions;
-    state.winnerNotes = winnerNotes;
-
-    const ready = state.sheetRows.filter(row => row.left_players.length >= 2 && row.right_players.length >= 2).length;
-    state.weakResult = shouldDeepRetryFromRows(state.sheetRows, combinedQuestions) && mode === 'fast';
-    setProcessingStage('final merge', `${state.sheetRows.length} rows`);
-    setStatus('sheetPanel','sheetStatusList', ready ? 'ok' : 'warn', 'Bet sheet', [
-      combinedRows.length ? `Built ${combinedRows.length} ordered row(s) from ${files.length} uploaded sheet image(s).` : 'The AI could not confidently build enough rows from the uploaded sheet image(s).',
-      `${ready} row(s) currently have enough players to settle.`,
-      mode === 'fast' ? 'Fast pass used fewer views and fewer AI calls.' : 'Deep mode used expanded views and transcript audits.',
-      state.weakResult ? 'Fast pass looks incomplete. Use Deep Retry.' : 'Fast pass looks strong enough.'
-    ]);
-
-    saveState(); render();
-  }catch(err){
-    console.error(err);
-    setStatus('sheetPanel','sheetStatusList','error','Bet sheet',[err.message || 'Could not build rows from the image.']);
-  }
-}
-
-
-function addRow(){
-  const nextOrder = (state.sheetRows.length ? Math.max(...state.sheetRows.map(r => Number(r.order) || 0)) : 0) + 1;
-  state.sheetRows.push({
-    order: nextOrder,
-    left_raw: [],
-    right_raw: [],
-    left_players: [],
-    right_players: [],
-    confidence: 0,
-    notes: ''
-  });
-  saveState(); render();
-}
-function addRows(count){
-  for(let i=0;i<count;i++) addRow();
-}
-function fillEmptyRowsFromAbove(){
-  let prevLeft = [];
-  let prevRight = [];
-  state.sheetRows = state.sheetRows.map(row => {
-    const leftRaw = row.left_raw.length ? row.left_raw.slice() : prevLeft.slice();
-    const rightRaw = row.right_raw.length ? row.right_raw.slice() : prevRight.slice();
-    prevLeft = leftRaw.slice();
-    prevRight = rightRaw.slice();
-    return {
-      ...row,
-      left_raw: leftRaw,
-      right_raw: rightRaw,
-      left_players: leftRaw.map(resolveAlias).filter(Boolean),
-      right_players: rightRaw.map(resolveAlias).filter(Boolean)
-    };
-  });
-  saveState(); render();
-}
-function clearAllRows(){
-  state.sheetRows = defaultRows();
-  state.settlements = [];
-  state.playerLedgers = [];
-  saveState(); render();
-}
-
-function teamBestBall(players){
-  if(!(players || []).length) return null;
-  let total = 0;
-  for(let hole=1; hole<=18; hole++){
-    const values = players.map(player => {
-      const strokes = state.scores[player];
-      if(!strokes || !Array.isArray(strokes)) return null;
-      return Number(strokes[hole - 1]);
-    }).filter(v => v != null && !Number.isNaN(v));
-    if(!values.length) return null;
-    total += Math.min(...values);
-  }
-  return total;
-}
-function addTransfer(ledger, from, to, amount, sourceTitle, reason){
-  amount = Number(amount || 0);
-  if(amount <= 0 || !from || !to) return;
-  if(!ledger[from]) ledger[from] = { name: from, net: 0, lines: [] };
-  if(!ledger[to]) ledger[to] = { name: to, net: 0, lines: [] };
-  ledger[from].net -= amount;
-  ledger[to].net += amount;
-  ledger[from].lines.push(`${sourceTitle}: paid ${to} $${amount.toFixed(2).replace(/\.00$/,'')}. ${reason}`);
-  ledger[to].lines.push(`${sourceTitle}: collected $${amount.toFixed(2).replace(/\.00$/,'')} from ${from}. ${reason}`);
-}
-function allocateTeamTransfer(ledger, losers, winners, perPerson, sourceTitle, reason){
-  const cleanLosers = (losers || []).filter(Boolean);
-  const cleanWinners = (winners || []).filter(Boolean);
-  const base = Number(perPerson || 0);
-  if(!cleanLosers.length || !cleanWinners.length || base <= 0) return;
-
-  if(cleanLosers.length === cleanWinners.length){
-    cleanLosers.forEach((loser, idx) => addTransfer(ledger, loser, cleanWinners[idx], base, sourceTitle, reason));
-    return;
-  }
-
-  const teamUnits = Math.min(cleanLosers.length, cleanWinners.length);
-  const totalTransfer = base * teamUnits;
-  const eachPayment = totalTransfer / (cleanLosers.length * cleanWinners.length);
-
-  cleanLosers.forEach(loser => {
-    cleanWinners.forEach(winner => {
-      addTransfer(ledger, loser, winner, eachPayment, sourceTitle, `${reason} Uneven team split.`);
-    });
-  });
-}
-
-function calculateSettlements(){
-  const rows = [];
-  const ledger = {};
-  state.rosterPlayers.forEach(name => { ledger[name] = { name, net: 0, lines: [] }; });
-
-  const shotValue = Number(state.shotValue || 0);
-  const maxShots = Number(state.maxShots || 0);
-
-  state.sheetRows.forEach((row) => {
-    const left = uniqueSortedNames(row.left_players || []);
-    const right = uniqueSortedNames(row.right_players || []);
-    const title = `Row ${row.order}: ${left.join(' & ') || 'Left team'} vs ${right.join(' & ') || 'Right team'}`;
-
-    if(left.length < 2 || right.length < 2){
-      rows.push({
-        row: row.order,
-        matchup: `${left.join(' & ') || 'Incomplete left'} vs ${right.join(' & ') || 'Incomplete right'}`,
-        winner: 'Needs review',
-        transfer: '-',
-        explanation: 'Each side needs at least two players before this row can be settled.'
-      });
-      return;
-    }
-
-    const leftBB = teamBestBall(left);
-    const rightBB = teamBestBall(right);
-
-    if(leftBB == null || rightBB == null){
-      rows.push({
-        row: row.order,
-        matchup: `${left.join(' & ')} vs ${right.join(' & ')}`,
-        winner: 'Needs scores',
-        transfer: '-',
-        explanation: 'One or more players in this row are missing completed scores.'
-      });
-      return;
-    }
-
-    if(leftBB === rightBB){
-      rows.push({
-        row: row.order,
-        matchup: `${left.join(' & ')} vs ${right.join(' & ')}`,
-        winner: 'Push',
-        transfer: '$0',
-        explanation: `Push. Left best ball ${leftBB}. Right best ball ${rightBB}.`
-      });
-      return;
-    }
-
-    const leftWins = leftBB < rightBB;
-    const margin = Math.abs(rightBB - leftBB);
-    const shotsCounted = Math.min(margin, maxShots);
-    const perPerson = shotsCounted * shotValue;
-    const winners = leftWins ? left : right;
-    const losers = leftWins ? right : left;
-    const winnerName = winners.join(' & ');
-    const standardUnits = Math.min(winners.length, losers.length);
-    const teamTransfer = perPerson * standardUnits;
-
-    allocateTeamTransfer(ledger, losers, winners, perPerson, title, `Best ball ${leftBB} to ${rightBB}. Margin ${margin}, counted ${shotsCounted}.`);
-
-    rows.push({
-      row: row.order,
-      matchup: `${left.join(' & ')} vs ${right.join(' & ')}`,
-      winner: winnerName,
-      transfer: `$${teamTransfer.toFixed(2).replace(/\.00$/,'')}`,
-      explanation: `Left best ball ${leftBB}. Right best ball ${rightBB}. Margin ${margin}, counted ${shotsCounted}. Team transfer $${teamTransfer.toFixed(2).replace(/\.00$/,'')}.`
-    });
-  });
-
-  state.settlements = rows;
-  state.playerLedgers = Object.values(ledger).filter(entry => entry.lines.length || state.rosterPlayers.includes(entry.name)).sort((a,b)=>a.name.localeCompare(b.name));
-
-  const settled = rows.filter(row => !['Needs review','Needs scores'].includes(row.winner)).length;
-  setStatus('calcPanel','calcStatusList','ok','Calculation',[
-    `Calculated ${rows.length} settlement row(s).`,
-    `${settled} row(s) produced a winner or push.`
-  ]);
-
-  saveState(); render();
-}
-
-function renderRows(){
-  const tbody = $('rowsTbody');
-  const shotValue = Number(state.shotValue || 0);
-  const maxShots = Number(state.maxShots || 0);
-
-  if(!Array.isArray(state.sheetRows) || !state.sheetRows.length) state.sheetRows = defaultRows();
-
-  tbody.innerHTML = state.sheetRows
-    .slice()
-    .sort((a,b)=>Number(a.order||0)-Number(b.order||0))
-    .map((row, idx) => {
-      const left = uniqueSortedNames(row.left_players || []);
-      const right = uniqueSortedNames(row.right_players || []);
-      const leftBB = left.length >= 2 ? teamBestBall(left) : null;
-      const rightBB = right.length >= 2 ? teamBestBall(right) : null;
-
-      let winner = '';
-      let margin = '';
-      let counted = '';
-      let perPerson = '';
-
-      if(leftBB != null && rightBB != null){
-        if(leftBB === rightBB){
-          winner = 'Push';
-          margin = '0';
-          counted = '0';
-          perPerson = '$0';
-        }else{
-          const leftWins = leftBB < rightBB;
-          const diff = Math.abs(rightBB - leftBB);
-          const countedNum = Math.min(diff, maxShots);
-          winner = leftWins ? left.join(' & ') : right.join(' & ');
-          margin = String(diff);
-          counted = String(countedNum);
-          perPerson = `$${(countedNum * shotValue).toFixed(2).replace(/\.00$/,'')}`;
-        }
-      }
-
-      return `
-        <tr>
-          <td><input class="input row-order" data-index="${idx}" type="number" min="1" step="1" value="${Number(row.order || idx + 1)}"></td>
-          <td><textarea class="textarea row-left" data-index="${idx}">${escapeHtml(left.join('\n') || row.left_raw.join('\n'))}</textarea></td>
-          <td><textarea class="textarea row-right" data-index="${idx}">${escapeHtml(right.join('\n') || row.right_raw.join('\n'))}</textarea></td>
-          <td><input class="input row-confidence" data-index="${idx}" type="number" min="0" max="1" step="0.01" value="${Number(row.confidence || 0)}"></td>
-          <td><textarea class="textarea row-notes" data-index="${idx}">${escapeHtml(row.notes || '')}</textarea></td>
-          <td>${leftBB == null ? '-' : leftBB}</td>
-          <td>${rightBB == null ? '-' : rightBB}</td>
-          <td>${escapeHtml(winner || '-')}</td>
-          <td>${escapeHtml(margin || '-')}</td>
-          <td>${escapeHtml(counted || '-')}</td>
-          <td>${escapeHtml(perPerson || '-')}</td>
-          <td><button class="btn btnRed row-delete" type="button" data-index="${idx}">Delete</button></td>
-        </tr>
-      `;
-    }).join('');
-
-  tbody.querySelectorAll('.row-order').forEach(el => el.addEventListener('input', e => {
-    const idx = Number(e.target.dataset.index);
-    state.sheetRows[idx].order = Math.max(1, Number(e.target.value || idx + 1));
-    saveState();
-  }));
-  tbody.querySelectorAll('.row-left').forEach(el => el.addEventListener('input', e => {
-    const idx = Number(e.target.dataset.index);
-    const raw = e.target.value.split(/\r?\n|,/).map(normalizeSpace).filter(Boolean);
-    state.sheetRows[idx].left_raw = raw;
-    state.sheetRows[idx].left_players = raw.map(resolveAlias).filter(Boolean);
-    saveState(); render();
-  }));
-  tbody.querySelectorAll('.row-right').forEach(el => el.addEventListener('input', e => {
-    const idx = Number(e.target.dataset.index);
-    const raw = e.target.value.split(/\r?\n|,/).map(normalizeSpace).filter(Boolean);
-    state.sheetRows[idx].right_raw = raw;
-    state.sheetRows[idx].right_players = raw.map(resolveAlias).filter(Boolean);
-    saveState(); render();
-  }));
-  tbody.querySelectorAll('.row-confidence').forEach(el => el.addEventListener('input', e => {
-    const idx = Number(e.target.dataset.index);
-    state.sheetRows[idx].confidence = Math.max(0, Math.min(1, Number(e.target.value || 0)));
-    saveState();
-  }));
-  tbody.querySelectorAll('.row-notes').forEach(el => el.addEventListener('input', e => {
-    const idx = Number(e.target.dataset.index);
-    state.sheetRows[idx].notes = e.target.value;
-    saveState();
-  }));
-  tbody.querySelectorAll('.row-delete').forEach(el => el.addEventListener('click', e => {
-    const idx = Number(e.target.dataset.index);
-    state.sheetRows.splice(idx, 1);
-    if(!state.sheetRows.length) state.sheetRows = defaultRows();
-    saveState(); render();
-  }));
-}
-
-function renderSettlements(){
-  const tbody = $('settlementTbody');
-  if(!state.settlements.length){
-    tbody.innerHTML = `<tr><td colspan="6">No settlements yet.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = state.settlements.map((row, idx) => `
-    <tr>
-      <td>${idx + 1}</td>
-      <td>${row.row}</td>
-      <td>${escapeHtml(row.matchup)}</td>
-      <td>${escapeHtml(row.winner)}</td>
-      <td>${escapeHtml(row.transfer)}</td>
-      <td>${escapeHtml(row.explanation)}</td>
-    </tr>
-  `).join('');
-}
-
 function renderPlayers(){
-  const wrap = $('playerBreakdownList');
-  if(!state.playerLedgers.length){
-    wrap.innerHTML = `<div class="pill pillMuted">No player breakdowns yet.</div>`;
-    return;
-  }
-  wrap.innerHTML = state.playerLedgers.map(player => {
-    const gross = playerGrossScore(player.name);
-    return `
-      <div class="playerCard">
-        <div class="playerHead">
-          <div>
-            <h3 class="playerName">${escapeHtml(player.name)}</h3>
-            <div class="pillWrap">
-              <span class="chip">${gross == null ? 'Score not loaded' : `Shot ${gross}`}</span>
-              <span class="chip">${player.lines.length} line item(s)</span>
-            </div>
-          </div>
-          <div class="playerNet ${player.net >= 0 ? 'gain' : 'loss'}">${friendlyMoney(player.net)}</div>
-        </div>
-        <div class="btnRow" style="margin-bottom:10px;">
-          <button class="btn btnBlue export-player" type="button" data-name="${escapeHtml(player.name)}">Download ${escapeHtml(player.name)} PDF</button>
-        </div>
-        <div class="breakdownList">
-          ${player.lines.length ? player.lines.map((line, i) => `<div class="breakdownItem"><div class="breakdownIndex">${i + 1}</div><div class="breakdownText">${escapeHtml(line)}</div></div>`).join('') : `<div class="breakdownItem"><div class="breakdownIndex">1</div><div class="breakdownText">No settled lines yet.</div></div>`}
-        </div>
-      </div>
-    `;
-  }).join('');
-  wrap.querySelectorAll('.export-player').forEach(btn => btn.addEventListener('click', () => exportPlayerPdf(btn.dataset.name)));
+els.playerChips.innerHTML = ""; const players = allKnownPlayers();
+if(!players.length){ els.playerChips.innerHTML = '<span class="nameChip">No Squabbit players loaded</span>'; return; }
+for(const player of players){ const chip = document.createElement("span"); const hasScores =
+state.scoreMap.has(normalizeName(player.name)); chip.className = "nameChip"; chip.textContent = player.name + (hasScores
+? " ✓ " + sumScores(player.scores) : ""); els.playerChips.appendChild(chip); }
 }
-
-function getJsPDF(){ return window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null; }
-function makeDoc(orientation){ const JsPDF = getJsPDF(); if(!JsPDF) throw new Error('jsPDF did not load.'); return new JsPDF({ unit: 'pt', format: 'letter', orientation: orientation || 'portrait' }); }
-function isIos(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
-function savePdfDoc(doc, filename){
-  if(isIos()){
-    const blob = doc.output('blob');
-    const url = URL.createObjectURL(blob);
-    const win = window.open(url, '_blank');
-    if(!win) window.location.href = url;
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    showToast('Your PDF opened in a new tab. On iPhone, use Share then Save to Files.');
-    return;
-  }
-  doc.save(filename);
+function renderMatchups(){
+els.matchupsBody.innerHTML = ""; if(!state.matchups.length){ els.matchupsBody.innerHTML = '<tr><td colspan="4">No matchups
+loaded yet.</td></tr>'; return; }
+const duplicateKeys = findDuplicateMatchupKeys(state.matchups);
+state.matchups.forEach((m,index) => { const validation=[]; const key = canonicalMatchupKey(m); if(duplicateKeys.has(key))
+validation.push(pill("Duplicate matchup","bad")); if(new Set([...m.team1,...m.team2].map(normalizeName)).size < 4)
+validation.push(pill("Same player repeated","bad")); const resolution = resolveMatchup(m);
+if(resolution.warnings.length) validation.push(pill(resolution.warnings.length + " warning(s)","warn"));
+if(!validation.length) validation.push(pill("OK","ok")); const tr = document.createElement("tr"); tr.innerHTML = `<td>${
+index+1}</td><td>${escapeHtml(teamLabel(m.team1))}</td><td>${escapeHtml(teamLabel(m.team2))}</td><td>${validation.join("
+")}</td>`; els.matchupsBody.appendChild(tr); });
 }
-function showToast(message){
-  const toast = document.createElement('div');
-  toast.style.position='fixed'; toast.style.left='12px'; toast.style.right='12px'; toast.style.bottom='12px'; toast.style.zIndex='9999';
-  toast.style.background='#14532d'; toast.style.color='#fff'; toast.style.padding='12px 14px'; toast.style.borderRadius='14px';
-  toast.style.fontSize='14px'; toast.style.fontWeight='700'; toast.style.boxShadow='0 10px 25px rgba(0,0,0,.25)';
-  toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.remove(), 5000);
+function renderResults(){
+els.resultsBody.innerHTML = ""; if(!state.results.length){ els.resultsBody.innerHTML = '<tr><td colspan="10">No results
+yet.</td></tr>'; return; }
+state.results.forEach((r,index) => { const warnings = r.warnings && r.warnings.length ? r.warnings.join("; ") : ""; const
+tr = document.createElement("tr"); tr.innerHTML =
+`<td>${index+1}</td><td>${escapeHtml(teamWithScores(r.matchup.team1))}</td><td>${r.t1Total === null ? "" :
+r.t1Total}</td><td>${escapeHtml(teamWithScores(r.matchup.team2))}</td><td>${r.t2Total === null ? "" :
+r.t2Total}</td><td>${pill(escapeHtml(r.winner), /Waiting|Missing|No score/i.test(r.winner) ? "warn" :
+"ok")}</td><td>${r.margin === null ? "" : r.margin}</td><td>${r.perPerson ? money(r.perPerson) :
+""}</td><td>${escapeHtml(paymentText(r.payments))}</td><td>${warnings ? pill(escapeHtml(warnings),"warn") :
+pill("None","info")}</td>`; els.resultsBody.appendChild(tr); });
 }
-function pdfText(doc, text, x, y, width, options){
-  const opts = options || {};
-  const lines = Array.isArray(text) ? text : doc.splitTextToSize(String(text ?? ''), width);
-  const fontSize = opts.fontSize || 11;
-  const lineHeight = opts.lineHeight || Math.ceil(fontSize * 1.45);
-  doc.setFont('helvetica', opts.fontStyle || 'normal');
-  doc.setFontSize(fontSize);
-  if(opts.color) doc.setTextColor(...opts.color); else doc.setTextColor(17,24,39);
-  lines.forEach(line => {
-    if(y > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
-    doc.text(String(line), x, y);
-    y += lineHeight;
-  });
-  return y;
+function renderLedger(){
+els.ledgerBody.innerHTML = ""; if(!state.ledger.length){ els.ledgerBody.innerHTML = '<tr><td colspan="4">No player
+winnings or losses yet.</td></tr>'; return; }
+for(const player of state.ledger){ const cls = player.net > 0 ? "netPositive" : player.net < 0 ? "netNegative" :
+"netZero"; const tr = document.createElement("tr"); tr.innerHTML =
+`<td>${escapeHtml(player.name)}</td><td>${player.score === null ? "" : player.score}</td><td
+class="${cls}">${moneySigned(player.net)}</td><td>${escapeHtml(player.lines.join("\n"))}</td>`;
+els.ledgerBody.appendChild(tr); }
 }
-function pdfHeader(doc, title, subtitle){
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 56; const width = pageWidth - (margin * 2); let y = 70;
-  doc.setFillColor(240,253,244); doc.setDrawColor(187,247,208); doc.roundedRect(margin, 42, width, 82, 16, 16, 'FD');
-  y = pdfText(doc, title, margin + 16, y, width - 32, { fontSize: 20, lineHeight: 24, fontStyle: 'bold', color: [20,83,45] });
-  y = pdfText(doc, subtitle, margin + 16, y, width - 32, { fontSize: 10, lineHeight: 14, color: [71,85,105] });
-  return y + 8;
+function findDuplicateMatchupKeys(matchups){ const counts = new Map(); for(const m of matchups){ const key =
+canonicalMatchupKey(m); counts.set(key, (counts.get(key)||0)+1); } const dups = new Set(); for(const [key,count] of
+counts.entries()) if(count > 1) dups.add(key); return dups; }
+function canonicalMatchupKey(matchup){ const teamA = matchup.team1.map(normalizeName).sort().join("+"); const teamB =
+matchup.team2.map(normalizeName).sort().join("+"); return [teamA,teamB].sort().join("_vs_"); }
+function teamLabel(team){ return (team || []).join(" / "); }
+function teamWithScores(team){ return (team || []).map(name => { const score = playerGrossScore(name); return score === null
+? name : name + " (" + score + ")"; }).join(" / "); }
+function scoreCompleteness(player){ return (player.scores || []).filter(Number.isFinite).length; }
+function sumScores(scores){ if(!Array.isArray(scores) || !scores.length) return ""; return scores.reduce((sum,value) => sum
++ Number(value || 0), 0); }
+function playerGrossScore(name){ const p = state.scoreMap.get(normalizeName(name)); if(!p || !Array.isArray(p.scores) ||
+p.scores.length !== 18) return null; return sumScores(p.scores); }
+function paymentText(payments){ return payments && payments.length ? payments.map(p => p.from + " pays " + p.to + " " +
+money(p.amount)).join("; ") : ""; }
+function money(n){ return "$" + Number(n || 0).toFixed(2).replace(/\.00$/, ""); }
+function moneySigned(n){ const val = Number(n || 0); if(val === 0) return "$0"; return (val > 0 ? "+" : "-") +
+money(Math.abs(val)); }
+function downloadResultsCsv(){
+if(!state.results.length){ alert("No results to download yet."); return; }
+const rows = [["matchup","team1_player1","team1_player2","team1_best_ball_total","team2_player1","team2_player2","team2_be
+st_ball_total","winner","margin","counted_shots","pay_per_person","who_pays_who","warnings"]];
+state.results.forEach((r,i) => rows.push([i+1, r.matchup.team1[0], r.matchup.team1[1], r.t1Total === null ? "" :
+r.t1Total, r.matchup.team2[0], r.matchup.team2[1], r.t2Total === null ? "" : r.t2Total, r.winner, r.margin === null ? ""
+: r.margin, r.countedShots === null ? "" : r.countedShots, r.perPerson || "", paymentText(r.payments), (r.warnings ||
+[]).join("; ")]));
+rows.push([]); rows.push(["Player","Gross Score","Net","Lines"]); state.ledger.forEach(p => rows.push([p.name, p.score ===
+null ? "" : p.score, p.net, p.lines.join("; ")]));
+downloadText("golf_bet_results_with_money.csv", rowsToCsv(rows));
 }
-function pdfCard(doc, x, y, width, title, value){
-  const titleLines = doc.splitTextToSize(String(title || ''), width - 24);
-  const valueLines = doc.splitTextToSize(String(value || ''), width - 24);
-  const height = 22 + (titleLines.length * 12) + (valueLines.length * 16) + 18;
-  if(y + height > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
-  doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240); doc.roundedRect(x, y, width, height, 12, 12, 'FD');
-  let ty = y + 18;
-  ty = pdfText(doc, titleLines, x + 12, ty, width - 24, { fontSize: 10, lineHeight: 12, fontStyle: 'bold', color: [71,85,105] });
-  pdfText(doc, valueLines, x + 12, ty + 2, width - 24, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] });
-  return y + height;
+function downloadMatchupsCsv(){ if(!state.matchups.length){ alert("No matchups to download yet."); return; } const rows =
+[["matchup","team1_player1","team1_player2","team2_player1","team2_player2"]]; state.matchups.forEach((m,i) =>
+rows.push([i+1, m.team1[0], m.team1[1], m.team2[0], m.team2[1]])); downloadText("golf_bet_matchups.csv", rowsToCsv(rows));
 }
-function exportPlayerPdf(playerName){
-  const player = state.playerLedgers.find(p => p.name === playerName);
-  if(!player) return;
-  const doc = makeDoc('portrait');
-  const margin = 56; const pageWidth = doc.internal.pageSize.getWidth(); const usable = pageWidth - (margin * 2);
-  let y = pdfHeader(doc, `${playerName} Best Ball Settlement`, [
-    playerGrossScore(playerName) == null ? 'Round score not loaded' : `Round score: Shot ${playerGrossScore(playerName)}`,
-    `Net result: ${friendlyMoney(player.net)}`
-  ]);
-  const cardWidth = (usable - 14) / 2;
-  const h1 = pdfCard(doc, margin, y, cardWidth, 'Player', playerName);
-  const h2 = pdfCard(doc, margin + cardWidth + 14, y, cardWidth, 'Net Total', friendlyMoney(player.net));
-  y = Math.max(h1,h2) + 10;
-  const h3 = pdfCard(doc, margin, y, cardWidth, 'Score', playerGrossScore(playerName) == null ? 'Score not loaded' : `Shot ${playerGrossScore(playerName)}`);
-  const h4 = pdfCard(doc, margin + cardWidth + 14, y, cardWidth, 'Line Items', String(player.lines.length));
-  y = Math.max(h3,h4) + 16;
-  y = pdfText(doc, 'Breakdown', margin, y, usable, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] });
-  doc.setDrawColor(209,213,219); doc.line(margin, y, margin + usable, y); y += 16;
-  if(!player.lines.length){ y = pdfText(doc, 'No settled lines yet.', margin, y, usable, { fontSize: 11, lineHeight: 16 }); }
-  else player.lines.forEach((line, idx) => {
-    const blockHeight = 40 + doc.splitTextToSize(line, usable - 24).length * 14;
-    if(y + blockHeight > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
-    doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240); doc.roundedRect(margin, y, usable, blockHeight, 12, 12, 'FD');
-    let ty = y + 18;
-    ty = pdfText(doc, `Line ${idx + 1}`, margin + 12, ty, usable - 24, { fontSize: 10, lineHeight: 12, fontStyle: 'bold', color: [71,85,105] });
-    pdfText(doc, line, margin + 12, ty + 2, usable - 24, { fontSize: 11, lineHeight: 16 });
-    y += blockHeight + 10;
-  });
-  savePdfDoc(doc, `${playerName.replace(/\s+/g,'_')}_best_ball_settlement.pdf`);
+function rowsToCsv(rows){ return rows.map(row => row.map(csvEscape).join(",")).join("\n"); }
+function csvEscape(value){ const s = String(value ?? ""); if(/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+return s; }
+function downloadText(filename,text){ const blob = new Blob([text], { type:"text/csv;charset=utf-8" }); const url =
+URL.createObjectURL(blob); const a = document.createElement("a"); a.href=url; a.download=filename;
+document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0); }
+function downloadFullResultsPdf(){
+if(!window.jspdf || !window.jspdf.jsPDF){ alert("PDF library did not load."); return; }
+const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit:"pt", format:"letter", orientation:"portrait" });
+const margin = 42; const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight =
+doc.internal.pageSize.getHeight(); const usable = pageWidth - margin*2; let y = 42;
+function checkPage(need){ if(y + need > pageHeight - 42){ doc.addPage(); y = 42; } }
+function text(str,x,yy,size=10,style="normal",color=[17,24,39]){ doc.setFont("helvetica",style); doc.setFontSize(size);
+doc.setTextColor(color[0],color[1],color[2]); doc.text(String(str),x,yy); }
+function wrapped(str,x,yy,width,size=10,style="normal",lineHeight=14,color=[17,24,39]){ doc.setFont("helvetica",style);
+doc.setFontSize(size); doc.setTextColor(color[0],color[1],color[2]); const lines = doc.splitTextToSize(String(str ||
+""), width); for(const line of lines){ checkPage(lineHeight); doc.text(line,x,y); y += lineHeight; } return y; }
+doc.setFillColor(240,253,244); doc.setDrawColor(187,247,208); doc.roundedRect(margin, y, usable, 78, 16, 16, "FD");
+text("Golf Best Ball Results", margin+16, y+28, 20, "bold", [20,83,45]);
+text("Best ball scores, winnings/losses, and who pays who", margin+16, y+50, 10, "normal", [71,85,105]);
+text("$" + getMoneySettings().shotValue + "/shot - " + getMoneySettings().maxShots + " max shots", margin+16, y+66, 10,
+"bold", [20,83,45]);
+y += 98;
+const finished = state.results.filter(r => Number.isFinite(r.t1Total) && Number.isFinite(r.t2Total)).length;
+const totalSettled = state.results.reduce((sum,r) => sum + (r.teamTransfer || 0), 0);
+const cards = [["Matchups",state.matchups.length],["Finished Bets",finished],["Total
+Settled",money(totalSettled)],["Scores Loaded",state.scoreMap.size]];
+const cardW = (usable - 24) / 4;
+cards.forEach((card,i) => { const x = margin + i*(cardW+8); doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240);
+doc.roundedRect(x,y,cardW,54,12,12,"FD"); text(card[0],x+10,y+18,8,"bold",[100,116,139]);
+text(card[1],x+10,y+40,16,"bold",[22,101,52]); });
+y += 76;
+text("Player Net Summary", margin, y, 14, "bold", [20,83,45]); y += 16;
+state.ledger.forEach(p => { checkPage(34); doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240);
+doc.roundedRect(margin,y,usable,28,8,8,"FD"); text(p.name, margin+10, y+18, 10, "bold"); text(p.score === null ? "Score:
+-" : "Score: " + p.score, margin+190, y+18, 9, "normal", [71,85,105]); const color = p.net > 0 ? [22,101,52] : p.net <
+0 ? [153,27,27] : [71,85,105]; text(moneySigned(p.net), margin+usable-78, y+18, 10, "bold", color); y += 34; });
+y += 8; checkPage(32); text("Matchup Results", margin, y, 14, "bold", [20,83,45]); y += 18;
+state.results.forEach((r,i) => { const pay = paymentText(r.payments) || "No payment"; const title = (i+1) + ". " +
+teamLabel(r.matchup.team1) + " vs " + teamLabel(r.matchup.team2); const detail = "Team 1 BB: " + (r.t1Total ?? "-") + "
+| Team 2 BB: " + (r.t2Total ?? "-") + " | Winner: " + r.winner + " | Margin: " + (r.margin ?? "-") + " | Pay per person:
+" + (r.perPerson ? money(r.perPerson) : "$0"); const blockLines = doc.splitTextToSize(title + "\n" + detail + "\n" +
+pay, usable-20); const blockH = 18 + blockLines.length*12 + 10; checkPage(blockH+8); doc.setFillColor(255,255,255);
+doc.setDrawColor(226,232,240); doc.roundedRect(margin,y,usable,blockH,10,10,"FD"); y += 16; wrapped(title, margin+10, y,
+usable-20, 10, "bold", 12, [17,24,39]); wrapped(detail, margin+10, y, usable-20, 9, "normal", 12, [71,85,105]);
+wrapped(pay, margin+10, y, usable-20, 9, "bold", 12, [20,83,45]); y += 8; });
+y += 8; checkPage(32); text("Who Pays Who - Detail", margin, y, 14, "bold", [20,83,45]); y += 18;
+state.ledger.forEach(p => { if(!p.lines.length) return; const blockLines = doc.splitTextToSize(p.name + " (" +
+moneySigned(p.net) + ")\n" + p.lines.join("\n"), usable-20); const blockH = 18 + blockLines.length*12 + 8;
+checkPage(blockH+8); doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240);
+doc.roundedRect(margin,y,usable,blockH,10,10,"FD"); y += 16; wrapped(p.name + " - " + moneySigned(p.net), margin+10, y,
+usable-20, 10, "bold", 12, [17,24,39]); p.lines.forEach(line => wrapped(line, margin+10, y, usable-20, 9, "normal", 12,
+[71,85,105])); y += 8; });
+doc.save("golf_best_ball_full_results.pdf");
 }
-function exportAllPdf(){
-  const doc = makeDoc('portrait');
-  const margin = 56; const pageWidth = doc.internal.pageSize.getWidth(); const usable = pageWidth - (margin * 2);
-  let y = pdfHeader(doc, 'Golf Best Ball Sheet Results', [
-    `Players loaded: ${state.rosterPlayers.length}    Finished scores: ${Object.keys(state.scores).length}`,
-    `Dollars per shot: $${Number(state.shotValue || 0)}    Max shots: ${Number(state.maxShots || 0)}`
-  ]);
-  const cardWidth = (usable - 14) / 2;
-  const h1 = pdfCard(doc, margin, y, cardWidth, 'Detected Rows', state.sheetRows.length);
-  const h2 = pdfCard(doc, margin + cardWidth + 14, y, cardWidth, 'AI Notes', state.aiNotes.length ? state.aiNotes.join(' | ') : 'No AI notes');
-  y = Math.max(h1,h2) + 16;
-  y = pdfText(doc, 'Settlement Rows', margin, y, usable, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] });
-  doc.setDrawColor(209,213,219); doc.line(margin, y, margin + usable, y); y += 16;
-  if(!state.settlements.length){ y = pdfText(doc, 'No settlement rows yet.', margin, y, usable, { fontSize: 11, lineHeight: 16 }); }
-  else state.settlements.forEach((row, idx) => {
-    const content = [`Winner: ${row.winner}`, `Transfer: ${row.transfer}`, row.explanation].join('\n');
-    const blockHeight = 44 + doc.splitTextToSize(content, usable - 24).length * 14;
-    if(y + blockHeight > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
-    doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240); doc.roundedRect(margin, y, usable, blockHeight, 12, 12, 'FD');
-    let ty = y + 18;
-    ty = pdfText(doc, `Settlement ${idx + 1}: Row ${row.row}`, margin + 12, ty, usable - 24, { fontSize: 11, lineHeight: 14, fontStyle: 'bold', color: [20,83,45] });
-    pdfText(doc, content, margin + 12, ty + 2, usable - 24, { fontSize: 10, lineHeight: 15 });
-    y += blockHeight + 10;
-  });
-  y += 6;
-  y = pdfText(doc, 'Player Net Summary', margin, y, usable, { fontSize: 14, lineHeight: 18, fontStyle: 'bold', color: [20,83,45] });
-  doc.setDrawColor(209,213,219); doc.line(margin, y, margin + usable, y); y += 16;
-  state.playerLedgers.forEach(player => {
-    const content = `Score: ${playerGrossScore(player.name) == null ? 'Score not loaded' : `Shot ${playerGrossScore(player.name)}`}    Net: ${friendlyMoney(player.net)}    Line Items: ${player.lines.length}`;
-    const blockHeight = 42;
-    if(y + blockHeight > doc.internal.pageSize.getHeight() - 56){ doc.addPage(); y = 56; }
-    doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240); doc.roundedRect(margin, y, usable, blockHeight, 12, 12, 'FD');
-    let ty = y + 18;
-    ty = pdfText(doc, player.name, margin + 12, ty, usable - 24, { fontSize: 11, lineHeight: 14, fontStyle: 'bold', color: [20,83,45] });
-    pdfText(doc, content, margin + 12, ty + 1, usable - 24, { fontSize: 10, lineHeight: 14 });
-    y += blockHeight + 8;
-  });
-  savePdfDoc(doc, 'golf_best_ball_sheet_results.pdf');
+function clearAll(){
+state.rawBetText = ""; state.matchups = []; state.prePlayers = []; state.postPlayers = []; state.scoreMap = new Map();
+state.aliases = new Map(); state.results = []; state.ledger = [];
+els.rawTextBox.value = ""; els.manualBetsBox.value = ""; els.aliasesBox.value = "";
+els.betFile.value = "";
+els.preFile.value = "";
+els.postFile.value = "";
+els.betFileName.textContent = "No file selected.";
+els.preFileName.textContent = "No file selected.";
+els.postFileName.textContent = "No file selected.";
+setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["No bet file loaded yet."]); setStatus(els.prePanel,
+els.preStatusList, "info", "Roster", ["No roster loaded yet."]); setStatus(els.postPanel, els.postStatusList, "info",
+"Scores", ["No completed scores loaded yet."]); reparseAll();
 }
-function exportAllCsv(){
-  const rows = [];
-  rows.push(['Dollars Per Shot', state.shotValue]);
-  rows.push(['Max Shots', state.maxShots]);
-  rows.push([]);
-  rows.push(['Row','Left Team','Right Team','Winner','Transfer','Explanation']);
-  state.settlements.forEach(row => rows.push([row.row, row.matchup.split(' vs ')[0] || '', row.matchup.split(' vs ')[1] || '', row.winner, row.transfer, row.explanation]));
-  rows.push([]);
-  rows.push(['Player','Score','Net','Line Items']);
-  state.playerLedgers.forEach(player => rows.push([player.name, playerGrossScore(player.name) == null ? '' : playerGrossScore(player.name), player.net, player.lines.length]));
-  const esc = v => {
-    const s = String(v ?? '');
-    return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g,'""')}"` : s;
-  };
-  const csv = rows.map(r => r.map(esc).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'golf_best_ball_sheet_results.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-function render(){
-  parseAliases();
-  state.shotValue = Number($('shotValue').value || state.shotValue || 0);
-  state.maxShots = Number($('maxShots').value || state.maxShots || 0);
-  if(!Array.isArray(state.sheetRows) || !state.sheetRows.length) state.sheetRows = defaultRows();
-  updateSummary();
-  renderRows();
-  renderSettlements();
-  renderPlayers();
-  $('questionsPreview').textContent = state.aiQuestions.length ? state.aiQuestions.map(q => `- ${q.question}${q.options && q.options.length ? ` | Options: ${q.options.join(', ')}` : ''}`).join('\n') : 'No questions yet.';
-  setPreview('ocrPreview', state.ocrText || 'No sheet text yet.');
-  setPreview('aiNotesPreview', state.aiNotes.join('\n') || 'No AI notes yet.');
-  setPreview('winnerPreview', (state.winnerNotes || []).join('\n') || 'No winner chosen yet.');
-  setPreview('mergedRowsPreview', state.sheetRows.length ? state.sheetRows.map(row => `Row ${row.order}: ${(row.left_raw||[]).join(' / ') || '-'} vs ${(row.right_raw||[]).join(' / ') || '-'}`).join('\n') : 'No merged rows yet.');
-  renderPreparedSheetsPreview();
-  updateSelectedFilePreviews();
-  if($('progressPreview')) $('progressPreview').textContent = (state.progressLines || []).join('\n') || 'No processing run yet.';
-  updateSpeedSummary();
-  setPreview('loadedPlayersPreview', state.rosterPlayers.join('\n') || 'No players loaded yet.');
-  const scoreNames = Object.keys(state.scores || {}).sort((a,b)=>a.localeCompare(b));
-  setPreview('loadedScoresPreview', scoreNames.map(name => `${name}: Shot ${playerGrossScore(name)}`).join('\n') || 'No scores loaded yet.');
-}
-
-$('signInBtn').addEventListener('click', async () => {
-  try{ await ensurePuterSession('Continue with Puter', { guestPreferred: false }); }
-  catch(err){ setStatus('authPanel','authStatusList','warn','Authentication', authStatusLines([err.message || 'Sign in did not finish.','Try Continue as Guest instead.'])); }
-});
-$('guestSignInBtn').addEventListener('click', async () => {
-  try{ await ensurePuterSession('Continue as Guest', { guestPreferred: true }); }
-  catch(err){ setStatus('authPanel','authStatusList','warn','Authentication', authStatusLines([err.message || 'Guest sign in did not finish.','Open this page from GitHub Pages or localhost and allow popups.'])); }
-});
-$('refreshAuthBtn').addEventListener('click', refreshAuthStatus);
-$('signOutBtn').addEventListener('click', async () => { try{ await Promise.resolve(puter.auth.signOut()); await refreshAuthStatus(); }catch(err){ setStatus('authPanel','authStatusList','error','Authentication',[err.message || 'Could not sign out.']); } });
-
-$('loadRosterBtn').addEventListener('click', () => { loadRoster().then(generateAliasSuggestions); });
-$('loadScoresBtn').addEventListener('click', loadScores);
-$('clearRosterBtn').addEventListener('click', clearRoster);
-$('clearScoresBtn').addEventListener('click', clearScores);
-
-$('prepareViewsBtn').addEventListener('click', () => prepareImageViews(state.fastMode ? 'fast' : 'deep'));
-$('readSheetBtn').addEventListener('click', readSheetText);
-$('buildRowsBtn').addEventListener('click', () => buildRowsFromImage(false));
-$('deepRetryBtn').addEventListener('click', () => buildRowsFromImage(true));
-$('clearSheetBtn').addEventListener('click', clearSheet);
-
-$('addRowBtn').addEventListener('click', addRow);
-$('addFiveRowsBtn').addEventListener('click', () => addRows(5));
-$('fillEmptyRowsBtn').addEventListener('click', fillEmptyRowsFromAbove);
-$('clearRowsBtn').addEventListener('click', clearAllRows);
-
-$('generateAliasBtn').addEventListener('click', generateAliasSuggestions);
-$('useDefaultAliasesBtn').addEventListener('click', () => {
-  $('aliasInput').value = DEFAULT_ALIASES;
-  parseAliases();
-  setPreview('aliasSuggestionsPreview','Loaded the default alias list.');
-  saveState();
-});
-$('clearAliasesBtn').addEventListener('click', () => {
-  $('aliasInput').value = '';
-  parseAliases();
-  setPreview('aliasSuggestionsPreview','Alias list cleared.');
-  saveState();
-});
-$('resetToolBtn').addEventListener('click', () => {
-  const ok = confirm('Reset this entire tool and clear all locally saved data for it on this device?');
-  if(!ok) return;
-  resetTool();
-});
-
-$('calcBtn').addEventListener('click', calculateSettlements);
-$('exportAllPdfBtn').addEventListener('click', exportAllPdf);
-$('exportAllCsvBtn').addEventListener('click', exportAllCsv);
-
-$('shotValue').addEventListener('input', () => { state.shotValue = Number($('shotValue').value || 0); saveState(); render(); });
-$('maxShots').addEventListener('input', () => { state.maxShots = Number($('maxShots').value || 0); saveState(); render(); });
-$('aliasInput').addEventListener('input', () => { parseAliases(); saveState(); });
-$('fastModeToggle').addEventListener('change', () => { state.fastMode = $('fastModeToggle').checked; saveState(); updateSpeedSummary(); });
-if($('ollamaEnabled')) $('ollamaEnabled').addEventListener('change', () => { state.ollamaEnabled = $('ollamaEnabled').checked; saveState(); });
-if($('ollamaEndpoint')) $('ollamaEndpoint').addEventListener('input', () => { state.ollamaEndpoint = $('ollamaEndpoint').value; saveState(); });
-if($('ollamaModel')) $('ollamaModel').addEventListener('input', () => { state.ollamaModel = $('ollamaModel').value; saveState(); });
-
-$('aliasInput').value = DEFAULT_ALIASES;
-loadState();
-if(!$('aliasInput').value.trim()) $('aliasInput').value = DEFAULT_ALIASES;
-if(!Array.isArray(state.sheetRows) || !state.sheetRows.length) state.sheetRows = defaultRows();
-$('shotValue').value = state.shotValue ?? 3;
-$('maxShots').value = state.maxShots ?? 7;
-if(!$('modelSelect').value) $('modelSelect').value='auto';
-if($('fastModeToggle')) $('fastModeToggle').checked = state.fastMode !== false;
-initBetSheetUploader();
-refreshAuthStatus();
-render();
+function setStatus(panelEl,listEl,tone,title,lines){ panelEl.className = "statusPanel " + tone;
+panelEl.querySelector(".statusTitle").textContent = title; listEl.innerHTML = (lines && lines.length ? lines : ["No
+details."]).map(line => "<li>" + escapeHtml(line) + "</li>").join(""); }
+function normalizeHeader(value){ return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+function cleanName(value){ return String(value || "").replace(/\u00a0/g," ").replace(/\s+/g,"
+").replace(/^[#\d\.\)\-:\s]+/,"").replace(/\s+(?:score|gross|net|total)$/i,"").trim(); }
+function normalizeName(value){ return cleanName(value).toLowerCase().replace(/\b(jr|sr|ii|iii|iv)\b/g,"").replace(/[^a-z0-9
+]/g," ").replace(/\s+/g," ").trim(); }
+function uniqueList(items){ return Array.from(new Set((items || []).filter(Boolean))); }
+function pill(text,kind){ return '<span class="pill ' + kind + '">' + text + '</span>'; }
+function escapeHtml(value){ return String(value ??
+"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"
+); }
+function errorMessage(err){ return err && err.message ? err.message : String(err); }
+els.loadBetBtn.addEventListener("click", loadSelectedBetFile);
+els.loadRosterBtn.addEventListener("click", loadSelectedRosterFile);
+els.loadScoresBtn.addEventListener("click", loadSelectedScoresFile);
+els.clearBetBtn.addEventListener("click", clearBetFileOnly);
+els.clearRosterBtn.addEventListener("click", clearRosterOnly);
+els.clearScoresBtn.addEventListener("click", clearScoresOnly);
+els.recheckBtn.addEventListener("click", reparseAll);
+els.applyAliasesBtn.addEventListener("click", reparseAll);
+els.useManualBtn.addEventListener("click", useManualBets);
+els.downloadResultsBtn.addEventListener("click", downloadResultsCsv);
+els.downloadPdfBtn.addEventListener("click", downloadFullResultsPdf);
+els.downloadMatchupsBtn.addEventListener("click", downloadMatchupsCsv);
+els.clearBtn.addEventListener("click", clearAll);
+els.shotValue.addEventListener("input", reparseAll);
+els.maxShots.addEventListener("input", reparseAll);
+initUploaders();
+reparseAll();
 </script>
 </body>
 </html>
