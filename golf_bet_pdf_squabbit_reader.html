@@ -1,1010 +1,1234 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Golf Bet PDF + Squabbit Score Reader</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<style>
-:root{
---bg0:#07110d;
---bg1:#0b1f16;
---panel:#ffffff;
---line:#e5e7eb;
---text:#111827;
---muted:#64748b;
---green1:#14532d;
---green2:#166534;
---green3:#22c55e;
---blue1:#2563eb;
---blue2:#38bdf8;
---red:#ef4444;
---gold:#f59e0b;
---warn:#92400e;
---warnBg:#fffbeb;
---warnBorder:#fde68a;
---bad:#991b1b;
---badBg:#fef2f2;
---badBorder:#fecaca;
---ok:#166534;
---okBg:#f0fdf4;
---okBorder:#bbf7d0;
---info:#1d4ed8;
---infoBg:#eff6ff;
---infoBorder:#bfdbfe;
---shadow:0 14px 45px rgba(0,0,0,.20);
---radius:20px;
-}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
-body{
-color:var(--text);
-font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-background:
-radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
-radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
-linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #08140e);
-}
-.wrap{width:100%;max-width:1320px;margin:0 auto;padding:16px}
-.hero{
-background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.10));
-border:1px solid rgba(255,255,255,.22);
-border-radius:24px;
-padding:18px;
-box-shadow:var(--shadow);
-margin-bottom:16px;
-backdrop-filter:blur(10px);
-color:#eaf5ef;
-}
-.heroTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
-h1{margin:0 0 8px;font-size:30px;line-height:1.05;font-weight:950}
-.hero h1{color:#eaf5ef !important;text-shadow:0 2px 12px rgba(0,0,0,.30)}
-.hero p{margin:0;color:#d9f5e4 !important;line-height:1.45;font-size:14px;max-width:980px;text-shadow:0 1px 8px
-rgba(0,0,0,.18)}
-.backBtn{
-display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.20);
-border-radius:999px;padding:10px 13px;color:#eaf5ef;background:rgba(255,255,255,.08);
-text-decoration:none;font-weight:900;font-size:13px;white-space:nowrap;
-}
-.summaryGrid,.grid2,.grid3,.grid5{display:grid;grid-template-columns:1fr;gap:12px}
-@media (min-width:900px){
-.summaryGrid{grid-template-columns:repeat(5,minmax(0,1fr))}
-.grid2{grid-template-columns:1fr 1fr}
-.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
-.grid5{grid-template-columns:repeat(5,minmax(0,1fr))}
-}
-.card,.summaryCard{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:var(--radius);box-shadow:0 10px 28px
-rgba(0,0,0,.08)}
-.card{padding:18px;margin-bottom:16px}
-.summaryCard{padding:16px;margin-bottom:16px}
-.summaryLabel{font-size:12px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.05em}
-.summaryValue{margin-top:6px;font-size:28px;font-weight:950;color:var(--green2);line-height:1}
-.summaryValue.money{font-size:24px}
-.sectionTitle{margin:0 0 6px;font-size:22px;font-weight:950;color:var(--green1)}
-.sectionSub{color:var(--muted);font-size:14px;line-height:1.45;margin-bottom:14px}
-.field label{display:block;font-size:13px;font-weight:900;color:#374151;margin-bottom:6px}
-.input{
-width:100%;border:1px solid #d1d5db;border-radius:14px;padding:12px;background:#fff;font-size:15px;color:#111827;
-}
-.btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-.btn{border:0;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:950;cursor:pointer;white-space:nowrap;to
-uch-action:manipulation;-webkit-tap-highlight-color:transparent}
-.btnGreen{background:linear-gradient(135deg,var(--green2),var(--green3));color:#fff}
-.btnBlue{background:linear-gradient(135deg,var(--blue1),var(--blue2));color:#fff}
-.btnGray{background:linear-gradient(135deg,#6b7280,#9ca3af);color:#fff}
-.btnRed{background:linear-gradient(135deg,#ef4444,#f87171);color:#fff}
-.btnGold{background:linear-gradient(135deg,#d97706,#fbbf24);color:#111827}
-.statusPanel{margin-top:12px;border-radius:16px;padding:12px 14px;border:1px solid #d1d5db;background:#f8fafc}
-.statusPanel.ok{background:var(--okBg);border-color:var(--okBorder)}
-.statusPanel.warn{background:var(--warnBg);border-color:var(--warnBorder)}
-.statusPanel.error{background:var(--badBg);border-color:var(--badBorder)}
-.statusPanel.info{background:var(--infoBg);border-color:var(--infoBorder)}
-.statusTitle{font-weight:950;margin-bottom:6px}
-.statusList{margin:0;padding-left:18px;color:#374151;line-height:1.45;font-size:14px}
-.previewBox{border:1px solid #e5e7eb;background:#fff;border-radius:14px;padding:12px;margin-top:12px}
-.previewLabel{font-size:12px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom
-:6px}
-.previewText{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;font-size:12px;colo
-r:#111827;max-height:280px;overflow:auto;line-height:1.45}
-.hint{color:#64748b;font-size:13px;line-height:1.4;margin:0 0 10px}
-details{margin-top:12px;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#f8fafc}
-summary{padding:12px;cursor:pointer;font-weight:900;color:#14532d}
-.detailsBody{padding:0 12px 12px}
-textarea{width:100%;min-height:110px;border-radius:14px;border:1px solid #d1d5db;background:#fff;color:#111827;padding
-:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.4;resize:vertica
-l;outline:none}
-textarea:focus,.input:focus{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.14);outline:none}
-.tableWrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid
-#e5e7eb;border-radius:18px;background:#fff}
-table{width:100%;min-width:1100px;border-collapse:collapse;background:#fff}
-th,td{padding:10px 12px;border-bottom:1px solid
-#e5e7eb;text-align:left;font-size:13px;vertical-align:top;line-height:1.35}
-th{background:#f8fafc;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:900;posit
-ion:sticky;top:0;z-index:1}
-tr:nth-child(even) td{background:#fcfcfd}
-tr:last-child td{border-bottom:0}
-.pill{display:inline-flex;align-items:center;padding:6px
-10px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid
-#e5e7eb;background:#f3f4f6;color:#374151;white-space:nowrap}
-.pill.ok{background:#dcfce7;color:#166534;border-color:#bbf7d0}
-.pill.warn{background:#fffbeb;color:#92400e;border-color:#fde68a}
-.pill.bad{background:#fef2f2;color:#991b1b;border-color:#fecaca}
-.pill.info{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
-.pill.money{background:#ecfdf5;color:#166534;border-color:#bbf7d0}
-.nameList{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.nameChip{border-radius:999px;background:#ecfdf5;border:1px solid #bbf7d0;padding:7px
-10px;color:#166534;font-size:12px;font-weight:900}
-.fileInput{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
-.uploadBtn{
-display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;
-border-radius:16px;border:2px dashed #bbf7d0;background:#f0fdf4;color:#14532d;
-font-size:15px;font-weight:950;cursor:pointer;text-align:center;padding:12px 14px;
-touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-}
-.uploadBtn:active{transform:scale(.99)}
-.uploadBtn.blue{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
-.fileName{margin-top:8px;color:#64748b;font-size:12px;line-height:1.35;word-break:break-word}
-.footerNote{color:#64748b;font-size:12px;line-height:1.45;margin:12px 0 0}
-.netPositive{color:#166534;font-weight:950}
-.netNegative{color:#991b1b;font-weight:950}
-.netZero{color:#475569;font-weight:950}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Golf Bet PDF + Squabbit Score Reader</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root{
+      --page:#f4f7f1;
+      --page2:#e8f2e8;
+      --ink:#102016;
+      --muted:#667085;
+      --card:#ffffff;
+      --line:#dbe5dc;
+      --greenDark:#0f3d24;
+      --green:#166534;
+      --green2:#22c55e;
+      --greenSoft:#eefaf1;
+      --greenLine:#bbf7d0;
+      --blue:#1d4ed8;
+      --blueSoft:#eff6ff;
+      --blueLine:#bfdbfe;
+      --gold:#f59e0b;
+      --goldSoft:#fff7ed;
+      --goldLine:#fed7aa;
+      --red:#b91c1c;
+      --redSoft:#fef2f2;
+      --redLine:#fecaca;
+      --shadow:0 18px 42px rgba(16,32,22,.12);
+      --radius:20px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+    body{
+      min-height:100vh;
+      color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(900px 520px at 10% 0%, rgba(34,197,94,.20), transparent 65%),
+        radial-gradient(700px 460px at 90% 0%, rgba(245,158,11,.18), transparent 60%),
+        linear-gradient(180deg,var(--page),var(--page2));
+    }
+    .wrap{width:100%;max-width:1320px;margin:0 auto;padding:14px}
+    .hero{
+      border-radius:28px;
+      padding:20px;
+      margin:0 0 14px;
+      color:#fff;
+      background:
+        linear-gradient(135deg,rgba(15,61,36,.98),rgba(22,101,52,.95)),
+        radial-gradient(600px 260px at 85% 0%,rgba(245,158,11,.28),transparent 70%);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .heroTop{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+    h1{margin:0 0 8px;font-size:30px;line-height:1.08;font-weight:950;letter-spacing:-.02em}
+    .hero p{margin:0;max-width:920px;color:#e8f8ed;font-size:14px;line-height:1.45}
+    .backBtn{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:10px 14px;border-radius:999px;
+      color:#fff;text-decoration:none;font-weight:900;font-size:13px;white-space:nowrap;
+      background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);
+    }
+    .summaryGrid,.grid2,.grid3{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width:900px){.summaryGrid{grid-template-columns:repeat(5,minmax(0,1fr))}.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    .card,.summaryCard{background:var(--card);border:1px solid rgba(16,32,22,.08);border-radius:var(--radius);box-shadow:0 10px 24px rgba(16,32,22,.08)}
+    .card{padding:18px;margin-bottom:14px}
+    .summaryCard{padding:16px;margin-bottom:14px}
+    .summaryLabel{font-size:12px;color:var(--muted);font-weight:950;text-transform:uppercase;letter-spacing:.05em}
+    .summaryValue{margin-top:7px;font-size:28px;line-height:1;font-weight:950;color:var(--green)}
+    .summaryValue.money{font-size:24px;color:#92400e}
+    .sectionTitle{margin:0 0 6px;font-size:22px;font-weight:950;color:var(--greenDark)}
+    .sectionSub{color:var(--muted);font-size:14px;line-height:1.45;margin:0 0 14px}
+    .field label:not(.uploadBox){display:block;font-size:13px;font-weight:900;color:#344054;margin-bottom:6px}
+    .input,textarea{
+      width:100%;border:1px solid #ccd6ce;border-radius:14px;padding:12px;background:#fff;color:var(--ink);font-size:15px;outline:none;
+    }
+    textarea{min-height:115px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.4;resize:vertical}
+    .input:focus,textarea:focus{border-color:var(--green2);box-shadow:0 0 0 4px rgba(34,197,94,.15)}
+    .btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .btn{border:0;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:950;cursor:pointer;white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    .btnGreen{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff}
+    .btnBlue{background:linear-gradient(135deg,#1d4ed8,#38bdf8);color:#fff}
+    .btnGray{background:linear-gradient(135deg,#667085,#98a2b3);color:#fff}
+    .btnRed{background:linear-gradient(135deg,#dc2626,#fb7185);color:#fff}
+    .btnGold{background:linear-gradient(135deg,#d97706,#fbbf24);color:#111827}
+    .statusPanel{margin-top:12px;border-radius:16px;padding:12px 14px;border:1px solid var(--line);background:#f8fafc}
+    .statusPanel.ok{background:var(--greenSoft);border-color:var(--greenLine)}
+    .statusPanel.warn{background:#fffbeb;border-color:#fde68a}
+    .statusPanel.error{background:var(--redSoft);border-color:var(--redLine)}
+    .statusPanel.info{background:var(--blueSoft);border-color:var(--blueLine)}
+    .statusTitle{font-weight:950;margin-bottom:6px;color:var(--ink)}
+    .statusList{margin:0;padding-left:18px;color:#344054;line-height:1.45;font-size:14px}
+    .uploadBox{
+      position:relative;display:flex;align-items:center;justify-content:center;min-height:76px;width:100%;
+      border-radius:18px;border:2px dashed var(--greenLine);background:var(--greenSoft);color:var(--greenDark);
+      text-align:center;padding:14px;cursor:pointer;overflow:hidden;user-select:none;touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .uploadBox.blue{border-color:var(--blueLine);background:var(--blueSoft);color:var(--blue)}
+    .uploadBox.gold{border-color:var(--goldLine);background:var(--goldSoft);color:#92400e}
+    .uploadBox strong{display:block;font-size:15px;line-height:1.2;font-weight:950}
+    .uploadBox span{display:block;margin-top:5px;font-size:12px;color:var(--muted);font-weight:800}
+    .uploadBox:active{transform:scale(.99)}
+    .fileInput{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2}
+    .fileName{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.35;word-break:break-word}
+    .previewBox{border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px;margin-top:12px}
+    .previewLabel{font-size:12px;font-weight:950;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+    .previewText{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;font-size:12px;color:#111827;max-height:290px;overflow:auto;line-height:1.45}
+    .hint{color:var(--muted);font-size:13px;line-height:1.4;margin:0 0 10px}
+    details{margin-top:12px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#f8fafc}
+    summary{padding:12px;cursor:pointer;font-weight:950;color:var(--greenDark)}
+    .detailsBody{padding:0 12px 12px}
+    .tableWrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:18px;background:#fff}
+    table{width:100%;min-width:1050px;border-collapse:collapse;background:#fff}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;font-size:13px;vertical-align:top;line-height:1.35}
+    th{background:#f2f7f3;color:#475467;font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:950;position:sticky;top:0;z-index:1}
+    tr:nth-child(even) td{background:#fbfdfb}
+    tr:last-child td{border-bottom:0}
+    .pill{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:950;border:1px solid #d0d5dd;background:#f2f4f7;color:#344054;white-space:nowrap;margin:1px 3px 1px 0}
+    .pill.ok{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+    .pill.warn{background:#fffbeb;color:#92400e;border-color:#fde68a}
+    .pill.bad{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+    .pill.info{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+    .nameList{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+    .nameChip{border-radius:999px;background:#ecfdf5;border:1px solid #bbf7d0;padding:7px 10px;color:#166534;font-size:12px;font-weight:950}
+    .netPositive{color:#166534;font-weight:950}.netNegative{color:#991b1b;font-weight:950}.netZero{color:#475467;font-weight:950}
+    .footerNote{color:var(--muted);font-size:12px;line-height:1.45;margin:12px 0 0}
+  </style>
 </head>
 <body>
-<div class="wrap">
-<section class="hero">
-<div class="heroTop">
-<div>
-<p>
-</p>
-</div>
-</div>
-</section>
-<h1>Golf Bet PDF + Squabbit Score Reader</h1>
-Upload a golf bet PDF, then upload a Squabbit pre-round roster CSV and a completed post-round CSV.
-This version calculates best ball scores, money owed, net winnings/losses, and who pays who.
-<a class="backBtn" href="index.html">Back to Hub</a>
-<section class="summaryGrid">
-<div class="summaryCard"><div class="summaryLabel">PDF Matchups</div><div class="summaryValue"
-id="summaryMatchups">0</div></div>
-<div class="summaryCard"><div class="summaryLabel">Roster Players</div><div class="summaryValue"
-id="summaryRoster">0</div></div>
-<div class="summaryCard"><div class="summaryLabel">Finished Scores</div><div class="summaryValue"
-id="summaryScores">0</div></div>
-<div class="summaryCard"><div class="summaryLabel">Finished Bets</div><div class="summaryValue"
-id="summaryFinished">0</div></div>
-<div class="summaryCard"><div class="summaryLabel">Total Settled</div><div class="summaryValue money"
-id="summaryMoney">$0</div></div>
-</section>
-<section class="card">
-<h2 class="sectionTitle">1) Upload Files</h2>
-<div class="sectionSub">Use the three upload boxes below. The roster and score CSV readers are built around the
-Squabbit export format.</div>
-<div class="grid3">
-<div>
-<div class="field">
-<label>Bet PDF / TXT / CSV</label>
-<label class="uploadBtn" for="betFile">Choose Bet PDF / TXT / CSV</label>
-<input class="fileInput" id="betFile" type="file" accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv" />
-<div class="fileName" id="betFileName">No file selected.</div>
-</div>
-<div id="betPanel" class="statusPanel info"><div class="statusTitle">Bet Sheet</div><ul class="statusList"
-id="betStatusList"><li>No bet file loaded yet.</li></ul></div>
-</div>
-<div>
-<div class="field">
-<label>Squabbit Pre-Round / Roster CSV</label>
-<label class="uploadBtn blue" for="preFile">Choose Pre-Round CSV</label>
-<input class="fileInput" id="preFile" type="file" accept=".csv,text/csv,text/plain" />
-<div class="fileName" id="preFileName">No file selected.</div>
-</div>
-<div id="prePanel" class="statusPanel info"><div class="statusTitle">Roster</div><ul class="statusList"
-id="preStatusList"><li>No roster loaded yet.</li></ul></div>
-</div>
-<div>
-<div class="field">
-<label>Squabbit Completed Round CSV</label>
-<label class="uploadBtn" for="postFile">Choose Completed Round CSV</label>
-<input class="fileInput" id="postFile" type="file" accept=".csv,text/csv,text/plain" />
-<div class="fileName" id="postFileName">No file selected.</div>
-</div>
-<div id="postPanel" class="statusPanel info"><div class="statusTitle">Scores</div><ul class="statusList"
-id="postStatusList"><li>No completed scores loaded yet.</li></ul></div>
-</div>
-</div>
-</section>
-<section class="card">
-<h2 class="sectionTitle">2) Money Settings</h2>
-<div class="sectionSub">Example: $3 per shot with a 7 shot max means each losing player can pay up to $21 for that
-matchup.</div>
-<div class="grid3">
-<div class="field"><label for="shotValue">Dollars per shot</label><input class="input" id="shotValue" type="number"
-min="0" step="1" value="3" /></div>
-<div class="field"><label for="maxShots">Max shots counted</label><input class="input" id="maxShots" type="number"
-min="0" step="1" value="7" /></div>
-<div class="field"><label for="pairMode">Payment pairing</label><input class="input" id="pairMode" value="Player 1
-pays Player 1, Player 2 pays Player 2" readonly /></div>
-</div>
-<div class="btnRow">
-<button class="btn btnBlue" id="recheckBtn" type="button">Recheck Everything</button>
-<button class="btn btnGreen" id="downloadResultsBtn" type="button">Download Results CSV</button>
-<button class="btn btnGold" id="downloadPdfBtn" type="button">Download Full Results PDF</button>
-<button class="btn btnGreen" id="downloadMatchupsBtn" type="button">Download Matchups CSV</button>
-<button class="btn btnRed" id="clearBtn" type="button">Clear All</button>
-</div>
-</section>
-<section class="card">
-<h2 class="sectionTitle">3) Checks and Manual Fixes</h2>
-<div class="grid3">
-<div class="previewBox"><div class="previewLabel">Bet Sheet Check</div><div class="previewText"
-id="betCheck">Waiting on bet file.</div></div>
-<div class="previewBox"><div class="previewLabel">Roster Check</div><div class="previewText"
-id="rosterCheck">Waiting on Squabbit CSV.</div></div>
-<div class="previewBox"><div class="previewLabel">Score Check</div><div class="previewText" id="scoreCheck">Waiting
-on completed scores.</div></div>
-</div>
-<details>
-<summary>Manual name aliases / fixes</summary>
-<div class="detailsBody">
-<p class="hint">Use this when a PDF name does not exactly match Squabbit. One per line.</p>
-<textarea id="aliasesBox" spellcheck="false" placeholder="K Waters = Keith Waters&#10;Dawson = Dawson
-Smith&#10;Bryon Ruben = Ruben Bryon"></textarea>
-<div class="btnRow"><button class="btn btnGray" id="applyAliasesBtn" type="button">Apply Aliases</button></div>
-</div>
-</details>
-<details>
-<summary>Manual matchup editor</summary>
-<div class="detailsBody">
-<p class="hint">Use this if the PDF reader misses anything. Examples: Clay / Zack vs Dawson / Dean or
-team1_player1,team1_player2,team2_player1,team2_player2</p>
-<textarea id="manualBetsBox" spellcheck="false" placeholder="Paste corrected matchups here if needed."></textarea>
-<div class="btnRow"><button class="btn btnGray" id="useManualBtn" type="button">Use Manual Matchups</button></div>
-</div>
-</details>
-<details>
-<summary>Extracted PDF text / raw file text</summary>
-<div class="detailsBody"><textarea id="rawTextBox" spellcheck="false" placeholder="Extracted PDF text will show
-here. You can edit it and click Recheck Everything."></textarea></div>
-</details>
-</section>
-<section class="card">
-<h2 class="sectionTitle">4) Loaded Players</h2>
-<div class="sectionSub">Players with a check mark have completed scores loaded.</div>
-<div id="playerChips" class="nameList"></div>
-<div class="grid2">
-<div class="previewBox"><div class="previewLabel">Roster players</div><div class="previewText" id="rosterPreview">No
-roster loaded yet.</div></div>
-<div class="previewBox"><div class="previewLabel">Score rows</div><div class="previewText" id="scorePreview">No
-completed scores loaded yet.</div></div>
-</div>
-</section>
-<section class="card">
-<h2 class="sectionTitle">5) Matchups</h2>
-<div class="tableWrap">
-<table id="matchupsTable">
-<thead><tr><th>#</th><th>Team 1</th><th>Team 2</th><th>Validation</th></tr></thead>
-<tbody></tbody>
-</table>
-</div>
-</section>
-<section class="card">
-<h2 class="sectionTitle">6) Full Results</h2>
-<div class="sectionSub">Best ball uses the lower score from each two-person team on every hole, then totals all 18
-holes.</div>
-<div class="tableWrap">
-<table id="resultsTable">
-<thead>
-<tr>
-<th>#</th><th>Team 1</th><th>Team 1 BB</th><th>Team 2</th><th>Team 2
-BB</th><th>Winner</th><th>Margin</th><th>Pay Per Person</th><th>Who Pays Who</th><th>Warnings</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
-<p class="footerNote">Important: this does not perform OCR perfectly. If the PDF is a screenshot/photo inside a PDF,
-the OCR may need manual cleanup in the manual matchup editor.</p>
-</section>
-<section class="card">
-<h2 class="sectionTitle">7) Player Winnings / Losses</h2>
-<div class="sectionSub">This is the total net amount each person wins or loses across every finished bet.</div>
-<div class="tableWrap">
-<table id="ledgerTable">
-<thead><tr><th>Player</th><th>Gross Score</th><th>Net</th><th>Lines</th></tr></thead>
-<tbody></tbody>
-</table>
-</div>
-</section>
-</div>
-<script>
-if(window.pdfjsLib){
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-}
-const state = {
-rawBetText:"", matchups:[], prePlayers:[], postPlayers:[], scoreMap:new Map(), aliases:new Map(), results:[], ledger:[]
-};
-const els = {
-betFile:document.getElementById("betFile"), preFile:document.getElementById("preFile"),
-postFile:document.getElementById("postFile"),
-betFileName:document.getElementById("betFileName"), preFileName:document.getElementById("preFileName"),
-postFileName:document.getElementById("postFileName"),
-betPanel:document.getElementById("betPanel"), prePanel:document.getElementById("prePanel"),
-postPanel:document.getElementById("postPanel"),
-betStatusList:document.getElementById("betStatusList"), preStatusList:document.getElementById("preStatusList"),
-postStatusList:document.getElementById("postStatusList"),
-betCheck:document.getElementById("betCheck"), rosterCheck:document.getElementById("rosterCheck"),
-scoreCheck:document.getElementById("scoreCheck"),
-rosterPreview:document.getElementById("rosterPreview"), scorePreview:document.getElementById("scorePreview"),
-rawTextBox:document.getElementById("rawTextBox"),
-aliasesBox:document.getElementById("aliasesBox"), manualBetsBox:document.getElementById("manualBetsBox"),
-playerChips:document.getElementById("playerChips"),
-matchupsBody:document.querySelector("#matchupsTable tbody"), resultsBody:document.querySelector("#resultsTable tbody"),
-ledgerBody:document.querySelector("#ledgerTable tbody"),
-recheckBtn:document.getElementById("recheckBtn"), downloadResultsBtn:document.getElementById("downloadResultsBtn"),
-downloadPdfBtn:document.getElementById("downloadPdfBtn"),
-downloadMatchupsBtn:document.getElementById("downloadMatchupsBtn"), clearBtn:document.getElementById("clearBtn"),
-applyAliasesBtn:document.getElementById("applyAliasesBtn"), useManualBtn:document.getElementById("useManualBtn"),
-shotValue:document.getElementById("shotValue"), maxShots:document.getElementById("maxShots"),
-summaryMatchups:document.getElementById("summaryMatchups"), summaryRoster:document.getElementById("summaryRoster"),
-summaryScores:document.getElementById("summaryScores"), summaryFinished:document.getElementById("summaryFinished"),
-summaryMoney:document.getElementById("summaryMoney")
-};
-let betPond=null, prePond=null, postPond=null;
-function initUploaders(){
-els.betFile.addEventListener("change", e => {
-const file = e.target.files && e.target.files[0];
-els.betFileName.textContent = file ? file.name : "No file selected.";
-handleBetFile(file);
-});
-els.preFile.addEventListener("change", e => {
-const file = e.target.files && e.target.files[0];
-els.preFileName.textContent = file ? file.name : "No file selected.";
-handlePreFile(file);
-});
-els.postFile.addEventListener("change", e => {
-const file = e.target.files && e.target.files[0];
-els.postFileName.textContent = file ? file.name : "No file selected.";
-handlePostFile(file);
-});
-}
-async function handleBetFile(file){
-if(!file) return;
-setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["Reading " + file.name + "..."]);
-try{
-let text = "";
-if(file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf") text = await extractPdfText(file);
-else text = await file.text();
-state.rawBetText = text;
-els.rawTextBox.value = text;
-state.matchups = parseMatchups(text);
-setStatus(els.betPanel, els.betStatusList, state.matchups.length ? "ok" : "error", "Bet Sheet", state.matchups.length
-? ["Loaded " + file.name + ".", "Found " + state.matchups.length + " matchup row(s)."] : ["Loaded " + file.name + ",
-but no 2v2 matchups were detected.", "Check the extracted text or use the manual matchup editor."]);
-reparseAll();
-}catch(err){ console.error(err); setStatus(els.betPanel, els.betStatusList, "error", "Bet Sheet", ["Could not read this
-bet file.", errorMessage(err)]); }
-}
-async function handlePreFile(file){
-if(!file) return;
-setStatus(els.prePanel, els.preStatusList, "info", "Roster", ["Reading " + file.name + "..."]);
-try{
-const names = squabbitAnalyzeRosterCSV(await file.text());
-state.prePlayers = names.map(name => ({ name, scores:[], raw:[] }));
-setStatus(els.prePanel, els.preStatusList, state.prePlayers.length ? "ok" : "error", "Roster", state.prePlayers.length
-? ["Loaded " + file.name + ".", "Found " + state.prePlayers.length + " roster player(s)."] : ["Loaded " + file.name
-+ ", but no players were detected.", "Make sure this is the Squabbit pre-round / roster CSV."]);
-reparseAll();
-}catch(err){ console.error(err); setStatus(els.prePanel, els.preStatusList, "error", "Roster", ["Could not read this
-pre-round CSV.", errorMessage(err)]); }
-}
-async function handlePostFile(file){
-if(!file) return;
-setStatus(els.postPanel, els.postStatusList, "info", "Scores", ["Reading " + file.name + "..."]);
-try{
-const scoreObject = squabbitAnalyzeScoresCSV(await file.text());
-const scoreNames = Object.keys(scoreObject).sort((a,b) => a.localeCompare(b));
-state.postPlayers = scoreNames.map(name => ({ name, scores:scoreObject[name], raw:[] }));
-state.scoreMap = new Map();
-for(const player of state.postPlayers){
-if(player.scores && player.scores.filter(Number.isFinite).length === 18)
-state.scoreMap.set(normalizeName(player.name), player);
-}
-setStatus(els.postPanel, els.postStatusList, scoreNames.length ? "ok" : "error", "Scores", scoreNames.length ?
-["Loaded " + file.name + ".", "Found " + scoreNames.length + " completed 18-hole score row(s)."] : ["Loaded " +
-file.name + ", but no completed 18-hole score rows were detected.", "Make sure this is the completed Squabbit
-post-round CSV."]);
-reparseAll();
-}catch(err){ console.error(err); setStatus(els.postPanel, els.postStatusList, "error", "Scores", ["Could not read this
-post-round CSV.", errorMessage(err)]); }
-}
-async function extractPdfText(file){
-if(!window.pdfjsLib) throw new Error("PDF.js did not load. Make sure this page has internet access.");
-const data = new Uint8Array(await file.arrayBuffer());
-const pdf = await pdfjsLib.getDocument({ data }).promise;
-const pageTexts = [];
-for(let pageNumber=1; pageNumber<=pdf.numPages; pageNumber++){
-const page = await pdf.getPage(pageNumber);
-const content = await page.getTextContent();
-const textLayerText = groupPdfItemsIntoLines(content.items).join("\n").trim();
-if(pdfTextLooksUsable(textLayerText)) pageTexts.push(textLayerText);
-else {
-if(!window.Tesseract) throw new Error("PDF text is unreadable and OCR did not load.");
-setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["PDF text layer was unreadable.", "Running OCR on
-page " + pageNumber + "..."]);
-pageTexts.push(await ocrPdfPage(pdf, pageNumber));
-}
-}
-const combined = pageTexts.join("\n").trim();
-if(!combined) throw new Error("No readable text was found in this PDF.");
-return combined;
-}
-function pdfTextLooksUsable(text){
-const s = String(text || "").trim();
-if(s.length < 20) return false;
-const badChars = (s.match(/[■■■\u0000-\u0008\u000B\u000C\u000E-\u001F]/g) || []).length;
-const letters = (s.match(/[A-Za-z]/g) || []).length;
-const readable = (s.match(/[A-Za-z0-9\s.,:/+&()#'"-]/g) || []).length;
-if(badChars > 3) return false;
-if(letters < 8) return false;
-if(readable / s.length < 0.70) return false;
-return true;
-}
-async function ocrPdfPage(pdf, pageNumber){
-const page = await pdf.getPage(pageNumber);
-const viewport = page.getViewport({ scale:2.5 });
-const canvas = document.createElement("canvas");
-const context = canvas.getContext("2d");
-canvas.width = Math.ceil(viewport.width);
-canvas.height = Math.ceil(viewport.height);
-await page.render({ canvasContext:context, viewport }).promise;
-const result = await Tesseract.recognize(canvas, "eng", { logger:() => {} });
-return String(result?.data?.text || "").trim();
-}
-function groupPdfItemsIntoLines(items){
-const usable = items.filter(item => item.str && item.str.trim()).map(item => ({ text:item.str.trim(),
-x:item.transform[4], y:item.transform[5], width:item.width || 0 }));
-usable.sort((a,b) => Math.abs(b.y - a.y) > 3 ? b.y - a.y : a.x - b.x);
-const rows = [];
-for(const item of usable){
-let row = rows.find(r => Math.abs(r.y - item.y) <= 3);
-if(!row){ row = { y:item.y, items:[] }; rows.push(row); }
-row.items.push(item);
-}
-rows.sort((a,b) => b.y - a.y);
-return rows.map(row => {
-row.items.sort((a,b) => a.x - b.x);
-let line = ""; let lastEnd = null;
-for(const item of row.items){
-if(lastEnd !== null){ const gap = item.x - lastEnd; if(gap > 45) line += "\t"; else if(gap > 12) line += " "; else
-line += " "; }
-line += item.text; lastEnd = item.x + item.width;
-}
-return line.replace(/[ \t]+$/g, "");
-}).filter(Boolean);
-}
-function parseMatchups(text){
-const cleanText = String(text || "").replace(/\r/g, "\n");
-let matchups = [];
-matchups = matchups.concat(parseMatchupsAsCsv(cleanText));
-matchups = matchups.concat(parseMatchupsFromLines(cleanText));
-const unique = []; const seen = new Set();
-for(const matchup of matchups){
-const cleaned = cleanMatchup(matchup); if(!cleaned) continue;
-const key = canonicalMatchupKey(cleaned); if(seen.has(key)) continue;
-seen.add(key); unique.push({ ...cleaned, source:matchup.source || "import" });
-}
-return unique.map((m,i) => ({ ...m, id:i+1 }));
-}
-function parseMatchupsAsCsv(text){
-const rows = parseCsv(text); if(!rows.length) return [];
-const headerIndex = rows.findIndex(row => row.some(cell => /team\s*1/i.test(cell)) && row.some(cell =>
-/team\s*2/i.test(cell)));
-if(headerIndex === -1) return [];
-const headers = rows[headerIndex].map(h => normalizeHeader(h));
-const team1Index = headers.findIndex(h => h === "team1" || h === "team1team" || h === "team1name");
-const team2Index = headers.findIndex(h => h === "team2" || h === "team2team" || h === "team2name");
-const t1p1 = headers.findIndex(h => h === "team1player1" || h === "t1p1");
-const t1p2 = headers.findIndex(h => h === "team1player2" || h === "t1p2");
-const t2p1 = headers.findIndex(h => h === "team2player1" || h === "t2p1");
-const t2p2 = headers.findIndex(h => h === "team2player2" || h === "t2p2");
-const results = [];
-for(let i=headerIndex+1; i<rows.length; i++){
-const row = rows[i]; if(!row || !row.join("").trim()) continue;
-if(t1p1 >= 0 && t1p2 >= 0 && t2p1 >= 0 && t2p2 >= 0) results.push({ team1:[row[t1p1], row[t1p2]], team2:[row[t2p1],
-row[t2p2]], source:"csv" });
-else if(team1Index >= 0 && team2Index >= 0) results.push({ team1:splitTeamPlayers(row[team1Index]),
-team2:splitTeamPlayers(row[team2Index]), source:"csv" });
-}
-return results;
-}
-function parseMatchupsFromLines(text){
-const results = [];
-const lines = String(text || "").split(/\n+/).map(line => line.replace(/\u00a0/g, " ").trim()).filter(Boolean);
-for(const originalLine of lines){
-let line = originalLine.replace(/^\|+|\|+$/g, "").replace(/\s+\|\s+/g, "\t").replace(/[–—]/g, "-").trim();
-if(!line) continue;
-if(!pdfTextLooksUsable(line) && line.length > 20) continue;
-if(/^(best\s+ball|these\s+are|wheel\s+teams|website\s+import|#\s+team|team\s*1\s+team\s*2)/i.test(line)) continue;
-const knownPlayerMatchup = parseKnownPlayerMatchupFromLine(line);
-if(knownPlayerMatchup){ results.push(knownPlayerMatchup); continue; }
-const numbered = line.match(/^(\d{1,3})[\).:\-\s]+(.+)$/); if(numbered) line = numbered[2].trim();
-let parts = line.split(/\t+/).map(x => x.trim()).filter(Boolean);
-if(parts.length >= 3 && /^\d+$/.test(parts[0])) parts = parts.slice(1);
-if(parts.length >= 2 && looksLikeTeam(parts[0]) && looksLikeTeam(parts[1])){ results.push({
-team1:splitTeamPlayers(parts[0]), team2:splitTeamPlayers(parts[1]), source:"pdf-line" }); continue; }
-const vsParts = line.split(/\s+(?:vs\.?|v\.?|against)\s+/i).map(x => x.trim()).filter(Boolean);
-if(vsParts.length === 2){ results.push({ team1:splitTeamPlayers(vsParts[0]), team2:splitTeamPlayers(vsParts[1]),
-source:"text-vs" }); continue; }
-const wideParts = line.split(/\s{3,}/).map(x => x.trim()).filter(Boolean);
-if(wideParts.length >= 2 && looksLikeTeam(wideParts[0]) && looksLikeTeam(wideParts[1])) results.push({
-team1:splitTeamPlayers(wideParts[0]), team2:splitTeamPlayers(wideParts[1]), source:"wide-space" });
-}
-return results;
-}
-function parseKnownPlayerMatchupFromLine(line){
-const knownPlayers = allKnownPlayers(); const candidates = [];
-for(const player of knownPlayers){ const playerName = cleanName(player.name); const key = normalizeName(playerName);
-if(!key || key.length < 3) continue; addNameCandidate(candidates, line, key, playerName); }
-if(state.aliases && state.aliases.size){ for(const [aliasKey, playerName] of state.aliases.entries()){ if(aliasKey &&
-aliasKey.length >= 2 && playerName) addNameCandidate(candidates, line, aliasKey, cleanName(playerName)); } }
-if(!candidates.length) return null;
-candidates.sort((a,b) => b.len - a.len);
-const picked = [];
-for(const candidate of candidates){
-const overlaps = picked.some(existing => candidate.start < existing.end && candidate.end > existing.start);
-const duplicatePlayer = picked.some(existing => normalizeName(existing.name) === normalizeName(candidate.name));
-if(!overlaps && !duplicatePlayer) picked.push(candidate);
-}
-picked.sort((a,b) => a.start - b.start);
-if(picked.length < 4) return null;
-return { team1:[picked[0].name, picked[1].name], team2:[picked[2].name, picked[3].name], source:"known-player-line" };
-}
-function addNameCandidate(candidates,line,key,playerName){
-const normalizedLine = normalizeName(line); let start = normalizedLine.indexOf(key);
-while(start >= 0){ candidates.push({ name:playerName, start, end:start + key.length, len:key.length }); start =
-normalizedLine.indexOf(key, start + key.length); }
-}
-function cleanMatchup(matchup){
-const t1 = (matchup.team1 || []).map(cleanName).filter(Boolean); const t2 = (matchup.team2 ||
-[]).map(cleanName).filter(Boolean);
-if(t1.length !== 2 || t2.length !== 2) return null;
-if(new Set([...t1, ...t2].map(normalizeName)).size !== 4) return null;
-return { team1:t1, team2:t2 };
-}
-function splitTeamPlayers(teamText){
-let s = String(teamText || "").replace(/\bTeam\s*[12]\b/ig, "").replace(/[()]/g, " ").replace(/\s+/g, " ").trim();
-s = s.replace(/\s+(?:vs\.?|v\.?|against)\s+.*$/i, "").trim();
-let parts = s.split(/\s*(?:\/|\+|&)\s*/).map(cleanName).filter(Boolean);
-if(parts.length !== 2) parts = s.split(/\s+\band\b\s+/i).map(cleanName).filter(Boolean);
-if(parts.length > 2) parts = [parts[0], parts.slice(1).join(" ")];
-return parts;
-}
-function looksLikeTeam(text){ const players = splitTeamPlayers(text); return players.length === 2 && players.every(p =>
-p.length >= 2); }
-function parseCsv(text){
-const rows = []; let row = []; let cell = ""; let inQuotes = false; const src = String(text || "").replace(/^\ufeff/,
-"");
-for(let i=0; i<src.length; i++){
-const ch = src[i]; const next = src[i+1];
-if(ch === '"'){ if(inQuotes && next === '"'){ cell += '"'; i++; } else inQuotes = !inQuotes; }
-else if(ch === "," && !inQuotes){ row.push(cell.trim()); cell = ""; }
-else if((ch === "\n" || ch === "\r") && !inQuotes){ if(ch === "\r" && next === "\n") i++; row.push(cell.trim());
-if(row.some(x => x !== "")) rows.push(row); row = []; cell = ""; }
-else cell += ch;
-}
-row.push(cell.trim()); if(row.some(x => x !== "")) rows.push(row); return rows;
-}
-function squabbitNormalizeSpace(value){ return String(value ?? "").replace(/\s+/g, " ").trim(); }
-function squabbitDisplayName(value){
-const cleaned = squabbitNormalizeSpace(value).replace(/\s+\(.*?\)\s*$/, "").trim(); if(!cleaned) return "";
-return cleaned.split(" ").filter(Boolean).map(part => part.split("-").map(piece => { if(!piece) return "";
-if(piece.length <= 2 && piece === piece.toUpperCase()) return piece; return piece.charAt(0).toUpperCase() +
-piece.slice(1).toLowerCase(); }).join("-")).join(" ").trim();
-}
-function squabbitToInt(value){ const s = squabbitNormalizeSpace(value); return /^-?\d+$/.test(s) ? parseInt(s,10) : null;
-}
-function squabbitUniqueSortedNames(names){ return [...new Set((names ||
-[]).map(squabbitDisplayName).filter(Boolean))].sort((a,b) => a.localeCompare(b)); }
-function squabbitSniffDelimiter(text){
-const sample = String(text || "").split(/\r?\n/).slice(0,20).join("\n"); const candidates = [",",";","\t","|"]; let best
-= ","; let bestScore = -1;
-candidates.forEach(delimiter => { const score = sample.split(/\r?\n/).reduce((sum,line) => { if(delimiter === "\t")
-return sum + ((line.match(/\t/g) || []).length); const escaped = delimiter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const re = new RegExp(escaped,"g"); return sum + ((line.match(re) || []).length); }, 0); if(score > bestScore){ best =
-delimiter; bestScore = score; } });
-return best;
-}
-function squabbitParseCSV(text, delimiter){
-const rows = []; let row = []; let cell = ""; let inQuotes = false; const src = String(text || "").replace(/^\uFEFF/,
-"");
-for(let i=0; i<src.length; i++){
-const char = src[i]; const next = src[i+1];
-if(char === '"'){ if(inQuotes && next === '"'){ cell += '"'; i++; } else inQuotes = !inQuotes; }
-else if(char === delimiter && !inQuotes){ row.push(cell.trim()); cell = ""; }
-else if((char === "\n" || char === "\r") && !inQuotes){ if(char === "\r" && next === "\n") i++; row.push(cell.trim());
-rows.push(row); row = []; cell = ""; }
-else cell += char;
-}
-if(cell.length || row.length){ row.push(cell.trim()); rows.push(row); }
-return rows.filter(r => r.some(c => squabbitNormalizeSpace(c)));
-}
-function squabbitIsNonPlayerName(name){
-const s = squabbitNormalizeSpace(name).toLowerCase();
-return !s || ["player","players","name","golfer","team","teams","gross","net","total","out","in","front","back","par","s
-.i.","si","handicap","hdcp","score","scores","matchup","matchups","hole","holes","round","tee","skins","strokeplay","s
-troke play","twos club","best ball","games","summary","totals"].includes(s);
-}
-function squabbitRowLooksLikePlayerScoreRow(row){
-const clean = (row || []).map(squabbitNormalizeSpace); const lower = clean.map(c => c.toLowerCase()); const name =
-squabbitDisplayName(clean[0] || "");
-if(!name || squabbitIsNonPlayerName(name)) return false; const hasTee = lower.some(c => c.includes("tee")); const
-numericCount = clean.filter(c => /^-?\d+$/.test(c)).length; return hasTee || numericCount >= 9;
-}
-function squabbitAnalyzeRosterCSV(text){
-const delimiter = squabbitSniffDelimiter(text); const rows = squabbitParseCSV(text, delimiter); const names = []; let
-playersRow = -1;
-for(let i=0; i<rows.length; i++){ if((rows[i] || []).some(c => squabbitNormalizeSpace(c).toLowerCase() === "players")){
-playersRow = i; break; } }
-if(playersRow >= 0){
-const headerRow = rows[playersRow + 1] || []; let nameCol = headerRow.findIndex(c =>
-squabbitNormalizeSpace(c).toLowerCase() === "name"); if(nameCol < 0) nameCol = 0;
-for(let i=playersRow + 2; i<rows.length; i++){
-const row = rows[i] || []; const first = squabbitNormalizeSpace(row.find(c => squabbitNormalizeSpace(c)) || "");
-if(!first) break;
-if(/^(skins|strokeplay|stroke play|twos club|best ball|games|summary|totals|round \d+)$/i.test(first)) break;
-const name = squabbitDisplayName(row[nameCol] || row[0] || ""); if(name && !squabbitIsNonPlayerName(name))
-names.push(name);
-}
-}
-rows.forEach(row => { if(squabbitRowLooksLikePlayerScoreRow(row)){ const name = squabbitDisplayName(row[0] || "");
-if(name && !squabbitIsNonPlayerName(name)) names.push(name); } });
-if(!names.length){
-const headerIndex = rows.findIndex(row => row.some(c =>
-["name","player","golfer"].includes(squabbitNormalizeSpace(c).toLowerCase())));
-if(headerIndex >= 0){ const header = rows[headerIndex]; let nameCol = header.findIndex(c =>
-["name","player","golfer"].includes(squabbitNormalizeSpace(c).toLowerCase())); if(nameCol < 0) nameCol = 0; for(let
-i=headerIndex + 1; i<rows.length; i++){ const name = squabbitDisplayName(rows[i][nameCol] || ""); if(name &&
-!squabbitIsNonPlayerName(name)) names.push(name); } }
-}
-return squabbitUniqueSortedNames(names);
-}
-function squabbitHoleIndexFromHeader(header){
-const h = squabbitNormalizeSpace(header).toLowerCase(); let m = h.match(/^(?:hole|h)\s*0?([1-9]|1[0-8])$/i); if(m)
-return Number(m[1]); m = h.match(/^0?([1-9]|1[0-8])$/); if(m) return Number(m[1]); m =
-h.match(/(?:hole|h)\s*0?([1-9]|1[0-8])\b/i); if(m) return Number(m[1]); return -1;
-}
-function squabbitBuildHoleIndex(row){ const index = {}; (row || []).forEach((cell,i) => { const hole =
-squabbitHoleIndexFromHeader(cell); if(hole >= 1 && hole <= 18 && index[hole] === undefined) index[hole] = i; }); return
-Object.keys(index).length ? index : null; }
-function squabbitFindNameColumn(headerRow){ const header = headerRow || []; const nameCol = header.findIndex(c => { const
-h = squabbitNormalizeSpace(c).toLowerCase(); return h === "name" || h === "player" || h === "golfer"; }); return nameCol
->= 0 ? nameCol : 0; }
-function squabbitAnalyzeScoresCSV(text){
-const delimiter = squabbitSniffDelimiter(text); const rows = squabbitParseCSV(text, delimiter); let headerIndex = -1;
-let holeIndex = null;
-for(let i=0; i<rows.length; i++){ const possibleHoleIndex = squabbitBuildHoleIndex(rows[i]); if(possibleHoleIndex &&
-Object.keys(possibleHoleIndex).length >= 9){ headerIndex = i; holeIndex = possibleHoleIndex; break; } }
-const scores = {}; if(headerIndex < 0 || !holeIndex) return scores; const nameCol =
-squabbitFindNameColumn(rows[headerIndex]);
-for(let i=headerIndex + 1; i<rows.length; i++){
-const row = rows[i] || []; const name = squabbitDisplayName(row[nameCol] || row[0] || ""); const rowText = row.map(c
-=> squabbitNormalizeSpace(c).toLowerCase());
-if(!name || squabbitIsNonPlayerName(name)) continue; const numericCount = row.filter(c =>
-/^-?\d+$/.test(squabbitNormalizeSpace(c))).length; const hasTee = rowText.some(c => c.includes("tee")); if(!hasTee
-&& numericCount < 9) continue;
-const strokes = [];
-for(let h=1; h<=18; h++){ const col = holeIndex[h]; const value = squabbitToInt(row[col]); if(value == null || value
-<= 0 || value > 20){ strokes.length = 0; break; } strokes.push(value); }
-if(strokes.length === 18) scores[name] = strokes;
-}
-return scores;
-}
-function reparseAll(){
-parseAliases();
-const manualText = els.manualBetsBox.value.trim(); const rawText = els.rawTextBox.value.trim();
-if(manualText) state.matchups = parseMatchups(manualText);
-else if(rawText){ state.rawBetText = rawText; state.matchups = parseMatchups(rawText); }
-state.results = calculateResults(); state.ledger = buildLedger(state.results); renderAll();
-}
-function useManualBets(){
-const text = els.manualBetsBox.value.trim(); if(!text){ alert("Paste matchups in the manual matchup box first.");
-return; }
-state.matchups = parseMatchups(text);
-setStatus(els.betPanel, els.betStatusList, state.matchups.length ? "ok" : "error", "Manual Matchups",
-state.matchups.length ? ["Using manual matchups.", "Found " + state.matchups.length + " matchup row(s)."] : ["Manual
-text did not produce any valid 2v2 rows."]);
-reparseAll();
-}
-function parseAliases(){
-state.aliases = new Map(); const lines = els.aliasesBox.value.split(/\n+/);
-for(const line of lines){ const trimmed = line.trim(); if(!trimmed || trimmed.startsWith("#")) continue; const parts =
-trimmed.split(/\s*=\s*/); if(parts.length !== 2) continue; const left = normalizeName(parts[0]); const right =
-cleanName(parts[1]); if(left && right) state.aliases.set(left, right); }
-}
-function getMoneySettings(){ return { shotValue:Math.max(0, Number(els.shotValue.value || 0)), maxShots:Math.max(0,
-Number(els.maxShots.value || 0)) }; }
-function calculateResults(){
-const results = []; const settings = getMoneySettings();
-for(const matchup of state.matchups){
-const resolution = resolveMatchup(matchup); const warnings = [...resolution.warnings];
-const result = { matchup, team1Players:resolution.team1, team2Players:resolution.team2, t1Total:null, t2Total:null,
-winner:"Waiting on scores", margin:null, countedShots:null, perPerson:0, teamTransfer:0, payments:[], warnings };
-if(!state.scoreMap.size){ results.push(result); continue; }
-if(!resolution.team1.every(Boolean) || !resolution.team2.every(Boolean)){ result.winner = "Missing player score";
-results.push(result); continue; }
-const t1Scores = resolution.team1.map(p => p.scores || []); const t2Scores = resolution.team2.map(p => p.scores ||
-[]);
-let t1Total = 0, t2Total = 0, holesCounted = 0;
-for(let h=0; h<18; h++){
-const t1Hole = [t1Scores[0][h], t1Scores[1][h]].filter(Number.isFinite); const t2Hole = [t2Scores[0][h],
-t2Scores[1][h]].filter(Number.isFinite);
-if(!t1Hole.length || !t2Hole.length){ warnings.push("Hole " + (h+1) + " missing score"); continue; }
-t1Total += Math.min(...t1Hole); t2Total += Math.min(...t2Hole); holesCounted++;
-}
-if(holesCounted < 18) warnings.push("Only counted " + holesCounted + " of 18 holes");
-result.t1Total = holesCounted ? t1Total : null; result.t2Total = holesCounted ? t2Total : null;
-if(!holesCounted){ result.winner = "No score"; results.push(result); continue; }
-if(t1Total === t2Total){ result.winner = "Push"; result.margin = 0; result.countedShots = 0; results.push(result);
-continue; }
-const team1Wins = t1Total < t2Total; const margin = Math.abs(t1Total - t2Total); const countedShots = Math.min(margin,
-settings.maxShots); const perPerson = countedShots * settings.shotValue;
-result.margin = margin; result.countedShots = countedShots; result.perPerson = perPerson; result.teamTransfer =
-perPerson * 2;
-const winners = team1Wins ? resolution.team1 : resolution.team2; const losers = team1Wins ? resolution.team2 :
-resolution.team1;
-result.winner = teamLabel(winners.map(p => p.name));
-for(let i=0; i<Math.min(winners.length, losers.length); i++){
-if(perPerson > 0) result.payments.push({ from:losers[i].name, to:winners[i].name, amount:perPerson });
-}
-results.push(result);
-}
-return results;
-}
-function buildLedger(results){
-const ledger = new Map();
-for(const p of allKnownPlayers()){ ledger.set(p.name, { name:p.name, score:playerGrossScore(p.name), net:0, lines:[] });
-}
-for(const result of results){
-for(const payment of result.payments || []){
-if(!ledger.has(payment.from)) ledger.set(payment.from, { name:payment.from, score:playerGrossScore(payment.from),
-net:0, lines:[] });
-if(!ledger.has(payment.to)) ledger.set(payment.to, { name:payment.to, score:playerGrossScore(payment.to), net:0,
-lines:[] });
-ledger.get(payment.from).net -= payment.amount; ledger.get(payment.to).net += payment.amount;
-const label = teamLabel(result.matchup.team1) + " vs " + teamLabel(result.matchup.team2);
-ledger.get(payment.from).lines.push("Pay " + payment.to + " " + money(payment.amount) + " - " + label);
-ledger.get(payment.to).lines.push("Collect " + money(payment.amount) + " from " + payment.from + " - " + label);
-}
-}
-return Array.from(ledger.values()).sort((a,b) => b.net - a.net || a.name.localeCompare(b.name));
-}
-function resolveMatchup(matchup){ const warnings=[]; const team1 = matchup.team1.map(name =>
-resolvePlayer(name,warnings)); const team2 = matchup.team2.map(name => resolvePlayer(name,warnings)); return { team1,
-team2, warnings:uniqueList(warnings) }; }
-function resolvePlayer(inputName,warnings){
-const aliasTarget = state.aliases.get(normalizeName(inputName)); const wanted = aliasTarget || inputName; const key =
-normalizeName(wanted);
-if(state.scoreMap.has(key)) return state.scoreMap.get(key);
-const allPlayers = allKnownPlayers(); const exact = allPlayers.find(p => normalizeName(p.name) === key);
-if(exact && state.scoreMap.has(normalizeName(exact.name))) return state.scoreMap.get(normalizeName(exact.name));
-const candidates = allPlayers.filter(p => namesCouldMatch(wanted, p.name)); const scoredCandidates = candidates.filter(p
-=> state.scoreMap.has(normalizeName(p.name)));
-if(scoredCandidates.length === 1) return state.scoreMap.get(normalizeName(scoredCandidates[0].name));
-if(scoredCandidates.length > 1){ warnings.push("Ambiguous name: " + inputName + " could be " + scoredCandidates.map(p =>
-p.name).join(", ")); return null; }
-if(state.scoreMap.size) warnings.push("No score found for " + inputName); return null;
-}
-function allKnownPlayers(){ const map = new Map(); for(const p of [...state.prePlayers, ...state.postPlayers])
-map.set(normalizeName(p.name), p); return Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name)); }
-function namesCouldMatch(a,b){
-const na = normalizeName(a), nb = normalizeName(b); if(!na || !nb) return false; if(na === nb) return true; if(na.length
->= 4 && nb.includes(na)) return true; if(nb.length >= 4 && na.includes(nb)) return true;
-const at = na.split(" ").filter(Boolean), bt = nb.split(" ").filter(Boolean); if(!at.length || !bt.length) return false;
-const aLast = at[at.length-1], bLast = bt[bt.length-1]; if(aLast.length >= 4 && aLast === bLast) return true;
-if(at.length === 1) return bt.some(token => token.length >= 4 && token === at[0]); if(bt.length === 1) return
-at.some(token => token.length >= 4 && token === bt[0]); return at[0][0] === bt[0][0] && aLast === bLast;
-}
-function renderAll(){ renderSummary(); renderChecks(); renderPlayers(); renderMatchups(); renderResults(); renderLedger();
-}
-function renderSummary(){
-els.summaryMatchups.textContent = String(state.matchups.length); els.summaryRoster.textContent =
-String(state.prePlayers.length); els.summaryScores.textContent = String(state.scoreMap.size);
-const finished = state.results.filter(r => Number.isFinite(r.t1Total) && Number.isFinite(r.t2Total)).length;
-els.summaryFinished.textContent = String(finished);
-const totalSettled = state.results.reduce((sum,r) => sum + (r.teamTransfer || 0), 0); els.summaryMoney.textContent =
-money(totalSettled);
-}
-function renderChecks(){
-if(!state.matchups.length) els.betCheck.textContent = "No valid 2v2 matchups found yet.";
-else { const duplicateCount = findDuplicateMatchupKeys(state.matchups).size; els.betCheck.textContent = "Matchups found:
-" + state.matchups.length + "\nDuplicate matchup groups: " + duplicateCount; }
-if(!state.prePlayers.length && !state.postPlayers.length) els.rosterCheck.textContent = "No Squabbit roster loaded.";
-else { const warnings=[]; for(const matchup of state.matchups) resolveMatchup(matchup).warnings.forEach(w =>
-warnings.push(w)); const uniqueWarnings=uniqueList(warnings); els.rosterCheck.textContent = "Known players: " +
-allKnownPlayers().length + "\nRoster players: " + state.prePlayers.length + "\nScore players: " +
-state.postPlayers.length + "\nName warnings: " + uniqueWarnings.length + (uniqueWarnings.length ? "\n" +
-uniqueWarnings.slice(0,6).join("\n") : ""); }
-if(!state.scoreMap.size) els.scoreCheck.textContent = "No completed post-round scores loaded.";
-else { const complete = Array.from(state.scoreMap.values()).filter(p => scoreCompleteness(p) >= 18).length; const
-finished = state.results.filter(r => Number.isFinite(r.t1Total) && Number.isFinite(r.t2Total)).length;
-els.scoreCheck.textContent = "Players with completed scores: " + state.scoreMap.size + "\nComplete 18-hole scorecards:
-" + complete + "\nFinished matchups: " + finished + " of " + state.matchups.length; }
-els.rosterPreview.textContent = state.prePlayers.length ? state.prePlayers.map(p => p.name).join("\n") : "No roster
-loaded yet.";
-els.scorePreview.textContent = state.postPlayers.length ? state.postPlayers.map(p => p.name + ": " +
-sumScores(p.scores)).join("\n") : "No completed scores loaded yet.";
-}
-function renderPlayers(){
-els.playerChips.innerHTML = ""; const players = allKnownPlayers();
-if(!players.length){ els.playerChips.innerHTML = '<span class="nameChip">No Squabbit players loaded</span>'; return; }
-for(const player of players){ const chip = document.createElement("span"); const hasScores =
-state.scoreMap.has(normalizeName(player.name)); chip.className = "nameChip"; chip.textContent = player.name +
-(hasScores ? " ✓ " + sumScores(player.scores) : ""); els.playerChips.appendChild(chip); }
-}
-function renderMatchups(){
-els.matchupsBody.innerHTML = ""; if(!state.matchups.length){ els.matchupsBody.innerHTML = '<tr><td colspan="4">No
-matchups loaded yet.</td></tr>'; return; }
-const duplicateKeys = findDuplicateMatchupKeys(state.matchups);
-state.matchups.forEach((m,index) => { const validation=[]; const key = canonicalMatchupKey(m);
-if(duplicateKeys.has(key)) validation.push(pill("Duplicate matchup","bad")); if(new
-Set([...m.team1,...m.team2].map(normalizeName)).size < 4) validation.push(pill("Same player repeated","bad")); const
-resolution = resolveMatchup(m); if(resolution.warnings.length) validation.push(pill(resolution.warnings.length + "
-warning(s)","warn")); if(!validation.length) validation.push(pill("OK","ok")); const tr =
-document.createElement("tr"); tr.innerHTML = `<td>${index+1}</td><td>${escapeHtml(teamLabel(m.team1))}</td><td>${escap
-eHtml(teamLabel(m.team2))}</td><td>${validation.join(" ")}</td>`; els.matchupsBody.appendChild(tr); });
-}
-function renderResults(){
-els.resultsBody.innerHTML = ""; if(!state.results.length){ els.resultsBody.innerHTML = '<tr><td colspan="10">No results
-yet.</td></tr>'; return; }
-state.results.forEach((r,index) => { const warnings = r.warnings && r.warnings.length ? r.warnings.join("; ") : "";
-const tr = document.createElement("tr"); tr.innerHTML =
-`<td>${index+1}</td><td>${escapeHtml(teamWithScores(r.matchup.team1))}</td><td>${r.t1Total === null ? "" :
-r.t1Total}</td><td>${escapeHtml(teamWithScores(r.matchup.team2))}</td><td>${r.t2Total === null ? "" :
-r.t2Total}</td><td>${pill(escapeHtml(r.winner), /Waiting|Missing|No score/i.test(r.winner) ? "warn" :
-"ok")}</td><td>${r.margin === null ? "" : r.margin}</td><td>${r.perPerson ? money(r.perPerson) :
-""}</td><td>${escapeHtml(paymentText(r.payments))}</td><td>${warnings ? pill(escapeHtml(warnings),"warn") :
-pill("None","info")}</td>`; els.resultsBody.appendChild(tr); });
-}
-function renderLedger(){
-els.ledgerBody.innerHTML = ""; if(!state.ledger.length){ els.ledgerBody.innerHTML = '<tr><td colspan="4">No player
-winnings or losses yet.</td></tr>'; return; }
-for(const player of state.ledger){ const cls = player.net > 0 ? "netPositive" : player.net < 0 ? "netNegative" :
-"netZero"; const tr = document.createElement("tr"); tr.innerHTML =
-`<td>${escapeHtml(player.name)}</td><td>${player.score === null ? "" : player.score}</td><td
-class="${cls}">${moneySigned(player.net)}</td><td>${escapeHtml(player.lines.join("\n"))}</td>`;
-els.ledgerBody.appendChild(tr); }
-}
-function findDuplicateMatchupKeys(matchups){ const counts = new Map(); for(const m of matchups){ const key =
-canonicalMatchupKey(m); counts.set(key, (counts.get(key)||0)+1); } const dups = new Set(); for(const [key,count] of
-counts.entries()) if(count > 1) dups.add(key); return dups; }
-function canonicalMatchupKey(matchup){ const teamA = matchup.team1.map(normalizeName).sort().join("+"); const teamB =
-matchup.team2.map(normalizeName).sort().join("+"); return [teamA,teamB].sort().join("_vs_"); }
-function teamLabel(team){ return (team || []).join(" / "); }
-function teamWithScores(team){ return (team || []).map(name => { const score = playerGrossScore(name); return score ===
-null ? name : name + " (" + score + ")"; }).join(" / "); }
-function scoreCompleteness(player){ return (player.scores || []).filter(Number.isFinite).length; }
-function sumScores(scores){ if(!Array.isArray(scores) || !scores.length) return ""; return scores.reduce((sum,value) =>
-sum + Number(value || 0), 0); }
-function playerGrossScore(name){ const p = state.scoreMap.get(normalizeName(name)); if(!p || !Array.isArray(p.scores) ||
-p.scores.length !== 18) return null; return sumScores(p.scores); }
-function paymentText(payments){ return payments && payments.length ? payments.map(p => p.from + " pays " + p.to + " " +
-money(p.amount)).join("; ") : ""; }
-function money(n){ return "$" + Number(n || 0).toFixed(2).replace(/\.00$/, ""); }
-function moneySigned(n){ const val = Number(n || 0); if(val === 0) return "$0"; return (val > 0 ? "+" : "-") +
-money(Math.abs(val)); }
-function downloadResultsCsv(){
-if(!state.results.length){ alert("No results to download yet."); return; }
-const rows = [["matchup","team1_player1","team1_player2","team1_best_ball_total","team2_player1","team2_player2","team2_
-best_ball_total","winner","margin","counted_shots","pay_per_person","who_pays_who","warnings"]];
-state.results.forEach((r,i) => rows.push([i+1, r.matchup.team1[0], r.matchup.team1[1], r.t1Total === null ? "" :
-r.t1Total, r.matchup.team2[0], r.matchup.team2[1], r.t2Total === null ? "" : r.t2Total, r.winner, r.margin === null ?
-"" : r.margin, r.countedShots === null ? "" : r.countedShots, r.perPerson || "", paymentText(r.payments), (r.warnings
-|| []).join("; ")]));
-rows.push([]); rows.push(["Player","Gross Score","Net","Lines"]); state.ledger.forEach(p => rows.push([p.name, p.score
-=== null ? "" : p.score, p.net, p.lines.join("; ")]));
-downloadText("golf_bet_results_with_money.csv", rowsToCsv(rows));
-}
-function downloadMatchupsCsv(){ if(!state.matchups.length){ alert("No matchups to download yet."); return; } const rows =
-[["matchup","team1_player1","team1_player2","team2_player1","team2_player2"]]; state.matchups.forEach((m,i) =>
-rows.push([i+1, m.team1[0], m.team1[1], m.team2[0], m.team2[1]])); downloadText("golf_bet_matchups.csv",
-rowsToCsv(rows)); }
-function rowsToCsv(rows){ return rows.map(row => row.map(csvEscape).join(",")).join("\n"); }
-function csvEscape(value){ const s = String(value ?? ""); if(/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-return s; }
-function downloadText(filename,text){ const blob = new Blob([text], { type:"text/csv;charset=utf-8" }); const url =
-URL.createObjectURL(blob); const a = document.createElement("a"); a.href=url; a.download=filename;
-document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0); }
-function downloadFullResultsPdf(){
-if(!window.jspdf || !window.jspdf.jsPDF){ alert("PDF library did not load."); return; }
-const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit:"pt", format:"letter", orientation:"portrait" });
-const margin = 42; const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight =
-doc.internal.pageSize.getHeight(); const usable = pageWidth - margin*2; let y = 42;
-function checkPage(need){ if(y + need > pageHeight - 42){ doc.addPage(); y = 42; } }
-function text(str,x,yy,size=10,style="normal",color=[17,24,39]){ doc.setFont("helvetica",style); doc.setFontSize(size);
-doc.setTextColor(color[0],color[1],color[2]); doc.text(String(str),x,yy); }
-function wrapped(str,x,yy,width,size=10,style="normal",lineHeight=14,color=[17,24,39]){ doc.setFont("helvetica",style);
-doc.setFontSize(size); doc.setTextColor(color[0],color[1],color[2]); const lines = doc.splitTextToSize(String(str ||
-""), width); for(const line of lines){ checkPage(lineHeight); doc.text(line,x,y); y += lineHeight; } return y; }
-doc.setFillColor(240,253,244); doc.setDrawColor(187,247,208); doc.roundedRect(margin, y, usable, 78, 16, 16, "FD");
-text("Golf Best Ball Results", margin+16, y+28, 20, "bold", [20,83,45]);
-text("Best ball scores, winnings/losses, and who pays who", margin+16, y+50, 10, "normal", [71,85,105]);
-text("$" + getMoneySettings().shotValue + "/shot - " + getMoneySettings().maxShots + " max shots", margin+16, y+66, 10,
-"bold", [20,83,45]);
-y += 98;
-const finished = state.results.filter(r => Number.isFinite(r.t1Total) && Number.isFinite(r.t2Total)).length;
-const totalSettled = state.results.reduce((sum,r) => sum + (r.teamTransfer || 0), 0);
-const cards = [["Matchups",state.matchups.length],["Finished Bets",finished],["Total
-Settled",money(totalSettled)],["Scores Loaded",state.scoreMap.size]];
-const cardW = (usable - 24) / 4;
-cards.forEach((card,i) => { const x = margin + i*(cardW+8); doc.setFillColor(248,250,252);
-doc.setDrawColor(226,232,240); doc.roundedRect(x,y,cardW,54,12,12,"FD");
-text(card[0],x+10,y+18,8,"bold",[100,116,139]); text(card[1],x+10,y+40,16,"bold",[22,101,52]); });
-y += 76;
-text("Player Net Summary", margin, y, 14, "bold", [20,83,45]); y += 16;
-state.ledger.forEach(p => { checkPage(34); doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240);
-doc.roundedRect(margin,y,usable,28,8,8,"FD"); text(p.name, margin+10, y+18, 10, "bold"); text(p.score === null ?
-"Score: -" : "Score: " + p.score, margin+190, y+18, 9, "normal", [71,85,105]); const color = p.net > 0 ? [22,101,52] :
-p.net < 0 ? [153,27,27] : [71,85,105]; text(moneySigned(p.net), margin+usable-78, y+18, 10, "bold", color); y += 34;
-});
-y += 8; checkPage(32); text("Matchup Results", margin, y, 14, "bold", [20,83,45]); y += 18;
-state.results.forEach((r,i) => { const pay = paymentText(r.payments) || "No payment"; const title = (i+1) + ". " +
-teamLabel(r.matchup.team1) + " vs " + teamLabel(r.matchup.team2); const detail = "Team 1 BB: " + (r.t1Total ?? "-") +
-" | Team 2 BB: " + (r.t2Total ?? "-") + " | Winner: " + r.winner + " | Margin: " + (r.margin ?? "-") + " | Pay per
-person: " + (r.perPerson ? money(r.perPerson) : "$0"); const blockLines = doc.splitTextToSize(title + "\n" + detail +
-"\n" + pay, usable-20); const blockH = 18 + blockLines.length*12 + 10; checkPage(blockH+8);
-doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240); doc.roundedRect(margin,y,usable,blockH,10,10,"FD"); y +=
-16; wrapped(title, margin+10, y, usable-20, 10, "bold", 12, [17,24,39]); wrapped(detail, margin+10, y, usable-20, 9,
-"normal", 12, [71,85,105]); wrapped(pay, margin+10, y, usable-20, 9, "bold", 12, [20,83,45]); y += 8; });
-y += 8; checkPage(32); text("Who Pays Who - Detail", margin, y, 14, "bold", [20,83,45]); y += 18;
-state.ledger.forEach(p => { if(!p.lines.length) return; const blockLines = doc.splitTextToSize(p.name + " (" +
-moneySigned(p.net) + ")\n" + p.lines.join("\n"), usable-20); const blockH = 18 + blockLines.length*12 + 8;
-checkPage(blockH+8); doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240);
-doc.roundedRect(margin,y,usable,blockH,10,10,"FD"); y += 16; wrapped(p.name + " - " + moneySigned(p.net), margin+10,
-y, usable-20, 10, "bold", 12, [17,24,39]); p.lines.forEach(line => wrapped(line, margin+10, y, usable-20, 9, "normal",
-12, [71,85,105])); y += 8; });
-doc.save("golf_best_ball_full_results.pdf");
-}
-function clearAll(){
-state.rawBetText = ""; state.matchups = []; state.prePlayers = []; state.postPlayers = []; state.scoreMap = new Map();
-state.aliases = new Map(); state.results = []; state.ledger = [];
-els.rawTextBox.value = ""; els.manualBetsBox.value = ""; els.aliasesBox.value = "";
-els.betFile.value = "";
-els.preFile.value = "";
-els.postFile.value = "";
-els.betFileName.textContent = "No file selected.";
-els.preFileName.textContent = "No file selected.";
-els.postFileName.textContent = "No file selected.";
-setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["No bet file loaded yet."]); setStatus(els.prePanel,
-els.preStatusList, "info", "Roster", ["No roster loaded yet."]); setStatus(els.postPanel, els.postStatusList, "info",
-"Scores", ["No completed scores loaded yet."]); reparseAll();
-}
-function setStatus(panelEl,listEl,tone,title,lines){ panelEl.className = "statusPanel " + tone;
-panelEl.querySelector(".statusTitle").textContent = title; listEl.innerHTML = (lines && lines.length ? lines : ["No
-details."]).map(line => "<li>" + escapeHtml(line) + "</li>").join(""); }
-function normalizeHeader(value){ return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
-function cleanName(value){ return String(value || "").replace(/\u00a0/g," ").replace(/\s+/g,"
-").replace(/^[#\d\.\)\-:\s]+/,"").replace(/\s+(?:score|gross|net|total)$/i,"").trim(); }
-function normalizeName(value){ return
-cleanName(value).toLowerCase().replace(/\b(jr|sr|ii|iii|iv)\b/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g,"
-").trim(); }
-function uniqueList(items){ return Array.from(new Set((items || []).filter(Boolean))); }
-function pill(text,kind){ return '<span class="pill ' + kind + '">' + text + '</span>'; }
-function escapeHtml(value){ return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;
-").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
-function errorMessage(err){ return err && err.message ? err.message : String(err); }
-els.recheckBtn.addEventListener("click", reparseAll);
-els.applyAliasesBtn.addEventListener("click", reparseAll);
-els.useManualBtn.addEventListener("click", useManualBets);
-els.downloadResultsBtn.addEventListener("click", downloadResultsCsv);
-els.downloadPdfBtn.addEventListener("click", downloadFullResultsPdf);
-els.downloadMatchupsBtn.addEventListener("click", downloadMatchupsCsv);
-els.clearBtn.addEventListener("click", clearAll);
-els.shotValue.addEventListener("input", reparseAll);
-els.maxShots.addEventListener("input", reparseAll);
-initUploaders();
-reparseAll();
-</script>
+  <div class="wrap">
+    <section class="hero">
+      <div class="heroTop">
+        <div>
+          <h1>Golf Bet PDF + Squabbit Score Reader</h1>
+          <p>Upload your bet sheet, Squabbit pre-round roster CSV, and completed Squabbit score CSV. The page reads the files, checks names, calculates best ball totals, and shows who pays who.</p>
+        </div>
+        <a class="backBtn" href="index.html">Back to Hub</a>
+      </div>
+    </section>
+
+    <section class="summaryGrid">
+      <div class="summaryCard"><div class="summaryLabel">PDF Matchups</div><div class="summaryValue" id="summaryMatchups">0</div></div>
+      <div class="summaryCard"><div class="summaryLabel">Roster Players</div><div class="summaryValue" id="summaryRoster">0</div></div>
+      <div class="summaryCard"><div class="summaryLabel">Finished Scores</div><div class="summaryValue" id="summaryScores">0</div></div>
+      <div class="summaryCard"><div class="summaryLabel">Finished Bets</div><div class="summaryValue" id="summaryFinished">0</div></div>
+      <div class="summaryCard"><div class="summaryLabel">Total Settled</div><div class="summaryValue money" id="summaryMoney">$0</div></div>
+    </section>
+
+    <section class="card">
+      <h2 class="sectionTitle">1) Upload Files</h2>
+      <p class="sectionSub">These upload boxes work on iPhone Safari and Firefox because the real file input covers the whole upload box.</p>
+      <div class="grid3">
+        <div>
+          <div class="field">
+            <label>Bet PDF / TXT / CSV</label>
+            <label class="uploadBox" for="betFile">
+              <input class="fileInput" id="betFile" type="file" accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv" />
+              <div><strong>Choose Bet Sheet</strong><span>PDF, TXT, or matchup CSV</span></div>
+            </label>
+            <div class="fileName" id="betFileName">No file selected.</div>
+          </div>
+          <div id="betPanel" class="statusPanel info"><div class="statusTitle">Bet Sheet</div><ul class="statusList" id="betStatusList"><li>No bet file loaded yet.</li></ul></div>
+        </div>
+        <div>
+          <div class="field">
+            <label>Squabbit Pre-Round / Roster CSV</label>
+            <label class="uploadBox blue" for="preFile">
+              <input class="fileInput" id="preFile" type="file" accept=".csv,text/csv,text/plain" />
+              <div><strong>Choose Roster CSV</strong><span>Squabbit pre-round export</span></div>
+            </label>
+            <div class="fileName" id="preFileName">No file selected.</div>
+          </div>
+          <div id="prePanel" class="statusPanel info"><div class="statusTitle">Roster</div><ul class="statusList" id="preStatusList"><li>No roster loaded yet.</li></ul></div>
+        </div>
+        <div>
+          <div class="field">
+            <label>Squabbit Completed Round CSV</label>
+            <label class="uploadBox gold" for="postFile">
+              <input class="fileInput" id="postFile" type="file" accept=".csv,text/csv,text/plain" />
+              <div><strong>Choose Scores CSV</strong><span>Completed round export</span></div>
+            </label>
+            <div class="fileName" id="postFileName">No file selected.</div>
+          </div>
+          <div id="postPanel" class="statusPanel info"><div class="statusTitle">Scores</div><ul class="statusList" id="postStatusList"><li>No completed scores loaded yet.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="sectionTitle">2) Money Settings</h2>
+      <p class="sectionSub">Example: $3 per shot with a 7 shot max means each losing player can pay up to $21 for that matchup.</p>
+      <div class="grid3">
+        <div class="field"><label for="shotValue">Dollars per shot</label><input class="input" id="shotValue" type="number" min="0" step="1" value="3" /></div>
+        <div class="field"><label for="maxShots">Max shots counted</label><input class="input" id="maxShots" type="number" min="0" step="1" value="7" /></div>
+        <div class="field"><label for="pairMode">Payment pairing</label><input class="input" id="pairMode" value="Player 1 pays Player 1, Player 2 pays Player 2" readonly /></div>
+      </div>
+      <div class="btnRow">
+        <button class="btn btnBlue" id="recheckBtn" type="button">Recheck Everything</button>
+        <button class="btn btnGreen" id="downloadResultsBtn" type="button">Download Results CSV</button>
+        <button class="btn btnGold" id="downloadPdfBtn" type="button">Download Full Results PDF</button>
+        <button class="btn btnGreen" id="downloadMatchupsBtn" type="button">Download Matchups CSV</button>
+        <button class="btn btnRed" id="clearBtn" type="button">Clear All</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="sectionTitle">3) Checks and Manual Fixes</h2>
+      <div class="grid3">
+        <div class="previewBox"><div class="previewLabel">Bet Sheet Check</div><div class="previewText" id="betCheck">Waiting on bet file.</div></div>
+        <div class="previewBox"><div class="previewLabel">Roster Check</div><div class="previewText" id="rosterCheck">Waiting on Squabbit CSV.</div></div>
+        <div class="previewBox"><div class="previewLabel">Score Check</div><div class="previewText" id="scoreCheck">Waiting on completed scores.</div></div>
+      </div>
+      <details>
+        <summary>Manual name aliases / fixes</summary>
+        <div class="detailsBody">
+          <p class="hint">Use this when a PDF name does not exactly match Squabbit. One per line.</p>
+          <textarea id="aliasesBox" spellcheck="false" placeholder="K Waters = Keith Waters&#10;Dawson = Dawson Smith&#10;Bryon Ruben = Ruben Bryon"></textarea>
+          <div class="btnRow"><button class="btn btnGray" id="applyAliasesBtn" type="button">Apply Aliases</button></div>
+        </div>
+      </details>
+      <details>
+        <summary>Manual matchup editor</summary>
+        <div class="detailsBody">
+          <p class="hint">Use this if the PDF reader misses anything. Examples: Clay / Zack vs Dawson / Dean or team1_player1,team1_player2,team2_player1,team2_player2</p>
+          <textarea id="manualBetsBox" spellcheck="false" placeholder="Paste corrected matchups here if needed."></textarea>
+          <div class="btnRow"><button class="btn btnGray" id="useManualBtn" type="button">Use Manual Matchups</button></div>
+        </div>
+      </details>
+      <details>
+        <summary>Extracted PDF text / raw file text</summary>
+        <div class="detailsBody"><textarea id="rawTextBox" spellcheck="false" placeholder="Extracted PDF text will show here. You can edit it and click Recheck Everything."></textarea></div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2 class="sectionTitle">4) Loaded Players</h2>
+      <p class="sectionSub">Players with a check mark have completed scores loaded.</p>
+      <div id="playerChips" class="nameList"></div>
+      <div class="grid2">
+        <div class="previewBox"><div class="previewLabel">Roster players</div><div class="previewText" id="rosterPreview">No roster loaded yet.</div></div>
+        <div class="previewBox"><div class="previewLabel">Score rows</div><div class="previewText" id="scorePreview">No completed scores loaded yet.</div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="sectionTitle">5) Matchups</h2>
+      <div class="tableWrap"><table id="matchupsTable"><thead><tr><th>#</th><th>Team 1</th><th>Team 2</th><th>Validation</th></tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section class="card">
+      <h2 class="sectionTitle">6) Full Results</h2>
+      <p class="sectionSub">Best ball uses the lower score from each two-person team on every hole, then totals all 18 holes.</p>
+      <div class="tableWrap">
+        <table id="resultsTable"><thead><tr><th>#</th><th>Team 1</th><th>Team 1 BB</th><th>Team 2</th><th>Team 2 BB</th><th>Winner</th><th>Margin</th><th>Pay Per Person</th><th>Who Pays Who</th><th>Warnings</th></tr></thead><tbody></tbody></table>
+      </div>
+      <p class="footerNote">If the PDF is a screenshot/photo inside a PDF, OCR can still need cleanup in the manual matchup editor.</p>
+    </section>
+
+    <section class="card">
+      <h2 class="sectionTitle">7) Player Winnings / Losses</h2>
+      <p class="sectionSub">This is the total net amount each person wins or loses across every finished bet.</p>
+      <div class="tableWrap"><table id="ledgerTable"><thead><tr><th>Player</th><th>Gross Score</th><th>Net</th><th>Lines</th></tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+
+    const state = {
+      rawBetText: "",
+      matchups: [],
+      prePlayers: [],
+      postPlayers: [],
+      scoreMap: new Map(),
+      aliases: new Map(),
+      results: [],
+      ledger: []
+    };
+
+    const els = {
+      betFile: document.getElementById("betFile"),
+      preFile: document.getElementById("preFile"),
+      postFile: document.getElementById("postFile"),
+      betFileName: document.getElementById("betFileName"),
+      preFileName: document.getElementById("preFileName"),
+      postFileName: document.getElementById("postFileName"),
+      betPanel: document.getElementById("betPanel"),
+      prePanel: document.getElementById("prePanel"),
+      postPanel: document.getElementById("postPanel"),
+      betStatusList: document.getElementById("betStatusList"),
+      preStatusList: document.getElementById("preStatusList"),
+      postStatusList: document.getElementById("postStatusList"),
+      betCheck: document.getElementById("betCheck"),
+      rosterCheck: document.getElementById("rosterCheck"),
+      scoreCheck: document.getElementById("scoreCheck"),
+      rosterPreview: document.getElementById("rosterPreview"),
+      scorePreview: document.getElementById("scorePreview"),
+      rawTextBox: document.getElementById("rawTextBox"),
+      aliasesBox: document.getElementById("aliasesBox"),
+      manualBetsBox: document.getElementById("manualBetsBox"),
+      playerChips: document.getElementById("playerChips"),
+      matchupsBody: document.querySelector("#matchupsTable tbody"),
+      resultsBody: document.querySelector("#resultsTable tbody"),
+      ledgerBody: document.querySelector("#ledgerTable tbody"),
+      recheckBtn: document.getElementById("recheckBtn"),
+      downloadResultsBtn: document.getElementById("downloadResultsBtn"),
+      downloadPdfBtn: document.getElementById("downloadPdfBtn"),
+      downloadMatchupsBtn: document.getElementById("downloadMatchupsBtn"),
+      clearBtn: document.getElementById("clearBtn"),
+      applyAliasesBtn: document.getElementById("applyAliasesBtn"),
+      useManualBtn: document.getElementById("useManualBtn"),
+      shotValue: document.getElementById("shotValue"),
+      maxShots: document.getElementById("maxShots"),
+      summaryMatchups: document.getElementById("summaryMatchups"),
+      summaryRoster: document.getElementById("summaryRoster"),
+      summaryScores: document.getElementById("summaryScores"),
+      summaryFinished: document.getElementById("summaryFinished"),
+      summaryMoney: document.getElementById("summaryMoney")
+    };
+
+    function initUploaders(){
+      els.betFile.addEventListener("change", () => handleBetFile(els.betFile.files && els.betFile.files[0]));
+      els.preFile.addEventListener("change", () => handlePreFile(els.preFile.files && els.preFile.files[0]));
+      els.postFile.addEventListener("change", () => handlePostFile(els.postFile.files && els.postFile.files[0]));
+    }
+
+    async function handleBetFile(file){
+      if (!file) return;
+      els.betFileName.textContent = file.name;
+      setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["Reading " + file.name + "..."]);
+      try {
+        let text = "";
+        const lowerName = file.name.toLowerCase();
+        if (lowerName.endsWith(".pdf") || file.type === "application/pdf") text = await extractPdfText(file);
+        else text = await file.text();
+        state.rawBetText = text;
+        els.rawTextBox.value = text;
+        state.matchups = parseMatchups(text);
+        if (state.matchups.length) {
+          setStatus(els.betPanel, els.betStatusList, "ok", "Bet Sheet", ["Loaded " + file.name + ".", "Found " + state.matchups.length + " matchup row(s)."]);
+        } else {
+          setStatus(els.betPanel, els.betStatusList, "error", "Bet Sheet", ["Loaded " + file.name + ", but no 2v2 matchups were detected.", "Check the extracted text or use the manual matchup editor."]);
+        }
+        reparseAll();
+      } catch (err) {
+        console.error(err);
+        setStatus(els.betPanel, els.betStatusList, "error", "Bet Sheet", ["Could not read this bet file.", errorMessage(err)]);
+      }
+    }
+
+    async function handlePreFile(file){
+      if (!file) return;
+      els.preFileName.textContent = file.name;
+      setStatus(els.prePanel, els.preStatusList, "info", "Roster", ["Reading " + file.name + "..."]);
+      try {
+        const names = squabbitAnalyzeRosterCSV(await file.text());
+        state.prePlayers = names.map(name => ({ name, scores: [], raw: [] }));
+        if (state.prePlayers.length) {
+          setStatus(els.prePanel, els.preStatusList, "ok", "Roster", ["Loaded " + file.name + ".", "Found " + state.prePlayers.length + " roster player(s)."]);
+        } else {
+          setStatus(els.prePanel, els.preStatusList, "error", "Roster", ["Loaded " + file.name + ", but no players were detected.", "Make sure this is the Squabbit pre-round roster CSV."]);
+        }
+        reparseAll();
+      } catch (err) {
+        console.error(err);
+        setStatus(els.prePanel, els.preStatusList, "error", "Roster", ["Could not read this pre-round CSV.", errorMessage(err)]);
+      }
+    }
+
+    async function handlePostFile(file){
+      if (!file) return;
+      els.postFileName.textContent = file.name;
+      setStatus(els.postPanel, els.postStatusList, "info", "Scores", ["Reading " + file.name + "..."]);
+      try {
+        const scoreObject = squabbitAnalyzeScoresCSV(await file.text());
+        const scoreNames = Object.keys(scoreObject).sort((a,b) => a.localeCompare(b));
+        state.postPlayers = scoreNames.map(name => ({ name, scores: scoreObject[name], raw: [] }));
+        state.scoreMap = new Map();
+        for (const player of state.postPlayers) {
+          if (player.scores && player.scores.filter(Number.isFinite).length === 18) state.scoreMap.set(normalizeName(player.name), player);
+        }
+        if (scoreNames.length) {
+          setStatus(els.postPanel, els.postStatusList, "ok", "Scores", ["Loaded " + file.name + ".", "Found " + scoreNames.length + " completed 18-hole score row(s)."]);
+        } else {
+          setStatus(els.postPanel, els.postStatusList, "error", "Scores", ["Loaded " + file.name + ", but no completed 18-hole score rows were detected.", "Make sure this is the completed Squabbit post-round CSV."]);
+        }
+        reparseAll();
+      } catch (err) {
+        console.error(err);
+        setStatus(els.postPanel, els.postStatusList, "error", "Scores", ["Could not read this post-round CSV.", errorMessage(err)]);
+      }
+    }
+
+    async function extractPdfText(file){
+      if (!window.pdfjsLib) throw new Error("PDF.js did not load. Check your internet connection and refresh the page.");
+      const data = new Uint8Array(await file.arrayBuffer());
+      const pdf = await pdfjsLib.getDocument({ data }).promise;
+      const pageTexts = [];
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        const page = await pdf.getPage(pageNumber);
+        const content = await page.getTextContent();
+        const textLayerText = groupPdfItemsIntoLines(content.items).join("\n").trim();
+        if (pdfTextLooksUsable(textLayerText)) {
+          pageTexts.push(textLayerText);
+        } else {
+          if (!window.Tesseract) throw new Error("PDF text is unreadable and OCR did not load.");
+          setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["PDF text layer was unreadable.", "Running OCR on page " + pageNumber + "..."]);
+          pageTexts.push(await ocrPdfPage(pdf, pageNumber));
+        }
+      }
+      const combined = pageTexts.join("\n").trim();
+      if (!combined) throw new Error("No readable text was found in this PDF.");
+      return combined;
+    }
+
+    function pdfTextLooksUsable(text){
+      const s = String(text || "").trim();
+      if (s.length < 20) return false;
+      const badChars = (s.match(/[■■■\u0000-\u0008\u000B\u000C\u000E-\u001F]/g) || []).length;
+      const letters = (s.match(/[A-Za-z]/g) || []).length;
+      const readable = (s.match(/[A-Za-z0-9\s.,:/+&()#'"-]/g) || []).length;
+      if (badChars > 3) return false;
+      if (letters < 8) return false;
+      return readable / s.length >= 0.70;
+    }
+
+    async function ocrPdfPage(pdf, pageNumber){
+      const page = await pdf.getPage(pageNumber);
+      const viewport = page.getViewport({ scale: 2.5 });
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      await page.render({ canvasContext: context, viewport }).promise;
+      const result = await Tesseract.recognize(canvas, "eng", { logger: () => {} });
+      return String(result && result.data && result.data.text ? result.data.text : "").trim();
+    }
+
+    function groupPdfItemsIntoLines(items){
+      const usable = items.filter(item => item.str && item.str.trim()).map(item => ({ text: item.str.trim(), x: item.transform[4], y: item.transform[5], width: item.width || 0 }));
+      usable.sort((a,b) => Math.abs(b.y - a.y) > 3 ? b.y - a.y : a.x - b.x);
+      const rows = [];
+      for (const item of usable) {
+        let row = rows.find(r => Math.abs(r.y - item.y) <= 3);
+        if (!row) { row = { y: item.y, items: [] }; rows.push(row); }
+        row.items.push(item);
+      }
+      rows.sort((a,b) => b.y - a.y);
+      return rows.map(row => {
+        row.items.sort((a,b) => a.x - b.x);
+        let line = "";
+        let lastEnd = null;
+        for (const item of row.items) {
+          if (lastEnd !== null) {
+            const gap = item.x - lastEnd;
+            line += gap > 45 ? "\t" : " ";
+          }
+          line += item.text;
+          lastEnd = item.x + item.width;
+        }
+        return line.replace(/[ \t]+$/g, "");
+      }).filter(Boolean);
+    }
+
+    function parseMatchups(text){
+      const cleanText = String(text || "").replace(/\r/g, "\n");
+      let matchups = [];
+      matchups = matchups.concat(parseMatchupsAsCsv(cleanText));
+      matchups = matchups.concat(parseMatchupsFromLines(cleanText));
+      const unique = [];
+      const seen = new Set();
+      for (const matchup of matchups) {
+        const cleaned = cleanMatchup(matchup);
+        if (!cleaned) continue;
+        const key = canonicalMatchupKey(cleaned);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        unique.push({ ...cleaned, source: matchup.source || "import" });
+      }
+      return unique.map((m,i) => ({ ...m, id: i + 1 }));
+    }
+
+    function parseMatchupsAsCsv(text){
+      const rows = parseCsv(text);
+      if (!rows.length) return [];
+      const headerIndex = rows.findIndex(row => row.some(cell => /team\s*1/i.test(cell)) && row.some(cell => /team\s*2/i.test(cell)));
+      if (headerIndex === -1) return [];
+      const headers = rows[headerIndex].map(h => normalizeHeader(h));
+      const team1Index = headers.findIndex(h => h === "team1" || h === "team1team" || h === "team1name");
+      const team2Index = headers.findIndex(h => h === "team2" || h === "team2team" || h === "team2name");
+      const t1p1 = headers.findIndex(h => h === "team1player1" || h === "t1p1");
+      const t1p2 = headers.findIndex(h => h === "team1player2" || h === "t1p2");
+      const t2p1 = headers.findIndex(h => h === "team2player1" || h === "t2p1");
+      const t2p2 = headers.findIndex(h => h === "team2player2" || h === "t2p2");
+      const results = [];
+      for (let i = headerIndex + 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row.join("").trim()) continue;
+        if (t1p1 >= 0 && t1p2 >= 0 && t2p1 >= 0 && t2p2 >= 0) results.push({ team1: [row[t1p1], row[t1p2]], team2: [row[t2p1], row[t2p2]], source: "csv" });
+        else if (team1Index >= 0 && team2Index >= 0) results.push({ team1: splitTeamPlayers(row[team1Index]), team2: splitTeamPlayers(row[team2Index]), source: "csv" });
+      }
+      return results;
+    }
+
+    function parseMatchupsFromLines(text){
+      const results = [];
+      const lines = String(text || "").split(/\n+/).map(line => line.replace(/\u00a0/g, " ").trim()).filter(Boolean);
+      for (const originalLine of lines) {
+        let line = originalLine.replace(/^\|+|\|+$/g, "").replace(/\s+\|\s+/g, "\t").replace(/[–—]/g, "-").trim();
+        if (!line) continue;
+        if (/^(best\s+ball|these\s+are|wheel\s+teams|website\s+import|#\s+team|team\s*1\s+team\s*2)/i.test(line)) continue;
+        const knownPlayerMatchup = parseKnownPlayerMatchupFromLine(line);
+        if (knownPlayerMatchup) { results.push(knownPlayerMatchup); continue; }
+        const numbered = line.match(/^(\d{1,3})[\).:\-\s]+(.+)$/);
+        if (numbered) line = numbered[2].trim();
+        let parts = line.split(/\t+/).map(x => x.trim()).filter(Boolean);
+        if (parts.length >= 3 && /^\d+$/.test(parts[0])) parts = parts.slice(1);
+        if (parts.length >= 2 && looksLikeTeam(parts[0]) && looksLikeTeam(parts[1])) {
+          results.push({ team1: splitTeamPlayers(parts[0]), team2: splitTeamPlayers(parts[1]), source: "pdf-line" });
+          continue;
+        }
+        const vsParts = line.split(/\s+(?:vs\.?|v\.?|against)\s+/i).map(x => x.trim()).filter(Boolean);
+        if (vsParts.length === 2) {
+          results.push({ team1: splitTeamPlayers(vsParts[0]), team2: splitTeamPlayers(vsParts[1]), source: "text-vs" });
+          continue;
+        }
+        const wideParts = line.split(/\s{3,}/).map(x => x.trim()).filter(Boolean);
+        if (wideParts.length >= 2 && looksLikeTeam(wideParts[0]) && looksLikeTeam(wideParts[1])) results.push({ team1: splitTeamPlayers(wideParts[0]), team2: splitTeamPlayers(wideParts[1]), source: "wide-space" });
+      }
+      return results;
+    }
+
+    function parseKnownPlayerMatchupFromLine(line){
+      const knownPlayers = allKnownPlayers();
+      const candidates = [];
+      for (const player of knownPlayers) {
+        const playerName = cleanName(player.name);
+        const key = normalizeName(playerName);
+        if (key && key.length >= 3) addNameCandidate(candidates, line, key, playerName);
+      }
+      if (state.aliases && state.aliases.size) {
+        for (const [aliasKey, playerName] of state.aliases.entries()) {
+          if (aliasKey && aliasKey.length >= 2 && playerName) addNameCandidate(candidates, line, aliasKey, cleanName(playerName));
+        }
+      }
+      if (!candidates.length) return null;
+      candidates.sort((a,b) => b.len - a.len);
+      const picked = [];
+      for (const candidate of candidates) {
+        const overlaps = picked.some(existing => candidate.start < existing.end && candidate.end > existing.start);
+        const duplicatePlayer = picked.some(existing => normalizeName(existing.name) === normalizeName(candidate.name));
+        if (!overlaps && !duplicatePlayer) picked.push(candidate);
+      }
+      picked.sort((a,b) => a.start - b.start);
+      if (picked.length < 4) return null;
+      return { team1: [picked[0].name, picked[1].name], team2: [picked[2].name, picked[3].name], source: "known-player-line" };
+    }
+
+    function addNameCandidate(candidates, line, key, playerName){
+      const normalizedLine = normalizeName(line);
+      let start = normalizedLine.indexOf(key);
+      while (start >= 0) {
+        candidates.push({ name: playerName, start, end: start + key.length, len: key.length });
+        start = normalizedLine.indexOf(key, start + key.length);
+      }
+    }
+
+    function cleanMatchup(matchup){
+      const t1 = (matchup.team1 || []).map(cleanName).filter(Boolean);
+      const t2 = (matchup.team2 || []).map(cleanName).filter(Boolean);
+      if (t1.length !== 2 || t2.length !== 2) return null;
+      if (new Set([...t1, ...t2].map(normalizeName)).size !== 4) return null;
+      return { team1: t1, team2: t2 };
+    }
+
+    function splitTeamPlayers(teamText){
+      let s = String(teamText || "").replace(/\bTeam\s*[12]\b/ig, "").replace(/[()]/g, " ").replace(/\s+/g, " ").trim();
+      s = s.replace(/\s+(?:vs\.?|v\.?|against)\s+.*$/i, "").trim();
+      let parts = s.split(/\s*(?:\/|\+|&)\s*/).map(cleanName).filter(Boolean);
+      if (parts.length !== 2) parts = s.split(/\s+and\s+/i).map(cleanName).filter(Boolean);
+      if (parts.length > 2) parts = [parts[0], parts.slice(1).join(" ")];
+      return parts;
+    }
+
+    function looksLikeTeam(text){
+      const players = splitTeamPlayers(text);
+      return players.length === 2 && players.every(p => p.length >= 2);
+    }
+
+    function parseCsv(text){
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let inQuotes = false;
+      const src = String(text || "").replace(/^\ufeff/, "");
+      for (let i = 0; i < src.length; i++) {
+        const ch = src[i];
+        const next = src[i + 1];
+        if (ch === '"') {
+          if (inQuotes && next === '"') { cell += '"'; i++; }
+          else inQuotes = !inQuotes;
+        } else if (ch === "," && !inQuotes) {
+          row.push(cell.trim());
+          cell = "";
+        } else if ((ch === "\n" || ch === "\r") && !inQuotes) {
+          if (ch === "\r" && next === "\n") i++;
+          row.push(cell.trim());
+          if (row.some(x => x !== "")) rows.push(row);
+          row = [];
+          cell = "";
+        } else {
+          cell += ch;
+        }
+      }
+      row.push(cell.trim());
+      if (row.some(x => x !== "")) rows.push(row);
+      return rows;
+    }
+
+    function squabbitNormalizeSpace(value){ return String(value ?? "").replace(/\s+/g, " ").trim(); }
+
+    function squabbitDisplayName(value){
+      const cleaned = squabbitNormalizeSpace(value).replace(/\s+\(.*?\)\s*$/, "").trim();
+      if (!cleaned) return "";
+      return cleaned.split(" ").filter(Boolean).map(part => part.split("-").map(piece => {
+        if (!piece) return "";
+        if (piece.length <= 2 && piece === piece.toUpperCase()) return piece;
+        return piece.charAt(0).toUpperCase() + piece.slice(1).toLowerCase();
+      }).join("-")).join(" ").trim();
+    }
+
+    function squabbitToInt(value){
+      const s = squabbitNormalizeSpace(value);
+      return /^-?\d+$/.test(s) ? parseInt(s, 10) : null;
+    }
+
+    function squabbitUniqueSortedNames(names){
+      return [...new Set((names || []).map(squabbitDisplayName).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+    }
+
+    function squabbitSniffDelimiter(text){
+      const sample = String(text || "").split(/\r?\n/).slice(0,20).join("\n");
+      const candidates = [",", ";", "\t", "|"];
+      let best = ",";
+      let bestScore = -1;
+      candidates.forEach(delimiter => {
+        const count = sample.split(/\r?\n/).reduce((sum,line) => sum + (line.split(delimiter).length - 1), 0);
+        if (count > bestScore) { best = delimiter; bestScore = count; }
+      });
+      return best;
+    }
+
+    function squabbitParseCSV(text, delimiter){
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let inQuotes = false;
+      const src = String(text || "").replace(/^\uFEFF/, "");
+      for (let i = 0; i < src.length; i++) {
+        const char = src[i];
+        const next = src[i + 1];
+        if (char === '"') {
+          if (inQuotes && next === '"') { cell += '"'; i++; }
+          else inQuotes = !inQuotes;
+        } else if (char === delimiter && !inQuotes) {
+          row.push(cell.trim());
+          cell = "";
+        } else if ((char === "\n" || char === "\r") && !inQuotes) {
+          if (char === "\r" && next === "\n") i++;
+          row.push(cell.trim());
+          rows.push(row);
+          row = [];
+          cell = "";
+        } else {
+          cell += char;
+        }
+      }
+      if (cell.length || row.length) { row.push(cell.trim()); rows.push(row); }
+      return rows.filter(r => r.some(c => squabbitNormalizeSpace(c)));
+    }
+
+    function squabbitIsNonPlayerName(name){
+      const s = squabbitNormalizeSpace(name).toLowerCase();
+      const blocked = ["player","players","name","golfer","team","teams","gross","net","total","out","in","front","back","par","s.i.","si","handicap","hdcp","score","scores","matchup","matchups","hole","holes","round","tee","skins","strokeplay","stroke play","twos club","best ball","games","summary","totals"];
+      return !s || blocked.includes(s);
+    }
+
+    function squabbitRowLooksLikePlayerScoreRow(row){
+      const clean = (row || []).map(squabbitNormalizeSpace);
+      const lower = clean.map(c => c.toLowerCase());
+      const name = squabbitDisplayName(clean[0] || "");
+      if (!name || squabbitIsNonPlayerName(name)) return false;
+      const hasTee = lower.some(c => c.includes("tee"));
+      const numericCount = clean.filter(c => /^-?\d+$/.test(c)).length;
+      return hasTee || numericCount >= 9;
+    }
+
+    function squabbitAnalyzeRosterCSV(text){
+      const delimiter = squabbitSniffDelimiter(text);
+      const rows = squabbitParseCSV(text, delimiter);
+      const names = [];
+      let playersRow = -1;
+      for (let i = 0; i < rows.length; i++) {
+        if ((rows[i] || []).some(c => squabbitNormalizeSpace(c).toLowerCase() === "players")) { playersRow = i; break; }
+      }
+      if (playersRow >= 0) {
+        const headerRow = rows[playersRow + 1] || [];
+        let nameCol = headerRow.findIndex(c => squabbitNormalizeSpace(c).toLowerCase() === "name");
+        if (nameCol < 0) nameCol = 0;
+        for (let i = playersRow + 2; i < rows.length; i++) {
+          const row = rows[i] || [];
+          const first = squabbitNormalizeSpace(row.find(c => squabbitNormalizeSpace(c)) || "");
+          if (!first) break;
+          if (/^(skins|strokeplay|stroke play|twos club|best ball|games|summary|totals|round \d+)$/i.test(first)) break;
+          const name = squabbitDisplayName(row[nameCol] || row[0] || "");
+          if (name && !squabbitIsNonPlayerName(name)) names.push(name);
+        }
+      }
+      rows.forEach(row => {
+        if (squabbitRowLooksLikePlayerScoreRow(row)) {
+          const name = squabbitDisplayName(row[0] || "");
+          if (name && !squabbitIsNonPlayerName(name)) names.push(name);
+        }
+      });
+      if (!names.length) {
+        const headerIndex = rows.findIndex(row => row.some(c => ["name","player","golfer"].includes(squabbitNormalizeSpace(c).toLowerCase())));
+        if (headerIndex >= 0) {
+          const header = rows[headerIndex];
+          let nameCol = header.findIndex(c => ["name","player","golfer"].includes(squabbitNormalizeSpace(c).toLowerCase()));
+          if (nameCol < 0) nameCol = 0;
+          for (let i = headerIndex + 1; i < rows.length; i++) {
+            const name = squabbitDisplayName(rows[i][nameCol] || "");
+            if (name && !squabbitIsNonPlayerName(name)) names.push(name);
+          }
+        }
+      }
+      return squabbitUniqueSortedNames(names);
+    }
+
+    function squabbitHoleIndexFromHeader(header){
+      const h = squabbitNormalizeSpace(header).toLowerCase();
+      let m = h.match(/^(?:hole|h)\s*0?([1-9]|1[0-8])$/i);
+      if (m) return Number(m[1]);
+      m = h.match(/^0?([1-9]|1[0-8])$/);
+      if (m) return Number(m[1]);
+      m = h.match(/(?:hole|h)\s*0?([1-9]|1[0-8])\b/i);
+      if (m) return Number(m[1]);
+      return -1;
+    }
+
+    function squabbitBuildHoleIndex(row){
+      const index = {};
+      (row || []).forEach((cell,i) => {
+        const hole = squabbitHoleIndexFromHeader(cell);
+        if (hole >= 1 && hole <= 18 && index[hole] === undefined) index[hole] = i;
+      });
+      return Object.keys(index).length ? index : null;
+    }
+
+    function squabbitFindNameColumn(headerRow){
+      const header = headerRow || [];
+      const nameCol = header.findIndex(c => {
+        const h = squabbitNormalizeSpace(c).toLowerCase();
+        return h === "name" || h === "player" || h === "golfer";
+      });
+      return nameCol >= 0 ? nameCol : 0;
+    }
+
+    function squabbitAnalyzeScoresCSV(text){
+      const delimiter = squabbitSniffDelimiter(text);
+      const rows = squabbitParseCSV(text, delimiter);
+      let headerIndex = -1;
+      let holeIndex = null;
+      for (let i = 0; i < rows.length; i++) {
+        const possibleHoleIndex = squabbitBuildHoleIndex(rows[i]);
+        if (possibleHoleIndex && Object.keys(possibleHoleIndex).length >= 9) { headerIndex = i; holeIndex = possibleHoleIndex; break; }
+      }
+      const scores = {};
+      if (headerIndex < 0 || !holeIndex) return scores;
+      const nameCol = squabbitFindNameColumn(rows[headerIndex]);
+      for (let i = headerIndex + 1; i < rows.length; i++) {
+        const row = rows[i] || [];
+        const name = squabbitDisplayName(row[nameCol] || row[0] || "");
+        const rowText = row.map(c => squabbitNormalizeSpace(c).toLowerCase());
+        if (!name || squabbitIsNonPlayerName(name)) continue;
+        const numericCount = row.filter(c => /^-?\d+$/.test(squabbitNormalizeSpace(c))).length;
+        const hasTee = rowText.some(c => c.includes("tee"));
+        if (!hasTee && numericCount < 9) continue;
+        const strokes = [];
+        for (let h = 1; h <= 18; h++) {
+          const col = holeIndex[h];
+          const value = squabbitToInt(row[col]);
+          if (value == null || value <= 0 || value > 20) { strokes.length = 0; break; }
+          strokes.push(value);
+        }
+        if (strokes.length === 18) scores[name] = strokes;
+      }
+      return scores;
+    }
+
+    function reparseAll(){
+      parseAliases();
+      const manualText = els.manualBetsBox.value.trim();
+      const rawText = els.rawTextBox.value.trim();
+      if (manualText) state.matchups = parseMatchups(manualText);
+      else if (rawText) { state.rawBetText = rawText; state.matchups = parseMatchups(rawText); }
+      state.results = calculateResults();
+      state.ledger = buildLedger(state.results);
+      renderAll();
+    }
+
+    function useManualBets(){
+      const text = els.manualBetsBox.value.trim();
+      if (!text) { alert("Paste matchups in the manual matchup box first."); return; }
+      state.matchups = parseMatchups(text);
+      setStatus(els.betPanel, els.betStatusList, state.matchups.length ? "ok" : "error", "Manual Matchups", state.matchups.length ? ["Using manual matchups.", "Found " + state.matchups.length + " matchup row(s)."] : ["Manual text did not produce any valid 2v2 rows."]);
+      reparseAll();
+    }
+
+    function parseAliases(){
+      state.aliases = new Map();
+      const lines = els.aliasesBox.value.split(/\n+/);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const parts = trimmed.split(/\s*=\s*/);
+        if (parts.length !== 2) continue;
+        const left = normalizeName(parts[0]);
+        const right = cleanName(parts[1]);
+        if (left && right) state.aliases.set(left, right);
+      }
+    }
+
+    function getMoneySettings(){
+      return { shotValue: Math.max(0, Number(els.shotValue.value || 0)), maxShots: Math.max(0, Number(els.maxShots.value || 0)) };
+    }
+
+    function calculateResults(){
+      const results = [];
+      const settings = getMoneySettings();
+      for (const matchup of state.matchups) {
+        const resolution = resolveMatchup(matchup);
+        const warnings = [...resolution.warnings];
+        const result = { matchup, team1Players: resolution.team1, team2Players: resolution.team2, t1Total: null, t2Total: null, winner: "Waiting on scores", margin: null, countedShots: null, perPerson: 0, teamTransfer: 0, payments: [], warnings };
+        if (!state.scoreMap.size) { results.push(result); continue; }
+        if (!resolution.team1.every(Boolean) || !resolution.team2.every(Boolean)) { result.winner = "Missing player score"; results.push(result); continue; }
+        const t1Scores = resolution.team1.map(p => p.scores || []);
+        const t2Scores = resolution.team2.map(p => p.scores || []);
+        let t1Total = 0;
+        let t2Total = 0;
+        let holesCounted = 0;
+        for (let h = 0; h < 18; h++) {
+          const t1Hole = [t1Scores[0][h], t1Scores[1][h]].filter(Number.isFinite);
+          const t2Hole = [t2Scores[0][h], t2Scores[1][h]].filter(Number.isFinite);
+          if (!t1Hole.length || !t2Hole.length) { warnings.push("Hole " + (h + 1) + " missing score"); continue; }
+          t1Total += Math.min(...t1Hole);
+          t2Total += Math.min(...t2Hole);
+          holesCounted++;
+        }
+        if (holesCounted < 18) warnings.push("Only counted " + holesCounted + " of 18 holes");
+        result.t1Total = holesCounted ? t1Total : null;
+        result.t2Total = holesCounted ? t2Total : null;
+        if (!holesCounted) { result.winner = "No score"; results.push(result); continue; }
+        if (t1Total === t2Total) { result.winner = "Push"; result.margin = 0; result.countedShots = 0; results.push(result); continue; }
+        const team1Wins = t1Total < t2Total;
+        const margin = Math.abs(t1Total - t2Total);
+        const countedShots = Math.min(margin, settings.maxShots);
+        const perPerson = countedShots * settings.shotValue;
+        result.margin = margin;
+        result.countedShots = countedShots;
+        result.perPerson = perPerson;
+        result.teamTransfer = perPerson * 2;
+        const winners = team1Wins ? resolution.team1 : resolution.team2;
+        const losers = team1Wins ? resolution.team2 : resolution.team1;
+        result.winner = teamLabel(winners.map(p => p.name));
+        for (let i = 0; i < Math.min(winners.length, losers.length); i++) {
+          if (perPerson > 0) result.payments.push({ from: losers[i].name, to: winners[i].name, amount: perPerson });
+        }
+        results.push(result);
+      }
+      return results;
+    }
+
+    function buildLedger(results){
+      const ledger = new Map();
+      for (const p of allKnownPlayers()) ledger.set(p.name, { name: p.name, score: playerGrossScore(p.name), net: 0, lines: [] });
+      for (const result of results) {
+        for (const payment of result.payments || []) {
+          if (!ledger.has(payment.from)) ledger.set(payment.from, { name: payment.from, score: playerGrossScore(payment.from), net: 0, lines: [] });
+          if (!ledger.has(payment.to)) ledger.set(payment.to, { name: payment.to, score: playerGrossScore(payment.to), net: 0, lines: [] });
+          ledger.get(payment.from).net -= payment.amount;
+          ledger.get(payment.to).net += payment.amount;
+          const label = teamLabel(result.matchup.team1) + " vs " + teamLabel(result.matchup.team2);
+          ledger.get(payment.from).lines.push("Pay " + payment.to + " " + money(payment.amount) + " - " + label);
+          ledger.get(payment.to).lines.push("Collect " + money(payment.amount) + " from " + payment.from + " - " + label);
+        }
+      }
+      return Array.from(ledger.values()).sort((a,b) => b.net - a.net || a.name.localeCompare(b.name));
+    }
+
+    function resolveMatchup(matchup){
+      const warnings = [];
+      const team1 = matchup.team1.map(name => resolvePlayer(name, warnings));
+      const team2 = matchup.team2.map(name => resolvePlayer(name, warnings));
+      return { team1, team2, warnings: uniqueList(warnings) };
+    }
+
+    function resolvePlayer(inputName, warnings){
+      const aliasTarget = state.aliases.get(normalizeName(inputName));
+      const wanted = aliasTarget || inputName;
+      const key = normalizeName(wanted);
+      if (state.scoreMap.has(key)) return state.scoreMap.get(key);
+      const allPlayers = allKnownPlayers();
+      const exact = allPlayers.find(p => normalizeName(p.name) === key);
+      if (exact && state.scoreMap.has(normalizeName(exact.name))) return state.scoreMap.get(normalizeName(exact.name));
+      const candidates = allPlayers.filter(p => namesCouldMatch(wanted, p.name));
+      const scoredCandidates = candidates.filter(p => state.scoreMap.has(normalizeName(p.name)));
+      if (scoredCandidates.length === 1) return state.scoreMap.get(normalizeName(scoredCandidates[0].name));
+      if (scoredCandidates.length > 1) { warnings.push("Ambiguous name: " + inputName + " could be " + scoredCandidates.map(p => p.name).join(", ")); return null; }
+      if (state.scoreMap.size) warnings.push("No score found for " + inputName);
+      return null;
+    }
+
+    function allKnownPlayers(){
+      const map = new Map();
+      for (const p of [...state.prePlayers, ...state.postPlayers]) map.set(normalizeName(p.name), p);
+      return Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name));
+    }
+
+    function namesCouldMatch(a,b){
+      const na = normalizeName(a);
+      const nb = normalizeName(b);
+      if (!na || !nb) return false;
+      if (na === nb) return true;
+      if (na.length >= 4 && nb.includes(na)) return true;
+      if (nb.length >= 4 && na.includes(nb)) return true;
+      const at = na.split(" ").filter(Boolean);
+      const bt = nb.split(" ").filter(Boolean);
+      if (!at.length || !bt.length) return false;
+      const aLast = at[at.length - 1];
+      const bLast = bt[bt.length - 1];
+      if (aLast.length >= 4 && aLast === bLast) return true;
+      if (at.length === 1) return bt.some(token => token.length >= 4 && token === at[0]);
+      if (bt.length === 1) return at.some(token => token.length >= 4 && token === bt[0]);
+      return at[0][0] === bt[0][0] && aLast === bLast;
+    }
+
+    function renderAll(){ renderSummary(); renderChecks(); renderPlayers(); renderMatchups(); renderResults(); renderLedger(); }
+
+    function renderSummary(){
+      els.summaryMatchups.textContent = String(state.matchups.length);
+      els.summaryRoster.textContent = String(state.prePlayers.length);
+      els.summaryScores.textContent = String(state.scoreMap.size);
+      const finished = state.results.filter(r => Number.isFinite(r.t1Total) && Number.isFinite(r.t2Total)).length;
+      els.summaryFinished.textContent = String(finished);
+      const totalSettled = state.results.reduce((sum,r) => sum + (r.teamTransfer || 0), 0);
+      els.summaryMoney.textContent = money(totalSettled);
+    }
+
+    function renderChecks(){
+      if (!state.matchups.length) els.betCheck.textContent = "No valid 2v2 matchups found yet.";
+      else {
+        const duplicateCount = findDuplicateMatchupKeys(state.matchups).size;
+        els.betCheck.textContent = "Matchups found: " + state.matchups.length + "\nDuplicate matchup groups: " + duplicateCount;
+      }
+      if (!state.prePlayers.length && !state.postPlayers.length) els.rosterCheck.textContent = "No Squabbit roster loaded.";
+      else {
+        const warnings = [];
+        for (const matchup of state.matchups) resolveMatchup(matchup).warnings.forEach(w => warnings.push(w));
+        const uniqueWarnings = uniqueList(warnings);
+        els.rosterCheck.textContent = "Known players: " + allKnownPlayers().length + "\nRoster players: " + state.prePlayers.length + "\nScore players: " + state.postPlayers.length + "\nName warnings: " + uniqueWarnings.length + (uniqueWarnings.length ? "\n" + uniqueWarnings.slice(0,6).join("\n") : "");
+      }
+      if (!state.scoreMap.size) els.scoreCheck.textContent = "No completed post-round scores loaded.";
+      else {
+        const complete = Array.from(state.scoreMap.values()).filter(p => scoreCompleteness(p) >= 18).length;
+        const finished = state.results.filter(r => Number.isFinite(r.t1Total) && Number.isFinite(r.t2Total)).length;
+        els.scoreCheck.textContent = "Players with completed scores: " + state.scoreMap.size + "\nComplete 18-hole scorecards: " + complete + "\nFinished matchups: " + finished + " of " + state.matchups.length;
+      }
+      els.rosterPreview.textContent = state.prePlayers.length ? state.prePlayers.map(p => p.name).join("\n") : "No roster loaded yet.";
+      els.scorePreview.textContent = state.postPlayers.length ? state.postPlayers.map(p => p.name + ": " + sumScores(p.scores)).join("\n") : "No completed scores loaded yet.";
+    }
+
+    function renderPlayers(){
+      els.playerChips.innerHTML = "";
+      const players = allKnownPlayers();
+      if (!players.length) { els.playerChips.innerHTML = '<span class="nameChip">No Squabbit players loaded</span>'; return; }
+      for (const player of players) {
+        const chip = document.createElement("span");
+        const hasScores = state.scoreMap.has(normalizeName(player.name));
+        chip.className = "nameChip";
+        chip.textContent = player.name + (hasScores ? " ✓ " + sumScores(player.scores) : "");
+        els.playerChips.appendChild(chip);
+      }
+    }
+
+    function renderMatchups(){
+      els.matchupsBody.innerHTML = "";
+      if (!state.matchups.length) { els.matchupsBody.innerHTML = '<tr><td colspan="4">No matchups loaded yet.</td></tr>'; return; }
+      const duplicateKeys = findDuplicateMatchupKeys(state.matchups);
+      state.matchups.forEach((m,index) => {
+        const validation = [];
+        const key = canonicalMatchupKey(m);
+        if (duplicateKeys.has(key)) validation.push(pill("Duplicate matchup", "bad"));
+        if (new Set([...m.team1, ...m.team2].map(normalizeName)).size < 4) validation.push(pill("Same player repeated", "bad"));
+        const resolution = resolveMatchup(m);
+        if (resolution.warnings.length) validation.push(pill(resolution.warnings.length + " warning(s)", "warn"));
+        if (!validation.length) validation.push(pill("OK", "ok"));
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${index + 1}</td><td>${escapeHtml(teamLabel(m.team1))}</td><td>${escapeHtml(teamLabel(m.team2))}</td><td>${validation.join(" ")}</td>`;
+        els.matchupsBody.appendChild(tr);
+      });
+    }
+
+    function renderResults(){
+      els.resultsBody.innerHTML = "";
+      if (!state.results.length) { els.resultsBody.innerHTML = '<tr><td colspan="10">No results yet.</td></tr>'; return; }
+      state.results.forEach((r,index) => {
+        const warnings = r.warnings && r.warnings.length ? r.warnings.join("; ") : "";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${index + 1}</td><td>${escapeHtml(teamWithScores(r.matchup.team1))}</td><td>${r.t1Total === null ? "" : r.t1Total}</td><td>${escapeHtml(teamWithScores(r.matchup.team2))}</td><td>${r.t2Total === null ? "" : r.t2Total}</td><td>${pill(escapeHtml(r.winner), /Waiting|Missing|No score/i.test(r.winner) ? "warn" : "ok")}</td><td>${r.margin === null ? "" : r.margin}</td><td>${r.perPerson ? money(r.perPerson) : ""}</td><td>${escapeHtml(paymentText(r.payments))}</td><td>${warnings ? pill(escapeHtml(warnings), "warn") : pill("None", "info")}</td>`;
+        els.resultsBody.appendChild(tr);
+      });
+    }
+
+    function renderLedger(){
+      els.ledgerBody.innerHTML = "";
+      if (!state.ledger.length) { els.ledgerBody.innerHTML = '<tr><td colspan="4">No player winnings or losses yet.</td></tr>'; return; }
+      for (const player of state.ledger) {
+        const cls = player.net > 0 ? "netPositive" : player.net < 0 ? "netNegative" : "netZero";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${escapeHtml(player.name)}</td><td>${player.score === null ? "" : player.score}</td><td class="${cls}">${moneySigned(player.net)}</td><td>${escapeHtml(player.lines.join("\n"))}</td>`;
+        els.ledgerBody.appendChild(tr);
+      }
+    }
+
+    function findDuplicateMatchupKeys(matchups){
+      const counts = new Map();
+      for (const m of matchups) {
+        const key = canonicalMatchupKey(m);
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+      const dups = new Set();
+      for (const [key,count] of counts.entries()) if (count > 1) dups.add(key);
+      return dups;
+    }
+
+    function canonicalMatchupKey(matchup){
+      const teamA = matchup.team1.map(normalizeName).sort().join("+");
+      const teamB = matchup.team2.map(normalizeName).sort().join("+");
+      return [teamA, teamB].sort().join("_vs_");
+    }
+
+    function teamLabel(team){ return (team || []).join(" / "); }
+
+    function teamWithScores(team){
+      return (team || []).map(name => {
+        const score = playerGrossScore(name);
+        return score === null ? name : name + " (" + score + ")";
+      }).join(" / ");
+    }
+
+    function scoreCompleteness(player){ return (player.scores || []).filter(Number.isFinite).length; }
+    function sumScores(scores){ return Array.isArray(scores) && scores.length ? scores.reduce((sum,value) => sum + Number(value || 0), 0) : ""; }
+    function playerGrossScore(name){ const p = state.scoreMap.get(normalizeName(name)); return p && Array.isArray(p.scores) && p.scores.length === 18 ? sumScores(p.scores) : null; }
+    function paymentText(payments){ return payments && payments.length ? payments.map(p => p.from + " pays " + p.to + " " + money(p.amount)).join("; ") : ""; }
+    function money(n){ return "$" + Number(n || 0).toFixed(2).replace(/\.00$/, ""); }
+    function moneySigned(n){ const val = Number(n || 0); if (val === 0) return "$0"; return (val > 0 ? "+" : "-") + money(Math.abs(val)); }
+
+    function downloadResultsCsv(){
+      if (!state.results.length) { alert("No results to download yet."); return; }
+      const rows = [["matchup","team1_player1","team1_player2","team1_best_ball_total","team2_player1","team2_player2","team2_best_ball_total","winner","margin","counted_shots","pay_per_person","who_pays_who","warnings"]];
+      state.results.forEach((r,i) => rows.push([i + 1, r.matchup.team1[0], r.matchup.team1[1], r.t1Total === null ? "" : r.t1Total, r.matchup.team2[0], r.matchup.team2[1], r.t2Total === null ? "" : r.t2Total, r.winner, r.margin === null ? "" : r.margin, r.countedShots === null ? "" : r.countedShots, r.perPerson || "", paymentText(r.payments), (r.warnings || []).join("; ")]));
+      rows.push([]);
+      rows.push(["Player","Gross Score","Net","Lines"]);
+      state.ledger.forEach(p => rows.push([p.name, p.score === null ? "" : p.score, p.net, p.lines.join("; ")]));
+      downloadText("golf_bet_results_with_money.csv", rowsToCsv(rows), "text/csv;charset=utf-8");
+    }
+
+    function downloadMatchupsCsv(){
+      if (!state.matchups.length) { alert("No matchups to download yet."); return; }
+      const rows = [["matchup","team1_player1","team1_player2","team2_player1","team2_player2"]];
+      state.matchups.forEach((m,i) => rows.push([i + 1, m.team1[0], m.team1[1], m.team2[0], m.team2[1]]));
+      downloadText("golf_bet_matchups.csv", rowsToCsv(rows), "text/csv;charset=utf-8");
+    }
+
+    function rowsToCsv(rows){ return rows.map(row => row.map(csvEscape).join(",")).join("\n"); }
+    function csvEscape(value){ const s = String(value ?? ""); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+
+    function downloadText(filename, text, type){
+      const blob = new Blob([text], { type: type || "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+    }
+
+    function downloadFullResultsPdf(){
+      if (!window.jspdf || !window.jspdf.jsPDF) { alert("PDF library did not load."); return; }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: "pt", format: "letter", orientation: "portrait" });
+      const margin = 42;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const usable = pageWidth - margin * 2;
+      let y = 42;
+      function checkPage(need){ if (y + need > pageHeight - 42) { doc.addPage(); y = 42; } }
+      function text(str,x,yy,size=10,style="normal",color=[17,24,39]){ doc.setFont("helvetica",style); doc.setFontSize(size); doc.setTextColor(color[0],color[1],color[2]); doc.text(String(str),x,yy); }
+      function wrapped(str,x,width,size=10,style="normal",lineHeight=14,color=[17,24,39]){
+        doc.setFont("helvetica",style); doc.setFontSize(size); doc.setTextColor(color[0],color[1],color[2]);
+        const lines = doc.splitTextToSize(String(str || ""), width);
+        for (const line of lines) { checkPage(lineHeight); doc.text(line,x,y); y += lineHeight; }
+      }
+      doc.setFillColor(240,253,244); doc.setDrawColor(187,247,208); doc.roundedRect(margin, y, usable, 78, 16, 16, "FD");
+      text("Golf Best Ball Results", margin + 16, y + 28, 20, "bold", [20,83,45]);
+      text("Best ball scores, winnings/losses, and who pays who", margin + 16, y + 50, 10, "normal", [71,85,105]);
+      text("$" + getMoneySettings().shotValue + "/shot - " + getMoneySettings().maxShots + " max shots", margin + 16, y + 66, 10, "bold", [20,83,45]);
+      y += 98;
+      const finished = state.results.filter(r => Number.isFinite(r.t1Total) && Number.isFinite(r.t2Total)).length;
+      const totalSettled = state.results.reduce((sum,r) => sum + (r.teamTransfer || 0), 0);
+      const cards = [["Matchups", state.matchups.length], ["Finished Bets", finished], ["Total Settled", money(totalSettled)], ["Scores Loaded", state.scoreMap.size]];
+      const cardW = (usable - 24) / 4;
+      cards.forEach((card,i) => {
+        const x = margin + i * (cardW + 8);
+        doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240); doc.roundedRect(x,y,cardW,54,12,12,"FD");
+        text(card[0], x + 10, y + 18, 8, "bold", [100,116,139]);
+        text(card[1], x + 10, y + 40, 16, "bold", [22,101,52]);
+      });
+      y += 76;
+      text("Player Net Summary", margin, y, 14, "bold", [20,83,45]); y += 16;
+      state.ledger.forEach(p => {
+        checkPage(34);
+        doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240); doc.roundedRect(margin,y,usable,28,8,8,"FD");
+        text(p.name, margin + 10, y + 18, 10, "bold");
+        text(p.score === null ? "Score: -" : "Score: " + p.score, margin + 190, y + 18, 9, "normal", [71,85,105]);
+        const color = p.net > 0 ? [22,101,52] : p.net < 0 ? [153,27,27] : [71,85,105];
+        text(moneySigned(p.net), margin + usable - 78, y + 18, 10, "bold", color);
+        y += 34;
+      });
+      y += 8;
+      checkPage(32);
+      text("Matchup Results", margin, y, 14, "bold", [20,83,45]); y += 18;
+      state.results.forEach((r,i) => {
+        const pay = paymentText(r.payments) || "No payment";
+        const title = (i + 1) + ". " + teamLabel(r.matchup.team1) + " vs " + teamLabel(r.matchup.team2);
+        const detail = "Team 1 BB: " + (r.t1Total ?? "-") + " | Team 2 BB: " + (r.t2Total ?? "-") + " | Winner: " + r.winner + " | Margin: " + (r.margin ?? "-") + " | Pay per person: " + (r.perPerson ? money(r.perPerson) : "$0");
+        const blockLines = doc.splitTextToSize(title + "\n" + detail + "\n" + pay, usable - 20);
+        const blockH = 18 + blockLines.length * 12 + 10;
+        checkPage(blockH + 8);
+        doc.setFillColor(255,255,255); doc.setDrawColor(226,232,240); doc.roundedRect(margin,y,usable,blockH,10,10,"FD");
+        y += 16;
+        wrapped(title, margin + 10, usable - 20, 10, "bold", 12, [17,24,39]);
+        wrapped(detail, margin + 10, usable - 20, 9, "normal", 12, [71,85,105]);
+        wrapped(pay, margin + 10, usable - 20, 9, "bold", 12, [20,83,45]);
+        y += 8;
+      });
+      y += 8;
+      checkPage(32);
+      text("Who Pays Who - Detail", margin, y, 14, "bold", [20,83,45]); y += 18;
+      state.ledger.forEach(p => {
+        if (!p.lines.length) return;
+        const blockLines = doc.splitTextToSize(p.name + " (" + moneySigned(p.net) + ")\n" + p.lines.join("\n"), usable - 20);
+        const blockH = 18 + blockLines.length * 12 + 8;
+        checkPage(blockH + 8);
+        doc.setFillColor(248,250,252); doc.setDrawColor(226,232,240); doc.roundedRect(margin,y,usable,blockH,10,10,"FD");
+        y += 16;
+        wrapped(p.name + " - " + moneySigned(p.net), margin + 10, usable - 20, 10, "bold", 12, [17,24,39]);
+        p.lines.forEach(line => wrapped(line, margin + 10, usable - 20, 9, "normal", 12, [71,85,105]));
+        y += 8;
+      });
+      doc.save("golf_best_ball_full_results.pdf");
+    }
+
+    function clearAll(){
+      state.rawBetText = "";
+      state.matchups = [];
+      state.prePlayers = [];
+      state.postPlayers = [];
+      state.scoreMap = new Map();
+      state.aliases = new Map();
+      state.results = [];
+      state.ledger = [];
+      els.rawTextBox.value = "";
+      els.manualBetsBox.value = "";
+      els.aliasesBox.value = "";
+      els.betFile.value = "";
+      els.preFile.value = "";
+      els.postFile.value = "";
+      els.betFileName.textContent = "No file selected.";
+      els.preFileName.textContent = "No file selected.";
+      els.postFileName.textContent = "No file selected.";
+      setStatus(els.betPanel, els.betStatusList, "info", "Bet Sheet", ["No bet file loaded yet."]);
+      setStatus(els.prePanel, els.preStatusList, "info", "Roster", ["No roster loaded yet."]);
+      setStatus(els.postPanel, els.postStatusList, "info", "Scores", ["No completed scores loaded yet."]);
+      reparseAll();
+    }
+
+    function setStatus(panelEl, listEl, tone, title, lines){
+      panelEl.className = "statusPanel " + tone;
+      panelEl.querySelector(".statusTitle").textContent = title;
+      listEl.innerHTML = (lines && lines.length ? lines : ["No details."]).map(line => "<li>" + escapeHtml(line) + "</li>").join("");
+    }
+
+    function normalizeHeader(value){ return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+    function cleanName(value){ return String(value || "").replace(/\u00a0/g," ").replace(/\s+/g," ").replace(/^[#\d\.\)\-:\s]+/,"").replace(/\s+(?:score|gross|net|total)$/i,"").trim(); }
+    function normalizeName(value){ return cleanName(value).toLowerCase().replace(/\b(jr|sr|ii|iii|iv)\b/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim(); }
+    function uniqueList(items){ return Array.from(new Set((items || []).filter(Boolean))); }
+    function pill(text, kind){ return '<span class="pill ' + kind + '">' + text + '</span>'; }
+    function escapeHtml(value){ return String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+    function errorMessage(err){ return err && err.message ? err.message : String(err); }
+
+    els.recheckBtn.addEventListener("click", reparseAll);
+    els.applyAliasesBtn.addEventListener("click", reparseAll);
+    els.useManualBtn.addEventListener("click", useManualBets);
+    els.downloadResultsBtn.addEventListener("click", downloadResultsCsv);
+    els.downloadPdfBtn.addEventListener("click", downloadFullResultsPdf);
+    els.downloadMatchupsBtn.addEventListener("click", downloadMatchupsCsv);
+    els.clearBtn.addEventListener("click", clearAll);
+    els.shotValue.addEventListener("input", reparseAll);
+    els.maxShots.addEventListener("input", reparseAll);
+    initUploaders();
+    reparseAll();
+  </script>
 </body>
 </html>
