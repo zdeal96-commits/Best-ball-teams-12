@@ -303,6 +303,13 @@
       font-weight:950;
     }
 
+    .badgeGreen{
+      color:#06110c;
+      background:linear-gradient(135deg, #86efac, var(--accent));
+      border:0;
+      font-weight:950;
+    }
+
     .toolActions{
       display:flex;
       gap:10px;
@@ -452,6 +459,14 @@
           needsSquabbit: true
         },
         {
+          name: "PDF Bet Sheet + Squabbit Reader",
+          file: "golf_bet_pdf_squabbit_reader.html",
+          desc: "Read a text based golf bet PDF without AI, upload a Squabbit pre round CSV for names, upload a post round CSV for scores, and calculate 2v2 best ball results.",
+          badges: ["No AI", "PDF reader", "Squabbit pre/post CSV", "2v2 best ball"],
+          needsSquabbit: true,
+          noAiTool: true
+        },
+        {
           name: "Golf Bet Sheet AI with Puter",
           file: "golf_bet_sheet_puter_v4.html",
           desc: "Upload a bet sheet image, run OCR and AI analysis with Puter, review questions, calculate settlements, and export PDFs and CSV.",
@@ -536,7 +551,8 @@
             const classes = [
               "badge",
               lower.includes("squabbit") ? "badgeWarn" : "",
-              lower.includes("ai") ? "badgeBlue" : ""
+              lower.includes("ai") ? "badgeBlue" : "",
+              lower.includes("no ai") ? "badgeGreen" : ""
             ].filter(Boolean).join(" ");
 
             return `<span class="${classes}">${escapeHtml(b)}</span>`;
@@ -545,6 +561,9 @@
           const notes = [];
           if(t.needsSquabbit){
             notes.push(`<div class="noteBox"><b>Squabbit export required:</b> export the round from Squabbit and upload it inside this tool.</div>`);
+          }
+          if(t.noAiTool){
+            notes.push(`<div class="noteBox"><b>No AI note:</b> this tool reads normal text based PDFs. If the PDF is only a screenshot or scanned image, use the manual matchup editor inside the tool.</div>`);
           }
           if(t.aiTool){
             notes.push(`<div class="noteBox"><b>AI tool note:</b> this page uses Puter for OCR and AI analysis, so it works best when opened from your GitHub page or localhost instead of a local file.</div>`);
