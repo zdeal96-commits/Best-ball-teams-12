@@ -4,1300 +4,1489 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Best Ball Bet Sheet</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root{
-      --bg0:#07110d;
-      --bg1:#0b1f16;
-      --text:#eaf5ef;
-      --muted:#b7d1c2;
-      --line:rgba(255,255,255,.10);
-
-      --accent:#34d399;
-      --accent2:#22c55e;
-      --warn:#fbbf24;
-      --bad:#fb7185;
-      --mid:#94a3b8;
-
-      --shadow: 0 14px 45px rgba(0,0,0,.45);
-      --radius: 16px;
+      --green-950:#052e16;
+      --green-900:#14532d;
+      --green-800:#166534;
+      --green-700:#15803d;
+      --green-600:#16a34a;
+      --green-500:#22c55e;
+      --green-100:#dcfce7;
+      --green-50:#f0fdf4;
+      --gold:#f59e0b;
+      --cream:#fff7ed;
+      --slate-900:#0f172a;
+      --slate-700:#334155;
+      --slate-500:#64748b;
+      --slate-200:#e2e8f0;
+      --slate-100:#f1f5f9;
+      --white:#ffffff;
     }
     *{ box-sizing:border-box; }
     body{
-      margin:0;
-      min-height:100vh;
-      color:var(--text);
-      font-family:-apple-system, system-ui, Segoe UI, Roboto, Arial;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        radial-gradient(1200px 800px at 20% 0%, rgba(52,211,153,.20), transparent 55%),
-        radial-gradient(900px 600px at 90% 10%, rgba(251,191,36,.16), transparent 55%),
-        linear-gradient(180deg, var(--bg0), var(--bg1) 55%, #06110c);
-      padding: 16px 16px 90px; /* room for bottom sticky bar */
+        radial-gradient(circle at top left, rgba(245,158,11,.20), transparent 30%),
+        radial-gradient(circle at top right, rgba(34,197,94,.25), transparent 28%),
+        linear-gradient(135deg, #052e16 0%, #166534 42%, #dff9fb 100%);
+      min-height: 100vh;
+      color:#1a202c;
+      margin:0;
     }
-    .wrap{ max-width: 980px; margin: 0 auto; }
-
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 14px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      margin: 12px 0;
-    }
-    .topline{
-      display:flex; gap:10px; align-items:center; justify-content:space-between;
-      margin: 0 0 10px; color: var(--muted); font-size: 12px;
-    }
-    .tag{
-      display:inline-block;
-      padding: 2px 8px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.05);
-      color: var(--muted);
-      font-size: 12px;
-      white-space:nowrap;
-    }
-
-    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    .grid3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
-    @media (max-width: 780px){
-      .grid2, .grid3{ grid-template-columns: 1fr; }
-    }
-
-    label{ display:block; margin: 10px 0 6px; color: var(--muted); font-size: 12.5px; }
-    input, select, button, textarea{
-      font-family: inherit;
-    }
-    input, select{
-      width:100%;
-      padding: 12px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(9, 24, 17, .55);
-      color: var(--text);
-      outline: none;
-      font-size: 16px;
-    }
-    select{
-      appearance:none;
-      background-image:
-        linear-gradient(45deg, transparent 50%, rgba(234,245,239,.75) 50%),
-        linear-gradient(135deg, rgba(234,245,239,.75) 50%, transparent 50%);
-      background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
-      background-size: 6px 6px, 6px 6px;
-      background-repeat: no-repeat;
-      padding-right: 34px;
-    }
-
-    .btnRow{ display:flex; gap:10px; flex-wrap:wrap; }
-    .btn{
-      border:0;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 16px;
-      font-weight: 900;
-      cursor:pointer;
-      user-select:none;
-      transition: transform .05s ease, filter .15s ease;
-    }
-    .btn:active{ transform: scale(.99); }
-    .btnFull{ width:100%; }
-    .btnPrimary{ color:#0b1510; background: linear-gradient(135deg, var(--accent2), var(--accent)); box-shadow: 0 12px 30px rgba(34,197,94,.25); }
-    .btnGhost{ background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--line); font-weight:900; }
-    .btnWarn{ color:#0b1510; background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 12px 30px rgba(245,158,11,.18); }
-    .btnBad{ color:#0b1510; background: linear-gradient(135deg, #fb7185, #ef4444); box-shadow: 0 12px 30px rgba(239,68,68,.20); }
-    .btnMid{ color:#0b1510; background: linear-gradient(135deg, #94a3b8, #cbd5e1); }
-
-    .mini{ font-size:12px; color: var(--muted); margin-top: 8px; line-height:1.35; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; }
-
-    /* Team entry chips + autocomplete */
-    .teamBox{
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(9, 24, 17, .55);
-      border-radius: 14px;
-      padding: 10px;
-    }
-    .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
-    .chip{
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      font-weight:900;
-      font-size: 14px;
-    }
-    .chip button{
-      border:0; cursor:pointer;
-      border-radius: 10px;
-      padding: 2px 8px;
-      font-weight: 950;
-      background: rgba(255,255,255,.10);
-      color: var(--text);
-    }
-    .chip button:active{ transform: scale(.99); }
-
-    .acWrap{ position: relative; }
-    .acList{
-      position:absolute; left:0; right:0; top: calc(100% + 6px);
-      background: rgba(10, 26, 18, .98);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 14px;
+    .hero{
+      color:#fff;
+      padding:28px 16px 24px;
+      border-bottom:1px solid rgba(255,255,255,.18);
+      box-shadow:0 10px 30px rgba(0,0,0,.20);
+      position:relative;
       overflow:hidden;
-      box-shadow: 0 18px 40px rgba(0,0,0,.45);
-      z-index: 50;
-      max-height: 220px;
-      overflow-y: auto;
     }
-    .acItem{
-      padding: 10px 12px;
-      font-weight: 900;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      cursor:pointer;
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:auto -80px -120px auto;
+      width:280px;
+      height:280px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
     }
-    .acItem:last-child{ border-bottom:0; }
-    .acItem:hover{ background: rgba(255,255,255,.06); }
-    .acNote{ padding: 10px 12px; color: var(--muted); font-size: 12px; }
-
-    /* Matchup rows (collapsed summary) */
-    .rowCard{
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 16px;
-      background: rgba(0,0,0,.18);
-      padding: 12px;
-      margin-top: 10px;
+    .hero-inner{
+      max-width:1150px;
+      margin:0 auto;
+      position:relative;
+      z-index:1;
     }
-    .rowTop{
-      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
-    }
-    .rowTitle{
-      font-weight: 950;
-      font-size: 15px;
-      line-height:1.25;
-    }
-    .rowSub{
-      margin-top:6px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height:1.35;
-    }
-    .payoutBig{
-      margin-top: 8px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.20);
-      border-radius: 14px;
-      padding: 10px 12px;
-      font-weight: 950;
-      font-size: 14px;
-      line-height:1.35;
-    }
-    .good{ color:#5eead4; font-weight:950; }
-    .bad{ color:#fda4af; font-weight:950; }
-    .warn{ color:#fde68a; font-weight:950; }
-
-    .divider{ height:1px; background: rgba(255,255,255,.10); margin: 12px 0; }
-
-    /* Bottom sticky bar (hub controls) */
-    .hubbar{
-      position: fixed;
-      left:0; right:0; bottom:0;
-      z-index: 9999;
-      padding: 10px 12px;
-      background: linear-gradient(180deg, rgba(5,17,11,.70), rgba(5,17,11,.92));
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-top: 1px solid rgba(255,255,255,.10);
-    }
-    .hubbarRow{
-      max-width: 980px;
-      margin: 0 auto;
-      display:flex;
+    .eyebrow{
+      display:inline-flex;
+      gap:8px;
       align-items:center;
-      justify-content:space-between;
-      gap:10px;
+      padding:7px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.22);
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.04em;
+      text-transform:uppercase;
     }
-    .hubbarTitle{
-      color: #eaf5ef;
-      font-weight: 950;
-      font-size: 13px;
-      letter-spacing:.2px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 40vw;
+    .hero h1{
+      margin:12px 0 6px;
+      font-size:clamp(2rem, 5vw, 4rem);
+      line-height:1;
+      letter-spacing:-.05em;
+      font-weight:950;
     }
-    .hubBtns{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-    .hubBtn{
+    .hero p{
+      margin:0;
+      color:rgba(255,255,255,.88);
+      max-width:780px;
+      font-size:16px;
+      line-height:1.5;
+    }
+    .card{
+      background:rgba(255,255,255,.97);
+      border:1px solid rgba(255,255,255,.7);
+      border-radius:1.35rem;
+      box-shadow:0 16px 35px rgba(15,23,42,.14);
+      padding:1.25rem;
+      margin-bottom:1.25rem;
+    }
+    .sticky-nav{
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(255,255,255,.90);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(15,23,42,.10);
+    }
+    .sticky-nav-inner{
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-links{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .nav-link{
+      display:inline-block;
+      text-decoration:none;
+      padding:9px 12px;
+      border-radius:999px;
+      background:#ecfdf5;
+      color:#166534;
+      font-size:13px;
+      font-weight:800;
+      border:1px solid #bbf7d0;
+    }
+    .action-btn{
       border:0;
-      border-radius: 12px;
-      padding: 9px 10px;
-      font-size: 13px;
-      font-weight: 950;
+      border-radius:.95rem;
+      padding:.76rem 1rem;
+      font-size:.95rem;
+      font-weight:900;
       cursor:pointer;
-      user-select:none;
+      transition:transform .1s ease, box-shadow .1s ease, opacity .1s ease;
+      box-shadow:0 8px 18px rgba(15,23,42,.12);
     }
-    .hubBtnGhost{
-      background: rgba(255,255,255,.08);
-      color:#eaf5ef;
-      border: 1px solid rgba(255,255,255,.10);
+    .action-btn:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(15,23,42,.16); }
+    .action-btn:active{ transform:translateY(0); opacity:.92; }
+    .btn-green{ background:linear-gradient(135deg,#14532d,#22c55e); color:#fff; }
+    .btn-blue{ background:linear-gradient(135deg,#1d4ed8,#38bdf8); color:#fff; }
+    .btn-gray{ background:#edf2f7; color:#1f2937; }
+    .btn-red{ background:linear-gradient(135deg,#dc2626,#f97316); color:#fff; }
+    .btn-purple{ background:linear-gradient(135deg,#6d28d9,#a855f7); color:#fff; }
+    .btn-gold{ background:linear-gradient(135deg,#92400e,#f59e0b); color:#fff; }
+    .small-note{ font-size:.86rem; color:#4b5563; line-height:1.45; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .pill{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#dcfce7;
+      color:#166534;
+      font-size:12px;
+      font-weight:800;
+      margin-right:6px;
+      margin-bottom:6px;
+      border:1px solid #bbf7d0;
     }
-    .hubBtnDanger{
-      background: linear-gradient(135deg, #fb7185, #ef4444);
-      color:#08110c;
+    .summary-strip{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:12px;
+      margin-bottom:1.25rem;
+      margin-top:1.25rem;
+    }
+    .summary-box{
+      background:rgba(255,255,255,.96);
+      border:1px solid rgba(255,255,255,.75);
+      border-radius:1.15rem;
+      box-shadow:0 12px 28px rgba(15,23,42,.13);
+      padding:14px 16px;
+    }
+    .summary-label{
+      font-size:12px;
+      color:#64748b;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+    .summary-value{
+      margin-top:6px;
+      font-size:28px;
+      font-weight:950;
+      color:#166534;
+      line-height:1;
+    }
+    .summary-sub{
+      margin-top:6px;
+      color:#64748b;
+      font-size:12px;
+      font-weight:700;
+    }
+    .pair-list{
+      border:1px solid #e5e7eb;
+      border-radius:.9rem;
+      overflow:hidden;
+      background:#fff;
+    }
+    .pair-header,.pair-row{
+      display:grid;
+      grid-template-columns:72px 1fr 110px 100px;
+      gap:12px;
+      padding:11px 12px;
+      align-items:center;
+    }
+    .pair-header{
+      background:linear-gradient(135deg,#f8fafc,#eef2ff);
+      font-size:12px;
+      font-weight:950;
+      color:#475569;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .pair-row{
+      border-top:1px solid #e5e7eb;
+      font-size:14px;
+    }
+    .pair-row:nth-child(even){ background:#f9fafb; }
+    .rank-badge{
+      width:34px;
+      height:34px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:999px;
+      background:#ecfdf5;
+      color:#166534;
+      font-weight:950;
+      border:1px solid #bbf7d0;
+    }
+    .result-box{
+      border:1px solid #d1d5db;
+      border-radius:.95rem;
+      padding:12px;
+      background:#f8fafc;
+      margin-top:12px;
+    }
+    .result-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      padding:7px 0;
+      border-bottom:1px solid #e5e7eb;
+    }
+    .result-row:last-child{ border-bottom:0; }
+    .bet-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:16px;
+    }
+    @media (min-width: 900px){
+      .bet-grid{ grid-template-columns:1fr 1fr; }
+    }
+    .team-box{
+      border:1px solid #d1d5db;
+      border-radius:16px;
+      padding:14px;
+      background:linear-gradient(180deg,#ffffff,#fafafa);
+    }
+    .team-title{
+      font-weight:950;
+      color:#166534;
+      margin-bottom:10px;
+    }
+    .saved-bet{
+      border:1px solid #e5e7eb;
+      border-radius:14px;
+      padding:13px;
+      background:#fff;
+      margin-bottom:10px;
+      box-shadow:0 5px 14px rgba(15,23,42,.06);
+    }
+    .status-pending{ color:#92400e; font-weight:900; }
+    .status-ready{ color:#166534; font-weight:900; }
+    .status-missing{ color:#b91c1c; font-weight:900; }
+    .two-col{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:20px;
+    }
+    .section-anchor{
+      scroll-margin-top: 90px;
+    }
+    .saved-bet-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .mini-btn{
+      border:0;
+      border-radius:10px;
+      padding:9px 12px;
+      font-size:14px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .mini-btn-edit{ background:#e0f2fe; color:#0c4a6e; }
+    .mini-btn-delete{ background:#fee2e2; color:#991b1b; }
+    .edit-banner{
+      margin-top:12px;
+      padding:12px 14px;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+      font-weight:800;
+    }
+    .report-panel{
+      background:
+        linear-gradient(135deg, rgba(20,83,45,.96), rgba(22,163,74,.92)),
+        radial-gradient(circle at top right, rgba(245,158,11,.35), transparent 35%);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.25);
+      border-radius:22px;
+      padding:18px;
+      box-shadow:0 18px 36px rgba(5,46,22,.23);
+      overflow:hidden;
+      position:relative;
+    }
+    .report-panel:after{
+      content:"";
+      position:absolute;
+      right:-70px;
+      bottom:-90px;
+      width:220px;
+      height:220px;
+      border-radius:999px;
+      background:rgba(255,255,255,.11);
+    }
+    .report-panel > *{ position:relative; z-index:1; }
+    .report-title{
+      font-weight:950;
+      font-size:22px;
+      letter-spacing:-.02em;
+      margin-bottom:6px;
+    }
+    .report-desc{
+      color:rgba(255,255,255,.86);
+      font-size:14px;
+      line-height:1.45;
+      max-width:800px;
+    }
+    .download-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+      margin-top:16px;
+    }
+    @media (min-width: 760px){
+      .download-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+    }
+    .download-tile{
+      background:rgba(255,255,255,.95);
+      color:#0f172a;
+      border:1px solid rgba(255,255,255,.7);
+      border-radius:16px;
+      padding:14px;
+      box-shadow:0 10px 24px rgba(15,23,42,.14);
+    }
+    .download-tile h3{
+      margin:0 0 6px;
+      color:#14532d;
+      font-weight:950;
+      font-size:16px;
+    }
+    .download-tile p{
+      margin:0 0 12px;
+      color:#64748b;
+      font-size:13px;
+      line-height:1.4;
+      min-height:38px;
+    }
+    .preview-card{
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:16px;
+      padding:14px;
+      margin-top:14px;
+    }
+    .preview-card-title{
+      font-weight:950;
+      color:#14532d;
+      margin-bottom:8px;
+    }
+    @media (min-width: 1100px){
+      .two-col{ grid-template-columns:1.05fr 1.35fr; }
+    }
+    @media (max-width: 900px){
+      .summary-strip{ grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width: 640px){
+      .summary-strip{ grid-template-columns:1fr; }
+      .sticky-nav-inner{ align-items:flex-start; }
+      .pair-header,.pair-row{ grid-template-columns:54px 1fr 78px 70px; gap:8px; font-size:12px; }
+      .action-btn{ width:100%; }
+      .nav-link{ flex:1; text-align:center; }
     }
   </style>
 </head>
-
 <body>
-<div class="wrap">
-
-  <div class="card" id="setupCard">
-    <div class="topline">
-      <span>Best Ball Bet Sheet</span>
-      <span class="tag" id="statusTag">No round loaded</span>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">Best Ball Score Center</div>
+      <h1>Best Ball Bet Sheet</h1>
+      <p>Upload your roster, upload the finished score CSV, then download clean best ball reports showing each player paired with every other player.</p>
     </div>
+  </header>
 
-    <div class="mini">
-      Upload your <b>Squabbit export CSV</b> once. Then build matchups.
-      Winner/payouts are calculated automatically. Saved locally on this device.
-    </div>
-
-    <label>1) Upload Squabbit CSV</label>
-    <input id="csvInput" type="file" accept=".csv,text/csv" />
-
-    <div class="grid3" style="margin-top:10px;">
-      <div>
-        <label>$ per stroke (uniform)</label>
-        <input id="perStroke" type="number" min="1" step="1" value="5" />
+  <div class="sticky-nav">
+    <div class="sticky-nav-inner">
+      <div class="nav-links">
+        <a class="nav-link" href="#section-names">Names</a>
+        <a class="nav-link" href="#section-scores">Scores</a>
+        <a class="nav-link" href="#section-reports">Reports</a>
+        <a class="nav-link" href="#section-pairings">Pairings</a>
+        <a class="nav-link" href="#section-bets">Bets</a>
+        <a class="nav-link" href="#section-saved">Saved Bets</a>
       </div>
-      <div>
-        <label>Max $ per person (uniform)</label>
-        <input id="maxPerPerson" type="number" min="1" step="1" value="25" />
-      </div>
-      <div>
-        <label>Holes counted</label>
-        <select id="holesCounted">
-          <option value="18" selected>18 holes</option>
-          <option value="9">Front 9 only</option>
-          <option value="9b">Back 9 only</option>
-        </select>
+      <div class="flex gap-2 flex-wrap">
+        <button id="resetRoundBtn" class="action-btn btn-gray" type="button">Reset round data</button>
+        <button id="resetAllBtn" class="action-btn btn-red" type="button">Reset all</button>
       </div>
     </div>
+  </div>
 
-    <div class="grid2" style="margin-top:10px;">
-      <div>
-        <label>Find player on sheet</label>
-        <input id="findPlayer" placeholder="Type a name…" />
-        <div class="mini" id="findResult"> </div>
+  <main class="max-w-6xl mx-auto p-4 md:p-5">
+    <div class="summary-strip">
+      <div class="summary-box">
+        <div class="summary-label">Players Loaded</div>
+        <div class="summary-value" id="summaryPlayersLoaded">0</div>
+        <div class="summary-sub">from roster</div>
       </div>
-      <div>
-        <label>Quick actions</label>
-        <div class="btnRow">
-          <button class="btn btnGhost" id="copyLastBtn" type="button">Copy last matchup</button>
-          <button class="btn btnPrimary" id="addRowBtn" type="button">Add next row</button>
+      <div class="summary-box">
+        <div class="summary-label">Finished Scores</div>
+        <div class="summary-value" id="summaryPlayersScored">0</div>
+        <div class="summary-sub">ready for pairings</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">Best Ball Teams</div>
+        <div class="summary-value" id="summaryBestBallTeams">0</div>
+        <div class="summary-sub">unique 2-person teams</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">Saved Bets</div>
+        <div class="summary-value" id="summarySavedBets">0</div>
+        <div class="summary-sub">tracked matchups</div>
+      </div>
+    </div>
+
+    <section class="card section-anchor" id="section-names">
+      <h2 class="font-semibold text-xl mb-2 text-green-700">Step 1: Load Names For Bets</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Pre round / roster CSV</label>
+          <input id="namesCsvInput" type="file" accept=".csv,text/csv" class="block w-full text-sm text-gray-700 bg-white border border-gray-300 rounded-xl p-3" />
+        </div>
+        <div>
+          <div class="small-note">
+            This reads only the Players section of the CSV and loads those names for the bet sheet.
+          </div>
+          <div class="small-note mt-2">
+            Current players loaded: <span id="playersLoaded" class="font-semibold text-green-700">0</span>
+          </div>
+        </div>
+      </div>
+      <p id="msgNames" class="text-green-700 text-sm mt-3">Upload a pre round CSV to load names for entering bets.</p>
+      <div id="namesPills" class="mt-3"></div>
+    </section>
+
+    <section class="card section-anchor" id="section-scores">
+      <h2 class="font-semibold text-xl mb-2 text-green-700">Step 2: Load Finished Scores</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Completed / in progress round CSV</label>
+          <input id="scoresCsvInput" type="file" accept=".csv,text/csv" class="block w-full text-sm text-gray-700 bg-white border border-gray-300 rounded-xl p-3" />
+        </div>
+        <div>
+          <div class="small-note">
+            This reads the round score table and updates best ball pairings, download reports, and saved bets.
+          </div>
+          <div class="small-note mt-2">
+            Players with finished scores: <span id="playersScored" class="font-semibold text-green-700">0</span>
+          </div>
+        </div>
+      </div>
+      <p id="msgScores" class="text-green-700 text-sm mt-3">Upload a completed round CSV later to calculate best ball teams and bet results.</p>
+      <div id="scoredPills" class="mt-3"></div>
+    </section>
+
+    <div id="appArea" style="display:none">
+      <section class="report-panel section-anchor" id="section-reports">
+        <div class="report-title">Download Best Ball Reports</div>
+        <div class="report-desc">
+          These reports show every player's best ball score with every other scored player. The HTML reports open like a clean web page and can be saved, printed, or sent from your phone or computer.
+        </div>
+        <div class="download-grid">
+          <div class="download-tile">
+            <h3>Selected Player Report</h3>
+            <p>Downloads one polished report for the player selected in Player Pairings.</p>
+            <button id="downloadSelectedReportBtn" class="action-btn btn-green" type="button">Download selected player</button>
+          </div>
+          <div class="download-tile">
+            <h3>Full Player Report</h3>
+            <p>Downloads a full grouped report for every player with every partner.</p>
+            <button id="downloadAllPlayersReportBtn" class="action-btn btn-gold" type="button">Download all players</button>
+          </div>
+          <div class="download-tile">
+            <h3>Best Ball CSV</h3>
+            <p>Downloads all unique 2-person teams and their best ball totals.</p>
+            <button id="downloadBestBallCsvBtn" class="action-btn btn-blue" type="button">Download CSV</button>
+          </div>
+        </div>
+        <div id="reportPreview" class="preview-card"></div>
+      </section>
+
+      <div class="two-col mt-5">
+        <div class="space-y-5">
+          <div class="card">
+            <h2 class="font-semibold text-lg text-green-700 mb-3">Global Bet Settings</h2>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Dollars per shot</label>
+                <input id="shotValue" type="number" min="0" step="1" value="3" class="w-full rounded-xl px-3 py-2 border border-gray-300 bg-white" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Max shots</label>
+                <input id="maxShots" type="number" min="0" step="1" value="7" class="w-full rounded-xl px-3 py-2 border border-gray-300 bg-white" />
+              </div>
+            </div>
+            <div class="small-note mt-3">
+              Current max payout: <span id="maxPayout" class="font-semibold text-green-700">$21</span>
+            </div>
+          </div>
+
+          <div class="card section-anchor" id="section-pairings">
+            <h2 class="font-semibold text-lg text-green-700 mb-3">Player Pairings</h2>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Choose player</label>
+            <select id="selectedPlayer" class="w-full rounded-xl px-3 py-2 border border-gray-300 bg-white"></select>
+            <div id="selectedPlayerNote" class="mt-4 small-note"></div>
+            <div id="pairingsBox" class="mt-4 pair-list"></div>
+          </div>
+
+          <div class="card">
+            <h2 class="font-semibold text-lg text-green-700 mb-3">Abbreviations</h2>
+            <div class="small-note mb-3">Edit these once for your group. Example: zd = Zack Deal and bd = Brad Deal.</div>
+            <div id="abbrPills" class="mb-3"></div>
+            <textarea id="abbrText" rows="10" class="w-full rounded-xl px-3 py-2 border border-gray-300 bg-white mono text-sm"></textarea>
+            <div class="flex gap-2 mt-3 flex-wrap">
+              <button id="saveAbbrBtn" class="action-btn btn-blue">Save abbreviations</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-5">
+          <div class="card section-anchor" id="section-bets">
+            <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+              <h2 class="font-semibold text-lg text-green-700">Bet Entry</h2>
+              <div class="small-note">Saved bets stay pending until all 4 golfers have score data</div>
+            </div>
+
+            <div class="bet-grid">
+              <div class="team-box">
+                <div class="team-title">Team 1</div>
+                <input id="team1Input" list="playerSuggestions" type="text" placeholder="Example: zd bd" class="w-full rounded-xl px-3 py-3 border border-gray-300 bg-white mono text-base" />
+                <div class="flex gap-2 mt-3 flex-wrap">
+                  <button id="copyPrevT1ToT1" class="action-btn btn-gray">Copy Team 1 from previous</button>
+                  <button id="copyPrevT2ToT1" class="action-btn btn-gray">Copy Team 2 from previous</button>
+                </div>
+              </div>
+
+              <div class="team-box">
+                <div class="team-title">Team 2</div>
+                <input id="team2Input" list="playerSuggestions" type="text" placeholder="Example: cl dw" class="w-full rounded-xl px-3 py-3 border border-gray-300 bg-white mono text-base" />
+                <div class="flex gap-2 mt-3 flex-wrap">
+                  <button id="copyPrevT1ToT2" class="action-btn btn-gray">Copy Team 1 from previous</button>
+                  <button id="copyPrevT2ToT2" class="action-btn btn-gray">Copy Team 2 from previous</button>
+                </div>
+              </div>
+            </div>
+
+            <datalist id="playerSuggestions"></datalist>
+
+            <div class="flex gap-2 mt-4 flex-wrap">
+              <button id="saveBetBtn" class="action-btn btn-green">Save this bet</button>
+              <button id="saveKeepT1Btn" class="action-btn btn-purple">Save and keep Team 1</button>
+              <button id="cancelEditBtn" class="action-btn btn-gray" style="display:none">Cancel edit</button>
+              <button id="clearEntryBtn" class="action-btn btn-red">Clear</button>
+            </div>
+
+            <div id="currentBetBox"></div>
+          </div>
+
+          <div class="card section-anchor" id="section-saved">
+            <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+              <h2 class="font-semibold text-lg text-green-700">Saved Bets</h2>
+              <div class="flex gap-2 flex-wrap">
+                <button id="exportBtn" class="action-btn btn-blue">Export saved bet sheet</button>
+                <button id="clearSavedBtn" class="action-btn btn-red">Clear saved bets</button>
+              </div>
+            </div>
+            <div id="savedBetsBox"></div>
+          </div>
         </div>
       </div>
     </div>
+  </main>
 
-    <div class="divider"></div>
+  <script>
+    const STORAGE_KEY = "best_ball_bet_sheet_reports_v2";
 
-    <div class="topline">
-      <span>Wheel Bet (optional)</span>
-      <span class="tag">Anchor team vs every 2-man combo</span>
-    </div>
-
-    <div class="grid2">
-      <div class="card" style="margin:0; padding:12px;">
-        <div class="topline"><span>Anchor Team (usually 2)</span><span class="tag">Best ball</span></div>
-        <div id="anchorTeamUI"></div>
-      </div>
-      <div class="card" style="margin:0; padding:12px;">
-        <div class="topline"><span>Include / Exclude players</span><span class="tag">OUT removes from combos</span></div>
-        <div id="wheelPoolUI"></div>
-      </div>
-    </div>
-
-    <div class="btnRow" style="margin-top:10px;">
-      <button class="btn btnWarn btnFull" id="runWheelBtn" type="button">Run Wheel (generate matchups)</button>
-    </div>
-
-    <div class="mini" id="wheelHint">
-      Wheel creates rows where your anchor team plays every 2-man combo from the remaining included players.
-    </div>
-  </div>
-
-  <div class="card" id="entryCard" style="display:none;">
-    <div class="topline">
-      <span>Enter Matchup</span>
-      <span class="tag" id="entryModeTag">New row</span>
-    </div>
-
-    <div class="grid2">
-      <div>
-        <label>Left Team (1–3 players)</label>
-        <div id="teamAUI"></div>
-      </div>
-      <div>
-        <label>Right Team (1–3 players)</label>
-        <div id="teamBUI"></div>
-      </div>
-    </div>
-
-    <div class="btnRow" style="margin-top:10px;">
-      <button class="btn btnPrimary" id="saveRowBtn" type="button">Save matchup</button>
-      <button class="btn btnGhost" id="cancelEntryBtn" type="button">Cancel</button>
-    </div>
-
-    <div class="mini" id="entryHelp">
-      Tip: type a name and tap it. After adding a name, you can immediately search the next name.
-      No side scrolling. Names cannot be duplicated inside the same matchup.
-    </div>
-  </div>
-
-  <div class="card" id="rowsCard">
-    <div class="topline">
-      <span>Matchups</span>
-      <span class="tag" id="rowsCountTag">0 rows</span>
-    </div>
-
-    <div id="rowsList"></div>
-  </div>
-
-  <div class="card" id="totalsCard">
-    <div class="topline">
-      <span>Net Totals (everyone)</span>
-      <span class="tag">$ shown is net</span>
-    </div>
-    <div id="totalsTable"></div>
-    <div class="mono mini" id="settlementText" style="margin-top:10px;"></div>
-  </div>
-
-</div>
-<div class="hubbar">
-  <div class="hubbarRow">
-    <div class="hubbarTitle" id="hubToolTitle">Best Ball Bet Sheet</div>
-    <div class="hubBtns">
-      <button class="hubBtn hubBtnGhost" type="button" id="hubBackBtn">← Back to Hub</button>
-      <button class="hubBtn hubBtnGhost" type="button" id="hubResetThisBtn">Reset This Tool</button>
-      <button class="hubBtn hubBtnDanger" type="button" id="hubResetAllBtn">Reset Everything</button>
-    </div>
-  </div>
-</div>
-
-<script>
-(() => {
-  // ====== CONFIG ======
-  window.TOOL_NAME = "Bet Sheet";
-  window.TOOL_STORAGE_KEYS = ["bb_betsheet_v1"];   // reset this tool
-  window.HUB_INDEX = "index.html";                // back to hub
-
-  const LS_KEY = "bb_betsheet_v1";
-  const $ = (id) => document.getElementById(id);
-
-  // ====== STATE ======
-  let players = [];          // [{name, strokes[18], front, back, total}]
-  let playerNames = [];      // [string]
-  let rows = [];             // [{id, teamA:[names], teamB:[names]}] (collapsed always; edit reopens)
-  let lastRow = null;        // {teamA, teamB}
-  let editingRowId = null;   // id if editing
-  let wheelOut = new Set();  // names excluded from wheel
-  let anchorTeam = [];       // names (1-3 allowed, but wheel assumes 2 as typical)
-
-  // ====== HELPERS ======
-  const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  const norm = (s) => (s || "").toString().trim().toLowerCase();
-
-  function loadSaved(){
-    try{
-      const raw = localStorage.getItem(LS_KEY);
-      if(!raw) return null;
-      return JSON.parse(raw);
-    }catch(e){ return null; }
-  }
-  function save(){
-    const payload = {
-      players,                // keep parsed players so you do not need re-upload
-      rows,
-      lastRow,
-      wheelOut: [...wheelOut],
-      anchorTeam,
-      settings: getSettings(),
-      savedAt: new Date().toISOString()
+    const state = {
+      names: [],
+      scoredPlayers: [],
+      selectedPlayer: "",
+      abbrMap: {},
+      shotValue: 3,
+      maxShots: 7,
+      savedBets: [],
+      previousTeam1: "",
+      previousTeam2: "",
+      editingBetId: null
     };
-    localStorage.setItem(LS_KEY, JSON.stringify(payload));
-  }
-  function restore(saved){
-    players = saved.players || [];
-    playerNames = (players || []).map(p => p.name).sort((a,b)=>a.localeCompare(b));
-    rows = saved.rows || [];
-    lastRow = saved.lastRow || null;
-    wheelOut = new Set(saved.wheelOut || []);
-    anchorTeam = saved.anchorTeam || [];
-    if(saved.settings){
-      $("perStroke").value = saved.settings.perStroke;
-      $("maxPerPerson").value = saved.settings.maxPerPerson;
-      $("holesCounted").value = saved.settings.holesCounted;
-    }
-  }
 
-  function getSettings(){
-    const perStroke = clamp(parseInt($("perStroke").value || "5", 10) || 5, 1, 9999);
-    const maxPerPerson = clamp(parseInt($("maxPerPerson").value || "25", 10) || 25, 1, 9999);
-    const holesCounted = $("holesCounted").value || "18"; // 18 | 9 | 9b
-    return { perStroke, maxPerPerson, holesCounted };
-  }
+    const $ = (id) => document.getElementById(id);
+    const normalizeSpace = (s) => (s || "").replace(/\s+/g, " ").trim();
+    const cleanKey = (s) => normalizeSpace(s).toLowerCase();
+    const toInt = (v) => /^-?\d+$/.test((v || "").trim()) ? parseInt(v, 10) : null;
 
-  // ====== CSV PARSER (Squabbit-style) ======
-  const splitCSVLine = (line) => {
-    const out = [];
-    let cur = "";
-    let inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') {
-        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
-        else inQ = !inQ;
-      } else if (c === ',' && !inQ) {
-        out.push(cur);
-        cur = "";
-      } else {
-        cur += c;
+    const splitCSVLine = (line) => {
+      const out = [];
+      let cur = "";
+      let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') {
+          if (inQ && line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQ = !inQ;
+          }
+        } else if (c === "," && !inQ) {
+          out.push(cur);
+          cur = "";
+        } else {
+          cur += c;
+        }
       }
-    }
-    out.push(cur);
-    return out.map(s => (s || "").trim());
-  };
-  const parseCSVRows = (text) => text.split(/\r?\n/).map(splitCSVLine);
-  const toInt = (v) => {
-    const s = (v ?? "").toString().trim();
-    if (!/^\d+$/.test(s)) return null;
-    const n = parseInt(s, 10);
-    return Number.isFinite(n) ? n : null;
-  };
-  const titleCase = (n) => n.split(/\s+/).map(w => w ? (w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()) : "").join(" ").trim();
-  const buildHoleIndex = (row) => {
-    const idx = {};
-    row.forEach((c, i) => {
-      const s = (c || "").toLowerCase().trim();
-      for (let h = 1; h <= 18; h++) {
-        if (s === `hole ${h}` || s === `${h}` || s === `hole${h}`) idx[h] = i;
-      }
-    });
-    return Object.keys(idx).length ? idx : null;
-  };
-  const isPlayerRow = (r) => (r[1] || "").toLowerCase().includes("tee") && (r[0] || "").trim();
-
-  function parsePlayersFromCSV(txt){
-    const rows = parseCSVRows(txt);
-    let holeIdx = null;
-    const playersMap = new Map();
-
-    for (const row of rows) {
-      if (row.some(c => /hole\s*1/i.test(c || ""))) {
-        holeIdx = buildHoleIndex(row);
-        continue;
-      }
-      if (!holeIdx) continue;
-
-      const lowerJoined = row.map(c => (c || "").toLowerCase()).join(" ");
-      if (
-        lowerJoined.includes("individual gross skins") ||
-        lowerJoined.includes("strokeplay") ||
-        lowerJoined.includes("best ball") ||
-        lowerJoined.includes("par") ||
-        lowerJoined.startsWith("s.i.")
-      ) continue;
-
-      if (!isPlayerRow(row)) continue;
-
-      const rawName = (row[0] || "").trim();
-      if (!rawName) continue;
-
-      const name = titleCase(rawName);
-      const strokes = [];
-      for (let h = 1; h <= 18; h++) {
-        const col = holeIdx[h];
-        const val = col != null ? toInt(row[col]) : null;
-        if (val == null) { strokes.length = 0; break; }
-        strokes.push(val);
-      }
-
-      if (strokes.length === 18) {
-        const front = strokes.slice(0,9).reduce((a,b)=>a+b,0);
-        const back  = strokes.slice(9,18).reduce((a,b)=>a+b,0);
-        const total = front + back;
-        playersMap.set(name, { name, strokes, front, back, total });
-      }
-    }
-    return [...playersMap.values()];
-  }
-
-  function findPlayerObj(name){
-    const n = norm(name);
-    return players.find(p => norm(p.name) === n) || null;
-  }
-
-  // Team best ball score:
-  // holesCounted:
-  // - "18": all
-  // - "9": front 9
-  // - "9b": back 9
-  function teamBestBallScore(teamNames, holesCounted){
-    const teamObjs = teamNames.map(findPlayerObj).filter(Boolean);
-    if(teamObjs.length !== teamNames.length) return null;
-
-    let start = 0, end = 18;
-    if(holesCounted === "9"){ start = 0; end = 9; }
-    if(holesCounted === "9b"){ start = 9; end = 18; }
-
-    let sum = 0;
-    for(let i=start; i<end; i++){
-      let best = Infinity;
-      for(const p of teamObjs){
-        best = Math.min(best, p.strokes[i]);
-      }
-      if(!Number.isFinite(best)) return null;
-      sum += best;
-    }
-    return sum;
-  }
-
-  // payout:
-  // diff strokes * perStroke, capped per person
-  // losers each pay same
-  // winners split total equally (balanced for 2v1, 3v2, etc)
-  function calcMatchup(teamA, teamB){
-    const { perStroke, maxPerPerson, holesCounted } = getSettings();
-    const scoreA = teamBestBallScore(teamA, holesCounted);
-    const scoreB = teamBestBallScore(teamB, holesCounted);
-
-    if(scoreA == null || scoreB == null) {
-      return { ok:false, msg:"Missing player scores (upload CSV, and use names from the CSV list)." };
-    }
-
-    const aSize = teamA.length;
-    const bSize = teamB.length;
-
-    // lower score wins
-    let winner = null;
-    let loser = null;
-    let winScore = null;
-    let loseScore = null;
-
-    if(scoreA < scoreB){ winner="A"; loser="B"; winScore=scoreA; loseScore=scoreB; }
-    else if(scoreB < scoreA){ winner="B"; loser="A"; winScore=scoreB; loseScore=scoreA; }
-    else { winner="TIE"; }
-
-    const diff = Math.abs(scoreA - scoreB);
-
-    if(winner === "TIE"){
-      return {
-        ok:true,
-        winner,
-        diff:0,
-        scoreA, scoreB,
-        perLoser:0,
-        perWinner:0,
-        total:0
-      };
-    }
-
-    const loserCount = (loser === "A") ? aSize : bSize;
-    const winnerCount = (winner === "A") ? aSize : bSize;
-
-    const raw = diff * perStroke;
-    const perLoser = Math.min(raw, maxPerPerson);
-    const total = perLoser * loserCount;
-    const perWinner = winnerCount ? (total / winnerCount) : 0;
-
-    return {
-      ok:true,
-      winner,
-      diff,
-      scoreA, scoreB,
-      perLoser,
-      perWinner,
-      total
+      out.push(cur);
+      return out.map(s => (s || "").trim());
     };
-  }
 
-  function fmtMoney(n){
-    if(!Number.isFinite(n)) return "$0";
-    const sign = n > 0 ? "+" : (n < 0 ? "−" : "");
-    const abs = Math.abs(n);
-    // show .50 etc if uneven split
-    const txt = abs % 1 === 0 ? abs.toFixed(0) : abs.toFixed(2);
-    return `${sign}$${txt}`;
-  }
+    const titleCase = (n) =>
+      normalizeSpace(n)
+        .split(" ")
+        .map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : "")
+        .join(" ");
 
-  // ====== AUTOCOMPLETE TEAM INPUT (chips) ======
-  function buildTeamPicker(mountId, options){
-    // options: { title, onChange(teamNames), maxPlayers, disallowSetProvider: ()=>Set(names) }
-    const mount = document.getElementById(mountId);
-    mount.innerHTML = "";
+    function parseNamesOnlyCSV(txt) {
+      const rows = txt.split(/\r?\n/).map(splitCSVLine);
+      const names = [];
+      const playersRow = rows.findIndex(row => normalizeSpace(row[0] || "").toLowerCase() === "players");
+      if (playersRow < 0) return [];
 
-    const box = document.createElement("div");
-    box.className = "teamBox";
+      const headerRow = rows[playersRow + 1] || [];
+      const nameCol = headerRow.findIndex(c => normalizeSpace(c).toLowerCase() === "name");
+      if (nameCol < 0) return [];
 
-    const chips = document.createElement("div");
-    chips.className = "chips";
+      for (let i = playersRow + 2; i < rows.length; i++) {
+        const row = rows[i];
+        const first = normalizeSpace(row[0] || "").toLowerCase();
+        if (!row.length || row.every(c => !normalizeSpace(c))) break;
+        if (["skins", "strokeplay", "twos club", "best ball", "games"].includes(first)) break;
 
-    const acWrap = document.createElement("div");
-    acWrap.className = "acWrap";
+        const nm = titleCase(row[nameCol] || "");
+        if (nm && nm.toLowerCase() !== "name" && !/^team\s*\d+/i.test(nm)) names.push(nm);
+      }
 
-    const input = document.createElement("input");
-    input.type = "text";
-    input.placeholder = players.length ? "Start typing a name…" : "Upload CSV first…";
-    input.disabled = players.length === 0;
-
-    const list = document.createElement("div");
-    list.className = "acList";
-    list.style.display = "none";
-
-    let team = [];
-
-    function emit(){
-      options.onChange([...team]);
+      return [...new Set(names)].sort((a, b) => a.localeCompare(b));
     }
 
-    function renderChips(){
-      chips.innerHTML = "";
-      team.forEach(n => {
-        const c = document.createElement("span");
-        c.className = "chip";
-        c.textContent = n;
-
-        const x = document.createElement("button");
-        x.type = "button";
-        x.textContent = "x";
-        x.onclick = () => {
-          team = team.filter(v => v !== n);
-          renderChips();
-          emit();
-        };
-
-        c.appendChild(x);
-        chips.appendChild(c);
+    function buildHoleIndex(row) {
+      const idx = {};
+      row.forEach((c, i) => {
+        const s = normalizeSpace(c).toLowerCase();
+        for (let h = 1; h <= 18; h++) {
+          if (s === `hole ${h}` || s === `${h}` || s === `hole${h}`) idx[h] = i;
+        }
       });
+      return Object.keys(idx).length ? idx : null;
     }
 
-    function openList(items){
-      list.innerHTML = "";
-      if(!items.length){
-        const note = document.createElement("div");
-        note.className = "acNote";
-        note.textContent = "No matches.";
-        list.appendChild(note);
-      } else {
-        items.forEach(name => {
-          const it = document.createElement("div");
-          it.className = "acItem";
-          it.textContent = name;
-          it.onclick = () => addName(name);
-          list.appendChild(it);
-        });
-      }
-      list.style.display = "block";
-    }
+    function parseScoresCSV(txt) {
+      const rows = txt.split(/\r?\n/).map(splitCSVLine);
+      const scoredPlayers = new Map();
+      let headerIndex = -1;
+      let holeIdx = null;
 
-    function closeList(){
-      list.style.display = "none";
-    }
-
-    function addName(name){
-      if(team.includes(name)) return;
-      if(team.length >= (options.maxPlayers || 3)) return;
-
-      const dis = options.disallowSetProvider ? options.disallowSetProvider() : new Set();
-      if(dis.has(name)){
-        alert("That name is already used on the other team for this matchup.");
-        return;
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.some(c => /hole\s*1/i.test(c || ""))) {
+          headerIndex = i;
+          holeIdx = buildHoleIndex(row);
+          break;
+        }
       }
 
-      team.push(name);
-      renderChips();
-      emit();
+      if (headerIndex < 0 || !holeIdx) return [];
 
-      input.value = "";      // "auto comma" behavior: you just keep adding
-      closeList();
-      input.focus();
+      for (let i = headerIndex + 1; i < rows.length; i++) {
+        const row = rows[i];
+        const name = titleCase(row[0] || "");
+        const tee = normalizeSpace(row[1] || "").toLowerCase();
+
+        if (!name) continue;
+        if (!tee.includes("tee")) continue;
+        if (name.toLowerCase() === "par" || name.toLowerCase() === "s.i.") continue;
+
+        const strokes = [];
+        for (let h = 1; h <= 18; h++) {
+          const val = toInt(row[holeIdx[h]]);
+          if (val == null) {
+            strokes.length = 0;
+            break;
+          }
+          strokes.push(val);
+        }
+
+        if (strokes.length === 18) {
+          scoredPlayers.set(name, { name, strokes });
+        }
+      }
+
+      return [...scoredPlayers.values()].sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    function filterItems(q){
-      const query = norm(q);
-      const dis = options.disallowSetProvider ? options.disallowSetProvider() : new Set();
-      const taken = new Set(team);
+    const bestBall = (a, b) => a.reduce((t, _, i) => t + Math.min(a[i], b[i]), 0);
 
-      return playerNames
-        .filter(n => !taken.has(n))
-        .filter(n => !dis.has(n))
-        .filter(n => !query || norm(n).includes(query))
-        .slice(0, 12);
-    }
-
-    input.addEventListener("input", () => {
-      const items = filterItems(input.value);
-      openList(items);
-    });
-
-    input.addEventListener("focus", () => {
-      const items = filterItems(input.value);
-      openList(items);
-    });
-
-    input.addEventListener("blur", () => {
-      setTimeout(closeList, 120);
-    });
-
-    acWrap.appendChild(input);
-    acWrap.appendChild(list);
-
-    box.appendChild(chips);
-    box.appendChild(acWrap);
-    mount.appendChild(box);
-
-    return {
-      setTeam(names){
-        team = [...names].filter(Boolean).slice(0, options.maxPlayers || 3);
-        renderChips();
-        emit();
-      },
-      getTeam(){ return [...team]; },
-      focus(){ input.focus(); }
+    const buildTeamsFromScoredPlayers = (players) => {
+      const out = [];
+      for (let i = 0; i < players.length; i++) {
+        for (let j = i + 1; j < players.length; j++) {
+          const A = players[i];
+          const B = players[j];
+          const parts = [A.name, B.name].sort((a, b) => a.localeCompare(b));
+          out.push({
+            name: `${parts[0]} & ${parts[1]}`,
+            total: bestBall(A.strokes, B.strokes),
+            players: parts,
+            playerA: parts[0],
+            playerB: parts[1]
+          });
+        }
+      }
+      return out.sort((a, b) => a.total - b.total || a.name.localeCompare(b.name));
     };
-  }
 
-  // ====== RENDER: ROWS + TOTALS ======
-  function computeNetTotals(){
-    // returns {name: dollarsNet}
-    const net = {};
-    playerNames.forEach(n => net[n] = 0);
+    const makeDefaultAbbreviations = (names) => {
+      const used = new Set();
+      const dict = {};
+      const clean = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
-    for(const r of rows){
-      const res = calcMatchup(r.teamA, r.teamB);
-      if(!res.ok) continue;
-      if(res.winner === "TIE") continue;
+      names.forEach(name => {
+        const parts = name.split(" ").filter(Boolean);
+        let abbr = "";
+        if (parts.length >= 2) abbr = clean(parts[0][0] + parts[parts.length - 1][0]);
+        else if (parts.length === 1) abbr = clean(parts[0].slice(0, 2));
+        if (!abbr) return;
 
-      const winTeam = (res.winner === "A") ? r.teamA : r.teamB;
-      const loseTeam = (res.winner === "A") ? r.teamB : r.teamA;
+        let finalAbbr = abbr;
+        let n = 2;
+        while (used.has(finalAbbr)) {
+          finalAbbr = clean(abbr + n);
+          n++;
+        }
+        used.add(finalAbbr);
+        dict[finalAbbr] = name;
+      });
 
-      // losers each lose perLoser
-      loseTeam.forEach(n => { if(net[n] != null) net[n] -= res.perLoser; });
-      // winners each win perWinner (balanced)
-      winTeam.forEach(n => { if(net[n] != null) net[n] += res.perWinner; });
-    }
-    return net;
-  }
+      return dict;
+    };
 
-  function renderTotals(){
-    if(!playerNames.length){
-      $("totalsTable").innerHTML = `<div class="mini">Upload a Squabbit CSV to populate players and totals.</div>`;
-      $("settlementText").textContent = "";
-      return;
-    }
+    const mergeAbbreviations = (oldMap, defaultMap) => {
+      const merged = { ...defaultMap };
+      Object.entries(oldMap || {}).forEach(([abbr, full]) => {
+        if (full) merged[abbr] = full;
+      });
+      return merged;
+    };
 
-    const net = computeNetTotals();
-    const rowsSorted = Object.keys(net).map(n => ({ name:n, amt: net[n] }))
-      .sort((a,b)=> b.amt - a.amt || a.name.localeCompare(b.name));
+    const sortedNames = (arr) => [...(arr || [])].sort((a, b) => a.localeCompare(b));
 
-    let html = `<div class="rowCard">
-      <div class="rowTitle">Net totals</div>
-      <div class="rowSub">Positive means they are owed money. Negative means they owe money.</div>
-      <div class="divider"></div>
+    const canonicalizeBetEntry = (entry) => {
+      const t1 = sortedNames(entry.team1Names);
+      const t2 = sortedNames(entry.team2Names);
+      const teams = [
+        { names: t1, label: t1.join(" & ") },
+        { names: t2, label: t2.join(" & ") }
+      ].sort((a, b) => a.label.localeCompare(b.label));
+
+      return {
+        ...entry,
+        team1Names: teams[0].names,
+        team2Names: teams[1].names
+      };
+    };
+
+    const betKeyFromEntry = (entry) => {
+      const c = canonicalizeBetEntry(entry);
+      return `${c.team1Names.join("|")}__VS__${c.team2Names.join("|")}`;
+    };
+
+    const dedupeSavedBets = (bets) => {
+      const seen = new Set();
+      const out = [];
+      (bets || []).forEach((entry) => {
+        const c = canonicalizeBetEntry(entry);
+        const key = betKeyFromEntry(c);
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push(c);
+        }
+      });
+      return out;
+    };
+
+    const preferredTokenForName = (name) => {
+      const found = Object.entries(state.abbrMap || {}).find(([, full]) => full === name);
+      if (found) return found[0];
+      return name;
+    };
+
+    const saveState = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+    const loadState = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        Object.assign(state, JSON.parse(raw) || {});
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    const namesSorted = () => [...(state.names || [])].sort((a, b) => a.localeCompare(b));
+
+    const scoredByName = () => {
+      const map = {};
+      (state.scoredPlayers || []).forEach(p => { map[p.name] = p; });
+      return map;
+    };
+
+    const teamsByPlayer = () => {
+      const builtTeams = buildTeamsFromScoredPlayers(state.scoredPlayers || []);
+      const map = {};
+      for (const t of builtTeams) {
+        for (const player of t.players) {
+          (map[player] ??= []).push(t);
+        }
+      }
+      Object.keys(map).forEach(player => {
+        map[player] = map[player]
+          .map(team => {
+            const other = team.players.find(p => p !== player) || "";
+            return { ...team, partner: other, name: `${player} & ${other}` };
+          })
+          .sort((a, b) => a.total - b.total || a.partner.localeCompare(b.partner));
+      });
+      return map;
+    };
+
+    const escapeHTML = (value) => String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+    const fileSafe = (value) => String(value || "report")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "report";
+
+    const downloadTextFile = (content, filename, type) => {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+
+    const reportStyles = () => `
+      body{margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8fafc;color:#0f172a;}
+      .wrap{max-width:1050px;margin:0 auto;padding:28px 18px 48px;}
+      .hero{background:linear-gradient(135deg,#052e16,#16a34a);color:#fff;border-radius:28px;padding:28px;box-shadow:0 20px 45px rgba(15,23,42,.18);position:relative;overflow:hidden;}
+      .hero:after{content:"";position:absolute;right:-60px;bottom:-80px;width:240px;height:240px;border-radius:999px;background:rgba(255,255,255,.12);}
+      .hero>*{position:relative;z-index:1}.eyebrow{font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-size:12px;color:#bbf7d0}.hero h1{font-size:42px;line-height:1;margin:8px 0 8px;letter-spacing:-.04em}.hero p{margin:0;color:rgba(255,255,255,.86)}
+      .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.stat{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:14px;box-shadow:0 8px 20px rgba(15,23,42,.06)}.label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;font-weight:900}.value{font-size:28px;color:#166534;font-weight:950;margin-top:5px}
+      .section{background:#fff;border:1px solid #e2e8f0;border-radius:22px;padding:18px;margin-top:16px;box-shadow:0 8px 20px rgba(15,23,42,.06)}.section h2{margin:0 0 12px;color:#14532d;letter-spacing:-.02em}
+      table{width:100%;border-collapse:collapse;border-radius:16px;overflow:hidden}th{background:#ecfdf5;color:#14532d;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding:11px;border-bottom:1px solid #bbf7d0}td{padding:11px;border-bottom:1px solid #e2e8f0;font-size:14px}tr:nth-child(even) td{background:#f8fafc}.rank{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;background:#dcfce7;color:#166534;font-weight:950}.score{font-size:18px;font-weight:950;color:#166534}.footer{margin-top:18px;color:#64748b;font-size:12px;text-align:center}.page-break{page-break-before:always}
+      @media print{body{background:#fff}.wrap{padding:0}.hero,.section,.stat{box-shadow:none}.section{break-inside:avoid}.no-print{display:none}}
+      @media(max-width:700px){.stats{grid-template-columns:1fr}.hero h1{font-size:32px}td,th{font-size:12px;padding:8px}}
     `;
 
-    rowsSorted.forEach(r => {
-      const cls = r.amt >= 0 ? "good" : "bad";
-      html += `<div style="display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.08);">
-        <div style="font-weight:950;">${r.name}</div>
-        <div class="${cls}" style="font-weight:950; font-size:16px;">${fmtMoney(r.amt)}</div>
-      </div>`;
-    });
-
-    html += `</div>`;
-    $("totalsTable").innerHTML = html;
-
-    // settlement suggestions (simple greedy)
-    const creditors = rowsSorted.filter(r => r.amt > 0).map(r => ({...r}));
-    const debtors = rowsSorted.filter(r => r.amt < 0).map(r => ({...r, amt: -r.amt}));
-
-    let i=0, j=0;
-    const lines = [];
-    while(i<debtors.length && j<creditors.length){
-      const pay = Math.min(debtors[i].amt, creditors[j].amt);
-      if(pay > 0.009){
-        const txt = (pay % 1 === 0) ? pay.toFixed(0) : pay.toFixed(2);
-        lines.push(`${debtors[i].name} pays ${creditors[j].name}: $${txt}`);
-        debtors[i].amt -= pay;
-        creditors[j].amt -= pay;
-      }
-      if(debtors[i].amt <= 0.009) i++;
-      if(creditors[j].amt <= 0.009) j++;
-    }
-    $("settlementText").textContent = "Settlement:\n" + (lines.length ? lines.join("\n") : "All square.");
-  }
-
-  function rowSummaryText(r){
-    const res = calcMatchup(r.teamA, r.teamB);
-    if(!res.ok) return { title: `${r.teamA.join(", ")} vs ${r.teamB.join(", ")}`, sub: res.msg, payout: "" };
-
-    const left = r.teamA.join(", ");
-    const right = r.teamB.join(", ");
-    const { holesCounted, perStroke, maxPerPerson } = getSettings();
-
-    const holesLabel = (holesCounted === "18") ? "18" : (holesCounted === "9" ? "Front 9" : "Back 9");
-    const scoreLine = `Scores (${holesLabel}): Left ${res.scoreA} | Right ${res.scoreB}`;
-
-    if(res.winner === "TIE"){
-      return {
-        title: `${left} vs ${right}`,
-        sub: `${scoreLine} • Tie`,
-        payout: `Push: $0`
-      };
-    }
-
-    const winSide = (res.winner === "A") ? "Left" : "Right";
-    const loseSide = (res.winner === "A") ? "Right" : "Left";
-
-    const perLoserTxt = (res.perLoser % 1 === 0) ? res.perLoser.toFixed(0) : res.perLoser.toFixed(2);
-    const perWinnerTxt = (res.perWinner % 1 === 0) ? res.perWinner.toFixed(0) : res.perWinner.toFixed(2);
-    const totalTxt = (res.total % 1 === 0) ? res.total.toFixed(0) : res.total.toFixed(2);
-
-    const payout =
-      `Winner: ${winSide} • By ${res.diff} stroke(s)\n` +
-      `Each losing player pays: $${perLoserTxt} (cap $${maxPerPerson})\n` +
-      `Each winning player receives: $${perWinnerTxt}\n` +
-      `Total moved: $${totalTxt} • Rate: $${perStroke}/stroke`;
-
-    return {
-      title: `${left} vs ${right}`,
-      sub: `${scoreLine} • Winner: ${winSide} by ${res.diff}`,
-      payout
+    const selectedPlayerReportHTML = (playerName) => {
+      const map = teamsByPlayer();
+      const rows = map[playerName] || [];
+      const best = rows[0];
+      const generated = new Date().toLocaleString();
+      return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHTML(playerName)} Best Ball Report</title><style>${reportStyles()}</style></head><body><div class="wrap">
+        <div class="hero"><div class="eyebrow">Best Ball Player Report</div><h1>${escapeHTML(playerName)}</h1><p>Every best ball score for ${escapeHTML(playerName)} paired with every other scored player.</p></div>
+        <div class="stats"><div class="stat"><div class="label">Partners</div><div class="value">${rows.length}</div></div><div class="stat"><div class="label">Best Score</div><div class="value">${best ? best.total : "-"}</div></div><div class="stat"><div class="label">Best Partner</div><div class="value" style="font-size:20px">${best ? escapeHTML(best.partner) : "-"}</div></div></div>
+        <div class="section"><h2>Pairings</h2><table><thead><tr><th>Rank</th><th>Partner</th><th>Team</th><th>Best Ball Total</th></tr></thead><tbody>${rows.map((r, idx) => `<tr><td><span class="rank">${idx + 1}</span></td><td>${escapeHTML(r.partner)}</td><td>${escapeHTML(r.name)}</td><td><span class="score">${r.total}</span></td></tr>`).join("")}</tbody></table></div>
+        <div class="footer">Generated ${escapeHTML(generated)} from Best Ball Bet Sheet</div>
+      </div></body></html>`;
     };
-  }
 
-  function renderRows(){
-    $("rowsCountTag").textContent = `${rows.length} row${rows.length === 1 ? "" : "s"}`;
-    const list = $("rowsList");
-    list.innerHTML = "";
+    const allPlayersReportHTML = () => {
+      const map = teamsByPlayer();
+      const playerNames = Object.keys(map).sort((a, b) => a.localeCompare(b));
+      const totalTeams = buildTeamsFromScoredPlayers(state.scoredPlayers || []).length;
+      const generated = new Date().toLocaleString();
+      const bestOverall = buildTeamsFromScoredPlayers(state.scoredPlayers || [])[0];
+      return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>All Players Best Ball Report</title><style>${reportStyles()}</style></head><body><div class="wrap">
+        <div class="hero"><div class="eyebrow">Full Best Ball Report</div><h1>All Player Pairings</h1><p>Every player paired with every other scored player, grouped by player and ranked by best ball score.</p></div>
+        <div class="stats"><div class="stat"><div class="label">Scored Players</div><div class="value">${playerNames.length}</div></div><div class="stat"><div class="label">Unique Teams</div><div class="value">${totalTeams}</div></div><div class="stat"><div class="label">Best Overall</div><div class="value" style="font-size:20px">${bestOverall ? `${escapeHTML(bestOverall.name)} (${bestOverall.total})` : "-"}</div></div></div>
+        ${playerNames.map((playerName, playerIndex) => {
+          const rows = map[playerName] || [];
+          const best = rows[0];
+          return `<div class="section ${playerIndex ? "page-break" : ""}"><h2>${escapeHTML(playerName)} ${best ? `<span style="font-size:14px;color:#64748b;font-weight:700">Best: ${best.total} with ${escapeHTML(best.partner)}</span>` : ""}</h2><table><thead><tr><th>Rank</th><th>Partner</th><th>Team</th><th>Best Ball Total</th></tr></thead><tbody>${rows.map((r, idx) => `<tr><td><span class="rank">${idx + 1}</span></td><td>${escapeHTML(r.partner)}</td><td>${escapeHTML(r.name)}</td><td><span class="score">${r.total}</span></td></tr>`).join("")}</tbody></table></div>`;
+        }).join("")}
+        <div class="footer">Generated ${escapeHTML(generated)} from Best Ball Bet Sheet</div>
+      </div></body></html>`;
+    };
 
-    if(!rows.length){
-      list.innerHTML = `<div class="mini">No matchups yet. Tap “Add next row”.</div>`;
-      renderTotals();
-      return;
-    }
+    const updateSuggestionList = () => {
+      const data = $("playerSuggestions");
+      const allNames = namesSorted();
+      const opts = [];
+      Object.entries(state.abbrMap || {}).sort((a, b) => a[0].localeCompare(b[0])).forEach(([abbr, full]) => {
+        opts.push(`<option value="${escapeHTML(abbr)}">${escapeHTML(full)}</option>`);
+      });
+      allNames.forEach(name => {
+        opts.push(`<option value="${escapeHTML(name)}"></option>`);
+      });
+      data.innerHTML = opts.join("");
+    };
 
-    rows.forEach((r, idx) => {
-      const box = document.createElement("div");
-      box.className = "rowCard";
+    const updateAbbrText = () => {
+      $("abbrText").value = Object.entries(state.abbrMap || {})
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([abbr, full]) => `${abbr} = ${full}`)
+        .join("\n");
 
-      const sum = rowSummaryText(r);
+      $("abbrPills").innerHTML = Object.entries(state.abbrMap || {})
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([abbr, full]) => `<span class="pill">${escapeHTML(abbr)} → ${escapeHTML(full)}</span>`)
+        .join("");
+    };
 
-      const top = document.createElement("div");
-      top.className = "rowTop";
+    const expandTeamInput = (text) => {
+      const parts = normalizeSpace(text).toLowerCase().split(/\s+/).filter(Boolean);
+      if (parts.length !== 2) return { error: "Each team must have exactly 2 players" };
 
-      const left = document.createElement("div");
-      left.style.flex = "1";
-      left.innerHTML = `
-        <div class="rowTitle">Row ${idx+1}: ${sum.title}</div>
-        <div class="rowSub">${sum.sub}</div>
+      const allNames = namesSorted();
+      const expandToken = (token) => {
+        if (state.abbrMap[token]) return state.abbrMap[token];
+        const exact = allNames.find(n => n.toLowerCase() === token);
+        if (exact) return exact;
+        const starts = allNames.filter(n => n.toLowerCase().startsWith(token));
+        if (starts.length === 1) return starts[0];
+        return null;
+      };
+
+      const namesOut = parts.map(expandToken);
+      if (namesOut.some(x => !x)) return { error: "One or more entries do not match a player" };
+      if (new Set(namesOut).size !== 2) return { error: "A team must have 2 different players" };
+      return { names: namesOut };
+    };
+
+    const evaluateBet = (team1Names, team2Names) => {
+      const all = [...team1Names, ...team2Names];
+      if (new Set(all).size !== 4) return { error: "Both teams together must have 4 different players" };
+
+      const scoreMap = scoredByName();
+      const missing = all.filter(name => !scoreMap[name]);
+
+      if (missing.length) return { pending: true, missing, team1Names, team2Names };
+
+      const team1Total = bestBall(scoreMap[team1Names[0]].strokes, scoreMap[team1Names[1]].strokes);
+      const team2Total = bestBall(scoreMap[team2Names[0]].strokes, scoreMap[team2Names[1]].strokes);
+
+      const rawDiff = team2Total - team1Total;
+      const winningShots = Math.abs(rawDiff);
+      const cappedShots = Math.min(winningShots, Number(state.maxShots) || 0);
+      const payout = cappedShots * (Number(state.shotValue) || 0);
+
+      let resultText = "Push";
+      if (rawDiff > 0) resultText = `${team1Names[0]} & ${team1Names[1]} won by ${winningShots}`;
+      if (rawDiff < 0) resultText = `${team2Names[0]} & ${team2Names[1]} won by ${winningShots}`;
+
+      return { pending:false, team1Names, team2Names, team1Total, team2Total, rawDiff, winningShots, cappedShots, payout, resultText };
+    };
+
+    const currentBet = () => {
+      const t1 = $("team1Input").value;
+      const t2 = $("team2Input").value;
+      if (!t1.trim() || !t2.trim()) return null;
+
+      const team1 = expandTeamInput(t1);
+      if (team1.error) return { error: `Team 1: ${team1.error}` };
+
+      const team2 = expandTeamInput(t2);
+      if (team2.error) return { error: `Team 2: ${team2.error}` };
+
+      return evaluateBet(team1.names, team2.names);
+    };
+
+    const renderCurrentBet = () => {
+      const box = $("currentBetBox");
+      const bet = currentBet();
+
+      if (!bet) {
+        box.innerHTML = state.editingBetId != null
+          ? `<div class="edit-banner">Editing a saved bet. Change the teams and press Save this bet to update it.</div>`
+          : "";
+        return;
+      }
+
+      if (bet.error) {
+        box.innerHTML = `${state.editingBetId != null ? `<div class="edit-banner">Editing a saved bet. Change the teams and press Save this bet to update it.</div>` : ""}<div class="result-box"><div class="text-red-600 font-semibold">${escapeHTML(bet.error)}</div></div>`;
+        return;
+      }
+
+      if (bet.pending) {
+        box.innerHTML = `
+          ${state.editingBetId != null ? `<div class="edit-banner">Editing a saved bet. Change the teams and press Save this bet to update it.</div>` : ""}
+          <div class="result-box">
+            <div class="result-row"><div>Team 1</div><div class="font-semibold">${escapeHTML(bet.team1Names[0])} & ${escapeHTML(bet.team1Names[1])}</div></div>
+            <div class="result-row"><div>Team 2</div><div class="font-semibold">${escapeHTML(bet.team2Names[0])} & ${escapeHTML(bet.team2Names[1])}</div></div>
+            <div class="result-row"><div>Status</div><div class="status-pending">Pending scores</div></div>
+            <div class="result-row"><div>Waiting on</div><div class="font-semibold">${escapeHTML(bet.missing.join(", "))}</div></div>
+          </div>
+        `;
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="result-box">
+          <div class="result-row"><div>Team 1 Best Ball</div><div class="font-semibold">${bet.team1Total}</div></div>
+          <div class="result-row"><div>Team 2 Best Ball</div><div class="font-semibold">${bet.team2Total}</div></div>
+          <div class="result-row"><div>Winner</div><div class="font-semibold">${escapeHTML(bet.resultText)}</div></div>
+          <div class="result-row"><div>Shots counted</div><div class="font-semibold">${bet.cappedShots}${bet.winningShots !== bet.cappedShots ? ` <span class="small-note">(capped from ${bet.winningShots})</span>` : ""}</div></div>
+          <div class="result-row"><div>Payout</div><div class="font-bold text-green-700">$${bet.payout}</div></div>
+        </div>
       `;
+    };
 
-      const right = document.createElement("div");
-      right.style.display = "flex";
-      right.style.gap = "8px";
-      right.style.flexWrap = "wrap";
-      right.style.justifyContent = "flex-end";
+    const renderSelectedPlayer = () => {
+      const select = $("selectedPlayer");
+      const note = $("selectedPlayerNote");
+      const box = $("pairingsBox");
 
-      const editBtn = document.createElement("button");
-      editBtn.className = "btn btnGhost";
-      editBtn.type = "button";
-      editBtn.textContent = "Edit";
-      editBtn.onclick = () => openEntryForEdit(r.id);
+      select.innerHTML = `<option value="">Select a player</option>` + namesSorted().map(name => `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`).join("");
+      select.value = state.selectedPlayer || "";
 
-      const dupBtn = document.createElement("button");
-      dupBtn.className = "btn btnGhost";
-      dupBtn.type = "button";
-      dupBtn.textContent = "Duplicate";
-      dupBtn.onclick = () => {
-        const copy = { id: uid(), teamA: [...r.teamA], teamB: [...r.teamB] };
-        rows.push(copy);
-        lastRow = { teamA: [...copy.teamA], teamB: [...copy.teamB] };
-        save();
-        renderAll();
-      };
+      if (!state.selectedPlayer) { note.textContent = ""; box.innerHTML = ""; return; }
 
-      const delBtn = document.createElement("button");
-      delBtn.className = "btn btnBad";
-      delBtn.type = "button";
-      delBtn.textContent = "Delete";
-      delBtn.onclick = () => {
-        const ok = confirm("Delete this row?");
-        if(!ok) return;
-        rows = rows.filter(x => x.id !== r.id);
-        save();
-        renderAll();
-      };
+      const scoreMap = scoredByName();
+      note.textContent = scoreMap[state.selectedPlayer] ? "Finished and scored. Ready to download this player's best ball report." : "Name loaded. Waiting on final scores.";
 
-      right.appendChild(editBtn);
-      right.appendChild(dupBtn);
-      right.appendChild(delBtn);
-
-      top.appendChild(left);
-      top.appendChild(right);
-
-      const payout = document.createElement("div");
-      payout.className = "payoutBig mono";
-      payout.textContent = sum.payout || "";
-
-      box.appendChild(top);
-      if(sum.payout) box.appendChild(payout);
-
-      list.appendChild(box);
-    });
-
-    renderTotals();
-  }
-
-  // ====== FIND PLAYER ======
-  function updateFindPlayer(){
-    const q = norm($("findPlayer").value);
-    if(!q){
-      $("findResult").textContent = " ";
-      return;
-    }
-    const matches = playerNames.filter(n => norm(n).includes(q));
-    if(!matches.length){
-      $("findResult").textContent = "No matching player in the loaded round.";
-      return;
-    }
-
-    const name = matches[0]; // first match
-    const net = computeNetTotals();
-    const amt = net[name] ?? 0;
-    const cls = amt >= 0 ? "good" : "bad";
-    $("findResult").innerHTML = `Found: <b>${name}</b> • Net: <span class="${cls}">${fmtMoney(amt)}</span>`;
-
-    // highlight rows containing that player
-    const cards = [...document.querySelectorAll("#rowsList .rowCard")];
-    cards.forEach((c, i) => {
-      const r = rows[i];
-      const has = r.teamA.includes(name) || r.teamB.includes(name);
-      c.style.outline = has ? "2px solid rgba(52,211,153,.45)" : "none";
-    });
-  }
-
-  // ====== ENTRY (ADD / EDIT) ======
-  let teamAPicker = null;
-  let teamBPicker = null;
-
-  function openEntry(newRow=true){
-    $("entryCard").style.display = "block";
-    $("entryModeTag").textContent = newRow ? "New row" : "Edit row";
-
-    let teamA = [];
-    let teamB = [];
-
-    teamAPicker = buildTeamPicker("teamAUI", {
-      maxPlayers: 3,
-      disallowSetProvider: () => new Set(teamB)
-      ,
-      onChange: (names) => { teamA = names; }
-    });
-
-    teamBPicker = buildTeamPicker("teamBUI", {
-      maxPlayers: 3,
-      disallowSetProvider: () => new Set(teamA),
-      onChange: (names) => { teamB = names; }
-    });
-
-    // if "copy last matchup" was pressed, lastRow will be set
-    if(lastRow && newRow){
-      teamAPicker.setTeam(lastRow.teamA || []);
-      teamBPicker.setTeam(lastRow.teamB || []);
-      teamA = teamAPicker.getTeam();
-      teamB = teamBPicker.getTeam();
-    }
-
-    // if editing
-    if(!newRow && editingRowId){
-      const r = rows.find(x => x.id === editingRowId);
-      if(r){
-        teamAPicker.setTeam(r.teamA);
-        teamBPicker.setTeam(r.teamB);
-        teamA = teamAPicker.getTeam();
-        teamB = teamBPicker.getTeam();
-      }
-    }
-
-    setTimeout(()=>teamAPicker.focus(), 50);
-
-    $("saveRowBtn").onclick = () => {
-      if(players.length === 0){
-        alert("Upload a Squabbit CSV first.");
-        return;
-      }
-      if(teamA.length < 1 || teamB.length < 1){
-        alert("Each side needs at least 1 player.");
-        return;
-      }
-      if(teamA.length > 3 || teamB.length > 3){
-        alert("Max 3 players per side.");
+      const playerTeams = (teamsByPlayer()[state.selectedPlayer] || []);
+      if (!playerTeams.length) {
+        box.innerHTML = `
+          <div class="pair-header">
+            <div>Rank</div><div>Team</div><div>Total</div><div>Status</div>
+          </div>
+          <div class="pair-row">
+            <div>-</div><div class="font-medium">No final pairings yet</div><div>-</div><div class="status-pending">Pending</div>
+          </div>
+        `;
         return;
       }
 
-      // prevent duplicates inside same matchup across both sides
-      const dup = teamA.find(n => teamB.includes(n));
-      if(dup){
-        alert("Same player cannot be on both sides.");
+      box.innerHTML = `
+        <div class="pair-header">
+          <div>Rank</div><div>Team</div><div>Total</div><div>Status</div>
+        </div>
+        ${playerTeams.map((t, idx) => `
+          <div class="pair-row">
+            <div><span class="rank-badge">${idx + 1}</span></div><div class="font-medium">${escapeHTML(t.name)}</div><div class="font-bold">${t.total}</div><div class="status-ready">Ready</div>
+          </div>
+        `).join("")}
+      `;
+    };
+
+    const renderSavedBets = () => {
+      const box = $("savedBetsBox");
+
+      if (!state.savedBets.length) {
+        box.innerHTML = `<div class="small-note">No bets saved yet.</div>`;
         return;
       }
 
-      // validate names exist in round
-      for(const n of [...teamA, ...teamB]){
-        if(!findPlayerObj(n)){
-          alert(`Player not found in the loaded CSV: ${n}`);
-          return;
+      box.innerHTML = state.savedBets.map(bet => {
+        const ev = evaluateBet(bet.team1Names, bet.team2Names);
+        const title = `${sortedNames(bet.team1Names).join(" & ")} vs ${sortedNames(bet.team2Names).join(" & ")}`;
+
+        let body = "";
+        if (ev.error) {
+          body = `<div class="status-missing">${escapeHTML(ev.error)}</div>`;
+        } else if (ev.pending) {
+          body = `<div class="status-pending">Pending scores</div><div class="small-note">Waiting on: ${escapeHTML(ev.missing.join(", "))}</div>`;
+        } else {
+          body = `<div class="small-note">Team 1: ${ev.team1Total} | Team 2: ${ev.team2Total}</div><div class="small-note">${escapeHTML(ev.resultText)}</div><div class="small-note">Shots counted: ${ev.cappedShots}${ev.winningShots !== ev.cappedShots ? ` (capped from ${ev.winningShots})` : ""}</div><div class="status-ready mt-1">$${ev.payout}</div>`;
         }
-      }
 
-      if(editingRowId){
-        const idx = rows.findIndex(x => x.id === editingRowId);
-        if(idx >= 0){
-          rows[idx].teamA = [...teamA];
-          rows[idx].teamB = [...teamB];
-        }
-        editingRowId = null;
-      } else {
-        rows.push({ id: uid(), teamA: [...teamA], teamB: [...teamB] });
-      }
+        return `
+          <div class="saved-bet">
+            <div class="font-semibold mb-1">${escapeHTML(title)}</div>
+            ${body}
+            <div class="saved-bet-actions">
+              <button class="mini-btn mini-btn-edit" type="button" data-edit-id="${bet.id}">Edit</button>
+              <button class="mini-btn mini-btn-delete" type="button" data-delete-id="${bet.id}">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join("");
 
-      lastRow = { teamA: [...teamA], teamB: [...teamB] };
-      save();
-      closeEntry();
-      renderAll();
+      box.querySelectorAll("[data-edit-id]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = Number(btn.getAttribute("data-edit-id"));
+          const bet = state.savedBets.find(b => b.id === id);
+          if (!bet) return;
+
+          $("team1Input").value = bet.team1Names.map(preferredTokenForName).join(" ");
+          $("team2Input").value = bet.team2Names.map(preferredTokenForName).join(" ");
+          state.editingBetId = id;
+          renderCurrentBet();
+          renderApp();
+          document.getElementById("section-bets").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+
+      box.querySelectorAll("[data-delete-id]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = Number(btn.getAttribute("data-delete-id"));
+          state.savedBets = state.savedBets.filter(b => b.id !== id);
+          if (state.editingBetId === id) state.editingBetId = null;
+          renderApp();
+        });
+      });
     };
 
-    $("cancelEntryBtn").onclick = () => {
-      editingRowId = null;
-      closeEntry();
-    };
-  }
-
-  function closeEntry(){
-    $("entryCard").style.display = "none";
-    $("teamAUI").innerHTML = "";
-    $("teamBUI").innerHTML = "";
-  }
-
-  function openEntryForEdit(rowId){
-    editingRowId = rowId;
-    openEntry(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  // ====== COPY LAST ======
-  function copyLast(){
-    if(!lastRow){
-      alert("No previous matchup to copy yet.");
-      return;
-    }
-    editingRowId = null;
-    $("entryCard").style.display = "none";
-    openEntry(true);
-  }
-
-  // ====== WHEEL MODE ======
-  function buildWheelUI(){
-    // anchor picker
-    const anchorMount = $("anchorTeamUI");
-    anchorMount.innerHTML = "";
-    const anchorPicker = buildTeamPicker("anchorTeamUI", {
-      maxPlayers: 3,
-      disallowSetProvider: () => new Set(),
-      onChange: (names) => { anchorTeam = names; save(); }
-    });
-    anchorPicker.setTeam(anchorTeam || []);
-
-    // pool list with OUT toggles
-    const pool = $("wheelPoolUI");
-    pool.innerHTML = "";
-
-    if(!playerNames.length){
-      pool.innerHTML = `<div class="mini">Upload a Squabbit CSV to enable wheel mode.</div>`;
-      return;
-    }
-
-    playerNames.forEach(n => {
-      const row = document.createElement("div");
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.justifyContent = "space-between";
-      row.style.gap = "10px";
-      row.style.padding = "8px 0";
-      row.style.borderBottom = "1px solid rgba(255,255,255,.08)";
-
-      const left = document.createElement("div");
-      left.style.fontWeight = "950";
-      left.textContent = n;
-
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn " + (wheelOut.has(n) ? "btnBad" : "btnGhost");
-      btn.style.padding = "8px 10px";
-      btn.style.fontSize = "13px";
-      btn.textContent = wheelOut.has(n) ? "OUT" : "IN";
-
-      btn.onclick = () => {
-        if(wheelOut.has(n)) wheelOut.delete(n); else wheelOut.add(n);
-        save();
-        buildWheelUI();
-      };
-
-      row.appendChild(left);
-      row.appendChild(btn);
-      pool.appendChild(row);
-    });
-  }
-
-  function runWheel(){
-    if(players.length === 0){
-      alert("Upload a Squabbit CSV first.");
-      return;
-    }
-    if(anchorTeam.length < 1){
-      alert("Pick an anchor team first.");
-      return;
-    }
-    if(anchorTeam.some(n => wheelOut.has(n))){
-      alert("Your anchor team includes a player marked OUT. Set them to IN or change the anchor team.");
-      return;
-    }
-    // remaining included players (excluding anchor team)
-    const pool = playerNames.filter(n => !wheelOut.has(n) && !anchorTeam.includes(n));
-    if(pool.length < 2){
-      alert("Need at least 2 remaining included players to create 2-man combos.");
-      return;
-    }
-
-    // build all 2-man combos
-    const combos = [];
-    for(let i=0; i<pool.length; i++){
-      for(let j=i+1; j<pool.length; j++){
-        combos.push([pool[i], pool[j]]);
-      }
-    }
-
-    const ok = confirm(`Generate ${combos.length} wheel matchups?\n\nAnchor: ${anchorTeam.join(", ")}\nOpponents: every 2-man combo from ${pool.length} players.`);
-    if(!ok) return;
-
-    combos.forEach(c => {
-      rows.push({ id: uid(), teamA: [...anchorTeam], teamB: [...c] });
-    });
-
-    lastRow = { teamA: [...anchorTeam], teamB: [...(combos[combos.length-1] || [])] };
-    save();
-    renderAll();
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-  }
-
-  // ====== MAIN RENDER ======
-  function setStatusTag(){
-    if(players.length){
-      $("statusTag").textContent = `Loaded: ${players.length} players`;
-    } else {
-      $("statusTag").textContent = "No round loaded";
-    }
-  }
-
-  function renderAll(){
-    setStatusTag();
-    buildWheelUI();
-    renderRows();
-    updateFindPlayer();
-  }
-
-  // ====== EVENTS ======
-  $("csvInput").addEventListener("change", async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if(!f) return;
-    const txt = await f.text();
-    const parsed = parsePlayersFromCSV(txt);
-    if(!parsed.length){
-      alert("Could not find player scores in that CSV. Make sure it includes Hole 1–18 tables from Squabbit.");
-      return;
-    }
-    players = parsed;
-    playerNames = players.map(p => p.name).sort((a,b)=>a.localeCompare(b));
-
-    // reset wheel toggles if they no longer match
-    const all = new Set(playerNames);
-    wheelOut = new Set([...wheelOut].filter(n => all.has(n)));
-    anchorTeam = (anchorTeam || []).filter(n => all.has(n));
-
-    save();
-    renderAll();
-  });
-
-  $("addRowBtn").onclick = () => { editingRowId = null; openEntry(true); };
-  $("copyLastBtn").onclick = () => { copyLast(); };
-  $("runWheelBtn").onclick = () => { runWheel(); };
-
-  $("perStroke").addEventListener("input", () => { save(); renderAll(); });
-  $("maxPerPerson").addEventListener("input", () => { save(); renderAll(); });
-  $("holesCounted").addEventListener("change", () => { save(); renderAll(); });
-
-  $("findPlayer").addEventListener("input", () => { updateFindPlayer(); });
-
-  // ====== HUB BAR (bottom) ======
-  (function(){
-    const TOOL_NAME = window.TOOL_NAME || document.title || "Golf Tool";
-    const TOOL_KEYS = Array.isArray(window.TOOL_STORAGE_KEYS) ? window.TOOL_STORAGE_KEYS : [];
-    const HUB_INDEX = window.HUB_INDEX || "index.html";
-
-    $("hubToolTitle").textContent = TOOL_NAME;
-
-    $("hubBackBtn").onclick = () => {
-      // direct nav is most reliable on iOS
-      window.location.href = HUB_INDEX;
+    const renderNamesPills = () => {
+      $("namesPills").innerHTML = namesSorted().map(name => `<span class="pill">${escapeHTML(name)}</span>`).join("");
     };
 
-    $("hubResetThisBtn").onclick = () => {
-      if(!TOOL_KEYS.length){
-        alert("No reset keys set for this tool yet.");
+    const renderScoredPills = () => {
+      $("scoredPills").innerHTML = (state.scoredPlayers || []).map(p => `<span class="pill">${escapeHTML(p.name)}</span>`).join("");
+    };
+
+    const renderReportPreview = () => {
+      const box = $("reportPreview");
+      const teams = buildTeamsFromScoredPlayers(state.scoredPlayers || []);
+      const map = teamsByPlayer();
+      const selected = state.selectedPlayer;
+      const selectedRows = selected ? (map[selected] || []) : [];
+      const bestOverall = teams[0];
+
+      if (!teams.length) {
+        box.innerHTML = `<div class="preview-card-title">Reports are waiting on final scores</div><div class="small-note">Upload the completed round CSV first. Once scores are loaded, this area will show report totals and the download buttons will work.</div>`;
         return;
       }
-      const ok = confirm(`Reset this tool?\n\nThis clears:\n- ${TOOL_KEYS.join("\n- ")}`);
-      if(!ok) return;
-      TOOL_KEYS.forEach(k => localStorage.removeItem(k));
-      alert("Tool reset. Reloading…");
-      window.location.reload();
+
+      box.innerHTML = `
+        <div class="preview-card-title">Report Preview</div>
+        <div class="grid md:grid-cols-3 gap-3">
+          <div><div class="small-note">Selected player</div><div class="font-black text-green-800">${escapeHTML(selected || "None selected")}</div></div>
+          <div><div class="small-note">Selected pairings</div><div class="font-black text-green-800">${selectedRows.length}</div></div>
+          <div><div class="small-note">Best overall team</div><div class="font-black text-green-800">${bestOverall ? `${escapeHTML(bestOverall.name)} - ${bestOverall.total}` : "-"}</div></div>
+        </div>
+      `;
     };
 
-    $("hubResetAllBtn").onclick = () => {
-      const ok = confirm("Reset EVERYTHING for this site on this device?\n\nThis clears all local saved data.");
-      if(!ok) return;
-      localStorage.clear();
-      alert("Everything reset. Returning to hub…");
-      window.location.href = HUB_INDEX;
+    const renderApp = () => {
+      state.savedBets = dedupeSavedBets(state.savedBets || []);
+      if (state.editingBetId != null && !state.savedBets.some(b => b.id === state.editingBetId)) state.editingBetId = null;
+
+      const uniqueTeams = buildTeamsFromScoredPlayers(state.scoredPlayers || []);
+      $("playersLoaded").textContent = String(namesSorted().length);
+      $("playersScored").textContent = String((state.scoredPlayers || []).length);
+      $("summaryPlayersLoaded").textContent = String(namesSorted().length);
+      $("summaryPlayersScored").textContent = String((state.scoredPlayers || []).length);
+      $("summaryBestBallTeams").textContent = String(uniqueTeams.length);
+      $("summarySavedBets").textContent = String((state.savedBets || []).length);
+      $("shotValue").value = state.shotValue;
+      $("maxShots").value = state.maxShots;
+      $("maxPayout").textContent = `$${(Number(state.shotValue) || 0) * (Number(state.maxShots) || 0)}`;
+      $("appArea").style.display = namesSorted().length ? "block" : "none";
+      $("cancelEditBtn").style.display = state.editingBetId != null ? "inline-block" : "none";
+      updateSuggestionList();
+      updateAbbrText();
+      renderNamesPills();
+      renderScoredPills();
+      renderSelectedPlayer();
+      renderReportPreview();
+      renderCurrentBet();
+      renderSavedBets();
+      saveState();
     };
-  })();
 
-  // ====== INIT ======
-  const saved = loadSaved();
-  if(saved){
-    restore(saved);
-  }
-  setStatusTag();
-  buildWheelUI();
-  renderRows();
-  updateFindPlayer();
+    const importNamesCSV = async (file) => {
+      try {
+        const text = await file.text();
+        const parsedNames = parseNamesOnlyCSV(text);
+        state.names = parsedNames;
+        state.scoredPlayers = [];
+        state.abbrMap = makeDefaultAbbreviations(parsedNames);
+        state.selectedPlayer = parsedNames[0] || "";
+        $("msgNames").textContent = parsedNames.length
+          ? `Imported ${file.name}. Names loaded: ${parsedNames.length}.`
+          : `Imported ${file.name}, but no names were found in the Players section.`;
+        $("msgScores").textContent = "Upload a completed round CSV later to calculate best ball teams and bet results.";
+        renderApp();
+      } catch (err) {
+        console.error(err);
+        $("msgNames").textContent = "Could not read that names CSV file.";
+      }
+    };
 
-})();
-</script>
+    const importScoresCSV = async (file) => {
+      try {
+        const text = await file.text();
+        const parsedScores = parseScoresCSV(text);
+        state.scoredPlayers = parsedScores;
+        const scoreNames = parsedScores.map(p => p.name);
+        state.names = [...new Set([...(state.names || []), ...scoreNames])].sort((a, b) => a.localeCompare(b));
+        state.abbrMap = mergeAbbreviations(state.abbrMap, makeDefaultAbbreviations(state.names));
+        if (!state.selectedPlayer || !state.names.includes(state.selectedPlayer)) state.selectedPlayer = state.names[0] || "";
+        $("msgScores").textContent = parsedScores.length
+          ? `Imported ${file.name}. Players with finished scores: ${state.scoredPlayers.length}. Best ball reports are ready.`
+          : `Imported ${file.name}, but no completed player scores were found.`;
+        renderApp();
+      } catch (err) {
+        console.error(err);
+        $("msgScores").textContent = "Could not read that scores CSV file.";
+      }
+    };
+
+    const resetRoundData = () => {
+      state.names = [];
+      state.scoredPlayers = [];
+      state.selectedPlayer = "";
+      state.abbrMap = {};
+      state.editingBetId = null;
+      $("msgNames").textContent = "Upload a pre round CSV to load names for entering bets.";
+      $("msgScores").textContent = "Upload a completed round CSV later to calculate best ball teams and bet results.";
+      renderApp();
+    };
+
+    const resetAllData = () => {
+      state.names = [];
+      state.scoredPlayers = [];
+      state.selectedPlayer = "";
+      state.abbrMap = {};
+      state.shotValue = 3;
+      state.maxShots = 7;
+      state.savedBets = [];
+      state.previousTeam1 = "";
+      state.previousTeam2 = "";
+      state.editingBetId = null;
+      localStorage.removeItem(STORAGE_KEY);
+      $("team1Input").value = "";
+      $("team2Input").value = "";
+      $("msgNames").textContent = "Upload a pre round CSV to load names for entering bets.";
+      $("msgScores").textContent = "Upload a completed round CSV later to calculate best ball teams and bet results.";
+      renderApp();
+    };
+
+    const escapeCSV = (value) => {
+      const str = String(value ?? "");
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) return `"${str.replace(/"/g, '""')}"`;
+      return str;
+    };
+
+    const exportSavedBetsCSV = () => {
+      if (!state.savedBets.length) {
+        alert("No saved bets to export.");
+        return;
+      }
+
+      const rows = [[
+        "Team 1 Player 1","Team 1 Player 2","Team 2 Player 1","Team 2 Player 2","Status",
+        "Team 1 Best Ball","Team 2 Best Ball","Winner","Winning Shots","Shots Counted",
+        "Dollars Per Shot","Max Shots","Payout","Waiting On"
+      ]];
+
+      state.savedBets.forEach((bet) => {
+        const ev = evaluateBet(bet.team1Names, bet.team2Names);
+        if (ev.error) {
+          rows.push([bet.team1Names[0]||"", bet.team1Names[1]||"", bet.team2Names[0]||"", bet.team2Names[1]||"", "Error", "", "", ev.error, "", "", state.shotValue, state.maxShots, "", ""]);
+        } else if (ev.pending) {
+          rows.push([bet.team1Names[0]||"", bet.team1Names[1]||"", bet.team2Names[0]||"", bet.team2Names[1]||"", "Pending", "", "", "", "", "", state.shotValue, state.maxShots, "", (ev.missing||[]).join(" | ")]);
+        } else {
+          rows.push([bet.team1Names[0]||"", bet.team1Names[1]||"", bet.team2Names[0]||"", bet.team2Names[1]||"", "Ready", ev.team1Total, ev.team2Total, ev.resultText, ev.winningShots, ev.cappedShots, state.shotValue, state.maxShots, ev.payout, ""]);
+        }
+      });
+
+      const csv = rows.map(row => row.map(escapeCSV).join(",")).join("\n");
+      downloadTextFile(csv, "best-ball-bet-sheet.csv", "text/csv;charset=utf-8;");
+    };
+
+    const downloadSelectedPlayerReport = () => {
+      const playerName = state.selectedPlayer;
+      if (!playerName) {
+        alert("Choose a player first in Player Pairings.");
+        return;
+      }
+      const rows = teamsByPlayer()[playerName] || [];
+      if (!rows.length) {
+        alert("Upload finished scores first. This player does not have completed best ball pairings yet.");
+        return;
+      }
+      downloadTextFile(selectedPlayerReportHTML(playerName), `best-ball-${fileSafe(playerName)}.html`, "text/html;charset=utf-8;");
+    };
+
+    const downloadAllPlayersReport = () => {
+      if (!buildTeamsFromScoredPlayers(state.scoredPlayers || []).length) {
+        alert("Upload finished scores first. No best ball pairings are ready yet.");
+        return;
+      }
+      downloadTextFile(allPlayersReportHTML(), "best-ball-all-players-report.html", "text/html;charset=utf-8;");
+    };
+
+    const downloadBestBallCSV = () => {
+      const teams = buildTeamsFromScoredPlayers(state.scoredPlayers || []);
+      if (!teams.length) {
+        alert("Upload finished scores first. No best ball pairings are ready yet.");
+        return;
+      }
+      const rows = [["Rank", "Player 1", "Player 2", "Team", "Best Ball Total"]];
+      teams.forEach((team, idx) => rows.push([idx + 1, team.playerA, team.playerB, team.name, team.total]));
+      const csv = rows.map(row => row.map(escapeCSV).join(",")).join("\n");
+      downloadTextFile(csv, "best-ball-all-pairings.csv", "text/csv;charset=utf-8;");
+    };
+
+    loadState();
+    renderApp();
+
+    $("namesCsvInput").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) importNamesCSV(file);
+    });
+
+    $("scoresCsvInput").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) importScoresCSV(file);
+    });
+
+    $("shotValue").addEventListener("input", (e) => {
+      state.shotValue = Number(e.target.value) || 0;
+      renderApp();
+    });
+
+    $("maxShots").addEventListener("input", (e) => {
+      state.maxShots = Number(e.target.value) || 0;
+      renderApp();
+    });
+
+    $("selectedPlayer").addEventListener("change", (e) => {
+      state.selectedPlayer = e.target.value;
+      renderApp();
+    });
+
+    $("saveAbbrBtn").addEventListener("click", () => {
+      const lines = $("abbrText").value.split(/\r?\n/);
+      const next = {};
+      for (const line of lines) {
+        const trimmed = normalizeSpace(line);
+        if (!trimmed) continue;
+        const parts = trimmed.split("=");
+        if (parts.length !== 2) continue;
+        const abbr = normalizeSpace(parts[0]).toLowerCase();
+        const full = normalizeSpace(parts[1]);
+        if (!abbr || !full) continue;
+        const exists = namesSorted().find(n => n.toLowerCase() === full.toLowerCase());
+        if (exists) next[abbr] = exists;
+      }
+      state.abbrMap = next;
+      renderApp();
+    });
+
+    $("team1Input").addEventListener("input", renderCurrentBet);
+    $("team2Input").addEventListener("input", renderCurrentBet);
+
+    $("copyPrevT1ToT1").addEventListener("click", () => { $("team1Input").value = state.previousTeam1 || ""; renderCurrentBet(); });
+    $("copyPrevT2ToT1").addEventListener("click", () => { $("team1Input").value = state.previousTeam2 || ""; renderCurrentBet(); });
+    $("copyPrevT1ToT2").addEventListener("click", () => { $("team2Input").value = state.previousTeam1 || ""; renderCurrentBet(); });
+    $("copyPrevT2ToT2").addEventListener("click", () => { $("team2Input").value = state.previousTeam2 || ""; renderCurrentBet(); });
+
+    $("clearEntryBtn").addEventListener("click", () => {
+      $("team1Input").value = "";
+      $("team2Input").value = "";
+      renderCurrentBet();
+    });
+
+    $("saveBetBtn").addEventListener("click", () => {
+      const bet = currentBet();
+      if (!bet || bet.error) return;
+
+      const normalized = canonicalizeBetEntry({
+        id: state.editingBetId || Date.now(),
+        team1Names: bet.team1Names,
+        team2Names: bet.team2Names
+      });
+      const newKey = betKeyFromEntry(normalized);
+      const duplicate = state.savedBets.find(b => betKeyFromEntry(b) === newKey && b.id !== normalized.id);
+
+      if (duplicate) {
+        alert("That same matchup is already saved.");
+        return;
+      }
+
+      if (state.editingBetId != null) state.savedBets = state.savedBets.map(b => b.id === state.editingBetId ? normalized : b);
+      else state.savedBets.unshift(normalized);
+
+      state.previousTeam1 = $("team1Input").value.trim();
+      state.previousTeam2 = $("team2Input").value.trim();
+      state.editingBetId = null;
+      $("team1Input").value = "";
+      $("team2Input").value = "";
+      renderApp();
+    });
+
+    $("saveKeepT1Btn").addEventListener("click", () => {
+      const bet = currentBet();
+      if (!bet || bet.error) return;
+
+      const normalized = canonicalizeBetEntry({
+        id: state.editingBetId || Date.now(),
+        team1Names: bet.team1Names,
+        team2Names: bet.team2Names
+      });
+      const newKey = betKeyFromEntry(normalized);
+      const duplicate = state.savedBets.find(b => betKeyFromEntry(b) === newKey && b.id !== normalized.id);
+
+      if (duplicate) {
+        alert("That same matchup is already saved.");
+        return;
+      }
+
+      if (state.editingBetId != null) state.savedBets = state.savedBets.map(b => b.id === state.editingBetId ? normalized : b);
+      else state.savedBets.unshift(normalized);
+
+      state.previousTeam1 = $("team1Input").value.trim();
+      state.previousTeam2 = $("team2Input").value.trim();
+      state.editingBetId = null;
+      $("team2Input").value = "";
+      renderApp();
+    });
+
+    $("cancelEditBtn").addEventListener("click", () => {
+      state.editingBetId = null;
+      $("team1Input").value = "";
+      $("team2Input").value = "";
+      renderApp();
+    });
+
+    $("downloadSelectedReportBtn").addEventListener("click", downloadSelectedPlayerReport);
+    $("downloadAllPlayersReportBtn").addEventListener("click", downloadAllPlayersReport);
+    $("downloadBestBallCsvBtn").addEventListener("click", downloadBestBallCSV);
+    $("exportBtn").addEventListener("click", exportSavedBetsCSV);
+    $("clearSavedBtn").addEventListener("click", () => {
+      state.savedBets = [];
+      state.editingBetId = null;
+      renderApp();
+    });
+
+    $("resetRoundBtn").addEventListener("click", resetRoundData);
+    $("resetAllBtn").addEventListener("click", resetAllData);
+  </script>
 </body>
 </html>
